@@ -1,0 +1,35 @@
+# Ignore datasets and trained models
+/data/
+/models/
+
+# Ignore environment secrets
+.env
+
+# Python specific
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node specific
+/apps/frontend/dashboard/node_modules/
+/apps/frontend/dashboard/dist/
+/apps/frontend/dashboard/build/
+
+# OS / IDE specific
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+

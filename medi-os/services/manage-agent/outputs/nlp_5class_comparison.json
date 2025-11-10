@@ -1,0 +1,77 @@
+{
+  "v9_nlp_5class": {
+    "description": "NLP embeddings (384\u219220 dims) + 5-class severity",
+    "features": 72,
+    "classes": 5,
+    "logistic_regression": {
+      "accuracy": 0.3604,
+      "macro_f1": 0.3101,
+      "status": "FIXED! (36% accuracy, using LogisticRegression)"
+    },
+    "random_forest": {
+      "accuracy": 0.5504,
+      "macro_f1": 0.3791,
+      "status": "IMPROVED! (+5% from baseline)"
+    }
+  },
+  "v8_rfv_clustered": {
+    "description": "RFV clustering (723 codes \u2192 10-15 clusters)",
+    "features": 58,
+    "classes": 7,
+    "logistic_regression": {
+      "accuracy": 0.0491,
+      "macro_f1": 0.0134,
+      "status": "BROKEN"
+    },
+    "random_forest": {
+      "accuracy": 0.4953,
+      "macro_f1": 0.2782,
+      "status": "BASELINE"
+    }
+  },
+  "v7_minimal": {
+    "description": "Minimal features (top 10 RFV + essential)",
+    "features": 24,
+    "classes": 7,
+    "logistic_regression": {
+      "accuracy": 0.05,
+      "macro_f1": 0.01,
+      "status": "BROKEN"
+    },
+    "random_forest": {
+      "accuracy": 0.519,
+      "macro_f1": 0.3,
+      "status": "GOOD"
+    }
+  },
+  "v4": {
+    "description": "RFV one-hot encoding (top 50 codes)",
+    "features": 100,
+    "classes": 7,
+    "logistic_regression": {
+      "accuracy": 0.05,
+      "macro_f1": 0.01,
+      "status": "BROKEN"
+    },
+    "random_forest": {
+      "accuracy": 0.53,
+      "macro_f1": 0.3,
+      "status": "GOOD"
+    }
+  },
+  "v3": {
+    "description": "RFV fix (selective scaling)",
+    "features": 28,
+    "classes": 7,
+    "logistic_regression": {
+      "accuracy": 0.28,
+      "macro_f1": 0.15,
+      "status": "POOR"
+    },
+    "random_forest": {
+      "accuracy": 0.53,
+      "macro_f1": 0.3,
+      "status": "GOOD"
+    }
+  }
+}

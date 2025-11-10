@@ -1,0 +1,365 @@
+{
+  "timestamp": "2025-11-05T17:32:57.007176",
+  "phase": "Weighted Voting Ensemble",
+  "model_order": [
+    "LightGBM",
+    "XGBoost",
+    "TabNet"
+  ],
+  "manual_combinations": [
+    {
+      "weights": [
+        0.5,
+        0.3,
+        0.2
+      ],
+      "description": "Balanced",
+      "metrics": {
+        "accuracy": 0.5737558247903075,
+        "macro_f1": 0.3580479560928084,
+        "weighted_f1": 0.5444927105582549,
+        "critical_recall": 0.05272564789991063,
+        "classification_report": {
+          "Severity 1 (Critical)": {
+            "precision": 0.4244604316546763,
+            "recall": 0.05272564789991063,
+            "f1-score": 0.09379968203497616,
+            "support": 1119.0
+          },
+          "Severity 2 (Emergent)": {
+            "precision": 0.4650602409638554,
+            "recall": 0.25579854208084823,
+            "f1-score": 0.3300555793073963,
+            "support": 3018.0
+          },
+          "Severity 3 (Urgent)": {
+            "precision": 0.5896354538956398,
+            "recall": 0.7052838577291382,
+            "f1-score": 0.6422954138441174,
+            "support": 11696.0
+          },
+          "Severity 4 (Less Urgent)": {
+            "precision": 0.575889547813195,
+            "recall": 0.6523564605857037,
+            "f1-score": 0.6117427038732222,
+            "support": 9527.0
+          },
+          "Severity 5 (Non-Urgent)": {
+            "precision": 0.39344262295081966,
+            "recall": 0.06552901023890785,
+            "f1-score": 0.11234640140433001,
+            "support": 1465.0
+          },
+          "accuracy": 0.5737558247903075,
+          "macro avg": {
+            "precision": 0.48969765945563715,
+            "recall": 0.34633870370690173,
+            "f1-score": 0.3580479560928084,
+            "support": 26825.0
+          },
+          "weighted avg": {
+            "precision": 0.5531329902573406,
+            "recall": 0.5737558247903075,
+            "f1-score": 0.5444927105582549,
+            "support": 26825.0
+          }
+        }
+      }
+    },
+    {
+      "weights": [
+        0.4,
+        0.3,
+        0.3
+      ],
+      "description": "More TabNet",
+      "metrics": {
+        "accuracy": 0.5695433364398882,
+        "macro_f1": 0.3680081005624499,
+        "weighted_f1": 0.5454493678470035,
+        "critical_recall": 0.06255585344057193,
+        "classification_report": {
+          "Severity 1 (Critical)": {
+            "precision": 0.3153153153153153,
+            "recall": 0.06255585344057193,
+            "f1-score": 0.10439970171513796,
+            "support": 1119.0
+          },
+          "Severity 2 (Emergent)": {
+            "precision": 0.4451913133402275,
+            "recall": 0.2852882703777336,
+            "f1-score": 0.34773828756058156,
+            "support": 3018.0
+          },
+          "Severity 3 (Urgent)": {
+            "precision": 0.5936440053089515,
+            "recall": 0.6883549931600548,
+            "f1-score": 0.6375009897854145,
+            "support": 11696.0
+          },
+          "Severity 4 (Less Urgent)": {
+            "precision": 0.5751469353484466,
+            "recall": 0.6471082187467199,
+            "f1-score": 0.6090091869999013,
+            "support": 9527.0
+          },
+          "Severity 5 (Non-Urgent)": {
+            "precision": 0.33762886597938147,
+            "recall": 0.089419795221843,
+            "f1-score": 0.14139233675121424,
+            "support": 1465.0
+          },
+          "accuracy": 0.5695433364398882,
+          "macro avg": {
+            "precision": 0.4533852870584645,
+            "recall": 0.3545454261893846,
+            "f1-score": 0.3680081005624499,
+            "support": 26825.0
+          },
+          "weighted avg": {
+            "precision": 0.5447804901888755,
+            "recall": 0.5695433364398882,
+            "f1-score": 0.5454493678470035,
+            "support": 26825.0
+          }
+        }
+      }
+    },
+    {
+      "weights": [
+        0.6,
+        0.3,
+        0.1
+      ],
+      "description": "Less TabNet",
+      "metrics": {
+        "accuracy": 0.5753960857409133,
+        "macro_f1": 0.34866524768241225,
+        "weighted_f1": 0.5421409822115273,
+        "critical_recall": 0.04736371760500447,
+        "classification_report": {
+          "Severity 1 (Critical)": {
+            "precision": 0.5353535353535354,
+            "recall": 0.04736371760500447,
+            "f1-score": 0.08702791461412152,
+            "support": 1119.0
+          },
+          "Severity 2 (Emergent)": {
+            "precision": 0.4861407249466951,
+            "recall": 0.22664015904572565,
+            "f1-score": 0.30915254237288137,
+            "support": 3018.0
+          },
+          "Severity 3 (Urgent)": {
+            "precision": 0.5866341802993387,
+            "recall": 0.7205027359781122,
+            "f1-score": 0.6467134799125129,
+            "support": 11696.0
+          },
+          "Severity 4 (Less Urgent)": {
+            "precision": 0.5752877831414779,
+            "recall": 0.6504670935236696,
+            "f1-score": 0.6105719493571112,
+            "support": 9527.0
+          },
+          "Severity 5 (Non-Urgent)": {
+            "precision": 0.4065934065934066,
+            "recall": 0.050511945392491465,
+            "f1-score": 0.08986035215543413,
+            "support": 1465.0
+          },
+          "accuracy": 0.5753960857409133,
+          "macro avg": {
+            "precision": 0.5180019260668907,
+            "recall": 0.3390971303090006,
+            "f1-score": 0.34866524768241225,
+            "support": 26825.0
+          },
+          "weighted avg": {
+            "precision": 0.559326476696328,
+            "recall": 0.5753960857409133,
+            "f1-score": 0.5421409822115273,
+            "support": 26825.0
+          }
+        }
+      }
+    },
+    {
+      "weights": [
+        0.4,
+        0.35,
+        0.25
+      ],
+      "description": "Moderate TabNet",
+      "metrics": {
+        "accuracy": 0.5723019571295433,
+        "macro_f1": 0.36287888563871346,
+        "weighted_f1": 0.5451305564462001,
+        "critical_recall": 0.05719392314566577,
+        "classification_report": {
+          "Severity 1 (Critical)": {
+            "precision": 0.3902439024390244,
+            "recall": 0.05719392314566577,
+            "f1-score": 0.09976617303195635,
+            "support": 1119.0
+          },
+          "Severity 2 (Emergent)": {
+            "precision": 0.45654627539503384,
+            "recall": 0.2680583167660702,
+            "f1-score": 0.33778705636743217,
+            "support": 3018.0
+          },
+          "Severity 3 (Urgent)": {
+            "precision": 0.5911586246749494,
+            "recall": 0.6997264021887825,
+            "f1-score": 0.6408770555990603,
+            "support": 11696.0
+          },
+          "Severity 4 (Less Urgent)": {
+            "precision": 0.5754163952730995,
+            "recall": 0.6491025506455338,
+            "f1-score": 0.6100424188615962,
+            "support": 9527.0
+          },
+          "Severity 5 (Non-Urgent)": {
+            "precision": 0.3724832214765101,
+            "recall": 0.0757679180887372,
+            "f1-score": 0.12592172433352242,
+            "support": 1465.0
+          },
+          "accuracy": 0.5723019571295433,
+          "macro avg": {
+            "precision": 0.4771696838517235,
+            "recall": 0.3499698221669579,
+            "f1-score": 0.36287888563871346,
+            "support": 26825.0
+          },
+          "weighted avg": {
+            "precision": 0.5500991902106093,
+            "recall": 0.5723019571295433,
+            "f1-score": 0.5451305564462001,
+            "support": 26825.0
+          }
+        }
+      }
+    },
+    {
+      "weights": [
+        0.35,
+        0.35,
+        0.3
+      ],
+      "description": "High TabNet (critical focus)",
+      "metrics": {
+        "accuracy": 0.5689095992544269,
+        "macro_f1": 0.36654360771505934,
+        "weighted_f1": 0.544454396037233,
+        "critical_recall": 0.05987488829311886,
+        "classification_report": {
+          "Severity 1 (Critical)": {
+            "precision": 0.3160377358490566,
+            "recall": 0.05987488829311886,
+            "f1-score": 0.10067618332081142,
+            "support": 1119.0
+          },
+          "Severity 2 (Emergent)": {
+            "precision": 0.44572025052192066,
+            "recall": 0.2829688535453943,
+            "f1-score": 0.34616943656262666,
+            "support": 3018.0
+          },
+          "Severity 3 (Urgent)": {
+            "precision": 0.592505510653931,
+            "recall": 0.6894664842681258,
+            "f1-score": 0.6373192128349008,
+            "support": 11696.0
+          },
+          "Severity 4 (Less Urgent)": {
+            "precision": 0.5738562091503268,
+            "recall": 0.6451138868479059,
+            "f1-score": 0.6074022829470771,
+            "support": 9527.0
+          },
+          "Severity 5 (Non-Urgent)": {
+            "precision": 0.3448275862068966,
+            "recall": 0.08873720136518772,
+            "f1-score": 0.14115092290988057,
+            "support": 1465.0
+          },
+          "accuracy": 0.5689095992544269,
+          "macro avg": {
+            "precision": 0.45458945847642634,
+            "recall": 0.35323226286394654,
+            "f1-score": 0.36654360771505934,
+            "support": 26825.0
+          },
+          "weighted avg": {
+            "precision": 0.5443084776688497,
+            "recall": 0.5689095992544269,
+            "f1-score": 0.544454396037233,
+            "support": 26825.0
+          }
+        }
+      }
+    }
+  ],
+  "best_manual": {
+    "weights": [
+      0.4,
+      0.3,
+      0.3
+    ],
+    "description": "More TabNet",
+    "metrics": {
+      "accuracy": 0.5695433364398882,
+      "macro_f1": 0.3680081005624499,
+      "weighted_f1": 0.5454493678470035,
+      "critical_recall": 0.06255585344057193,
+      "classification_report": {
+        "Severity 1 (Critical)": {
+          "precision": 0.3153153153153153,
+          "recall": 0.06255585344057193,
+          "f1-score": 0.10439970171513796,
+          "support": 1119.0
+        },
+        "Severity 2 (Emergent)": {
+          "precision": 0.4451913133402275,
+          "recall": 0.2852882703777336,
+          "f1-score": 0.34773828756058156,
+          "support": 3018.0
+        },
+        "Severity 3 (Urgent)": {
+          "precision": 0.5936440053089515,
+          "recall": 0.6883549931600548,
+          "f1-score": 0.6375009897854145,
+          "support": 11696.0
+        },
+        "Severity 4 (Less Urgent)": {
+          "precision": 0.5751469353484466,
+          "recall": 0.6471082187467199,
+          "f1-score": 0.6090091869999013,
+          "support": 9527.0
+        },
+        "Severity 5 (Non-Urgent)": {
+          "precision": 0.33762886597938147,
+          "recall": 0.089419795221843,
+          "f1-score": 0.14139233675121424,
+          "support": 1465.0
+        },
+        "accuracy": 0.5695433364398882,
+        "macro avg": {
+          "precision": 0.4533852870584645,
+          "recall": 0.3545454261893846,
+          "f1-score": 0.3680081005624499,
+          "support": 26825.0
+        },
+        "weighted avg": {
+          "precision": 0.5447804901888755,
+          "recall": 0.5695433364398882,
+          "f1-score": 0.5454493678470035,
+          "support": 26825.0
+        }
+      }
+    }
+  }
+}

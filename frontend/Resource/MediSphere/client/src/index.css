@@ -1,0 +1,331 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(220, 14.3%, 4.1%);
+  --muted: hsl(220, 4.8%, 95.9%);
+  --muted-foreground: hsl(220, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(220, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(220, 14.3%, 4.1%);
+  --border: hsl(220, 5.9%, 90%);
+  --input: hsl(220, 5.9%, 90%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(220, 4.8%, 95.9%);
+  --secondary-foreground: hsl(220, 9.8%, 10%);
+  --accent: hsl(220, 4.8%, 95.9%);
+  --accent-foreground: hsl(220, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(220, 9.1%, 97.8%);
+  --ring: hsl(207, 90%, 54%);
+  --radius: 0.5rem;
+
+  /* Medical Theme Colors */
+  --medical-blue: hsl(207, 90%, 54%);
+  --medical-teal: hsl(174, 100%, 29%);
+  --medical-bg: hsl(210, 20%, 98%);
+  --medical-gray: hsl(215, 16%, 47%);
+  --medical-light: hsl(210, 17%, 98%);
+  --medical-success: hsl(142, 76%, 36%);
+  --medical-warning: hsl(45, 93%, 47%);
+  --medical-error: hsl(0, 84%, 60%);
+  --medical-info: hsl(199, 89%, 48%);
+}
+
+.dark {
+  --background: hsl(222, 14%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(222, 3.7%, 15.9%);
+  --muted-foreground: hsl(222, 5%, 64.9%);
+  --popover: hsl(222, 14%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(222, 14%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(222, 3.7%, 15.9%);
+  --input: hsl(222, 3.7%, 15.9%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(222, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(222, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(207, 90%, 54%);
+  --radius: 0.5rem;
+
+  /* Dark Medical Theme Colors */
+  --medical-blue: hsl(207, 90%, 54%);
+  --medical-teal: hsl(174, 100%, 29%);
+  --medical-bg: hsl(222, 14%, 3.9%);
+  --medical-gray: hsl(215, 16%, 65%);
+  --medical-light: hsl(222, 14%, 8%);
+  --medical-success: hsl(142, 76%, 36%);
+  --medical-warning: hsl(45, 93%, 47%);
+  --medical-error: hsl(0, 84%, 60%);
+  --medical-info: hsl(199, 89%, 48%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+
+  /* Medical Theme Utility Classes */
+  .bg-medical-blue {
+    background-color: var(--medical-blue);
+  }
+
+  .bg-medical-teal {
+    background-color: var(--medical-teal);
+  }
+
+  .bg-medical-bg {
+    background-color: var(--medical-bg);
+  }
+
+  .bg-medical-light {
+    background-color: var(--medical-light);
+  }
+
+  .text-medical-blue {
+    color: var(--medical-blue);
+  }
+
+  .text-medical-teal {
+    color: var(--medical-teal);
+  }
+
+  .text-medical-gray {
+    color: var(--medical-gray);
+  }
+
+  .text-medical-success {
+    color: var(--medical-success);
+  }
+
+  .text-medical-warning {
+    color: var(--medical-warning);
+  }
+
+  .text-medical-error {
+    color: var(--medical-error);
+  }
+
+  .text-medical-info {
+    color: var(--medical-info);
+  }
+
+  .border-medical-blue {
+    border-color: var(--medical-blue);
+  }
+
+  .border-medical-teal {
+    border-color: var(--medical-teal);
+  }
+
+  /* Medical Status Indicators */
+  .status-available {
+    @apply bg-green-100 text-green-800;
+  }
+
+  .status-busy {
+    @apply bg-red-100 text-red-800;
+  }
+
+  .status-on-break {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+
+  .status-emergency {
+    @apply bg-orange-100 text-orange-800;
+  }
+
+  .status-off-duty {
+    @apply bg-gray-100 text-gray-800;
+  }
+
+  /* Priority Indicators */
+  .priority-low {
+    @apply bg-blue-100 text-blue-800;
+  }
+
+  .priority-normal {
+    @apply bg-green-100 text-green-800;
+  }
+
+  .priority-high {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+
+  .priority-urgent {
+    @apply bg-orange-100 text-orange-800;
+  }
+
+  .priority-emergency {
+    @apply bg-red-100 text-red-800;
+  }
+
+  /* Room Status Indicators */
+  .room-available {
+    @apply bg-green-50 border-green-200 text-green-800;
+  }
+
+  .room-occupied {
+    @apply bg-red-50 border-red-200 text-red-800;
+  }
+
+  .room-cleaning {
+    @apply bg-yellow-50 border-yellow-200 text-yellow-800;
+  }
+
+  .room-maintenance {
+    @apply bg-gray-50 border-gray-200 text-gray-800;
+  }
+
+  .room-reserved {
+    @apply bg-blue-50 border-blue-200 text-blue-800;
+  }
+
+  /* Animation utilities for medical interface */
+  .pulse-medical {
+    animation: pulse-medical 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse-medical {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: .7;
+    }
+  }
+
+  /* Vital signs color coding */
+  .vitals-normal {
+    @apply text-green-600 bg-green-50;
+  }
+
+  .vitals-low {
+    @apply text-blue-600 bg-blue-50;
+  }
+
+  .vitals-high {
+    @apply text-red-600 bg-red-50;
+  }
+
+  .vitals-critical {
+    @apply text-red-800 bg-red-100;
+  }
+
+  /* Medical form styling */
+  .medical-form-section {
+    @apply bg-white rounded-lg border border-gray-200 p-6 space-y-4;
+  }
+
+  .medical-input-group {
+    @apply space-y-2;
+  }
+
+  .medical-label {
+    @apply block text-sm font-medium text-gray-700;
+  }
+
+  .medical-input {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-medical-blue focus:border-transparent;
+  }
+
+  /* QR Code styling */
+  .qr-scanner-active {
+    @apply border-2 border-dashed border-medical-blue bg-blue-50;
+  }
+
+  /* Medical dashboard cards */
+  .medical-card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
+  }
+
+  .medical-card-header {
+    @apply flex items-center justify-between mb-4;
+  }
+
+  .medical-card-title {
+    @apply text-lg font-semibold text-gray-900;
+  }
+
+  /* Emergency button styling */
+  .emergency-button {
+    @apply bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+
+  /* Medical status dots */
+  .status-dot {
+    @apply w-2 h-2 rounded-full;
+  }
+
+  .status-dot-green {
+    @apply bg-green-500;
+  }
+
+  .status-dot-red {
+    @apply bg-red-500;
+  }
+
+  .status-dot-yellow {
+    @apply bg-yellow-500;
+  }
+
+  .status-dot-blue {
+    @apply bg-blue-500;
+  }
+
+  .status-dot-gray {
+    @apply bg-gray-500;
+  }
+}
+
+/* Custom scrollbar for medical interface */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(220, 4.8%, 95.9%);
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(220, 5.3%, 44.7%);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(207, 90%, 54%);
+}
+
+/* Medical interface focus styles */
+.medical-focus:focus {
+  @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+}
+
+/* Print styles for medical documents */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .medical-card {
+    @apply shadow-none border border-gray-300;
+  }
+  
+  body {
+    @apply text-black bg-white;
+  }
+}

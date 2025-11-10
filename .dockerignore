@@ -1,0 +1,66 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+docs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+
+# Test files
+coverage/
+.nyc_output/
+*.test.js
+*.spec.js
+__tests__/
+tests/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Backend specific
+backend/dev.db
+backend/uploads/
+backend/models/
+backend/tmp-*
+
+# Frontend specific
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+

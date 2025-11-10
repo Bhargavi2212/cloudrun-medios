@@ -1,0 +1,22 @@
+{
+  "xgboost": {
+    "accuracy": 0.04171637339695795,
+    "macro_f1": 0.016018323014708513,
+    "weighted_f1": 0.003341131720373327,
+    "auroc": 0.5987812013511056,
+    "severity_1_recall": 1.0
+  },
+  "lightgbm": {
+    "accuracy": 0.10330301222785565,
+    "macro_f1": 0.1200929337302508,
+    "weighted_f1": 0.08249307010713598,
+    "auroc": 0.704664334019038,
+    "severity_1_recall": 0.900804289544236
+  },
+  "comparison": {
+    "best_accuracy": "LightGBM",
+    "best_f1": "LightGBM",
+    "best_auroc": "LightGBM",
+    "fastest": "XGBoost"
+  }
+}

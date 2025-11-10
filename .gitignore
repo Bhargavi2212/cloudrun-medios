@@ -1,0 +1,95 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment variables
+.env
+.env.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Storage
+storage/
+uploads/
+
+# Models
+models/
+*.pt
+*.pth
+*.onnx
+*.pkl
+*.cbm
+*.xgb
+*.zip.zip
+
+# Data and Datasets
+Data/
+data/
+datasets/
+*.csv
+*.jsonl
+medi-os/data/
+medi-os/models/
+
+# FFmpeg (auto-downloaded)
+ffmpeg/
+
+# Temporary model files
+tmp-models/
+backend/tmp*.txt
+backend/tmp*.json
+
+# Backups
+*_backup*/
+frontend_backup*/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Frontend
+node_modules/
+dist/
+.cache/
+
+# Temporary files
+*.tmp
+tmp/
+temp/
+

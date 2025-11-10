@@ -1,0 +1,135 @@
+SUPER ADMIN Dashboard
+
+  Primary Focus: System-wide oversight and management
+
+  Key Sections:
+  - Global Analytics Hub: Real-time metrics across all hospitals, patient flow,
+  revenue, staff utilization
+  - Hospital Management Panel: Add/edit/manage multiple hospitals, view performance
+  comparisons
+  - System User Management: Create/manage hospital admins, assign permissions, audit        
+  user activities
+  - Revenue & Financial Overview: Cross-hospital financial data, billing insights, cost     
+   analysis
+  - ML Insights Center: System-wide AI predictions, patient flow optimization, resource     
+   allocation recommendations
+
+  Functionality: Complete CRUD operations on all entities, advanced reporting, system       
+  configuration
+
+  ---
+  🏥 HOSPITAL ADMIN Dashboard
+
+  Primary Focus: Single hospital operations management
+
+  Key Sections:
+  - Hospital Operations Center: Departmental performance, staff scheduling, resource        
+  allocation
+  - Staff Management: Hire/manage staff, assign departments, track performance, payroll     
+   insights
+  - Department Analytics: Individual department metrics, efficiency tracking, patient       
+  throughput
+  - Financial Dashboard: Hospital-specific revenue, expenses, department costs, billing     
+   overview
+  - Patient Flow Management: Admission trends, discharge planning, bed occupancy
+  optimization
+
+  Functionality: Hospital-scoped management, staff scheduling, departmental oversight,      
+  financial tracking
+
+  ---
+  👩‍⚕️ DOCTOR Dashboard
+
+  Primary Focus: Patient care and medical decision making
+
+  Key Sections:
+  - Patient Queue: Assigned patients, priority cases, appointment schedule with
+  real-time updates
+  - Medical Records Hub: Complete patient histories, lab results, imaging, previous
+  consultations
+  - Smart Diagnosis Assistant: AI-powered diagnostic suggestions, drug interaction
+  alerts, treatment recommendations
+  - Laboratory Integration: Order tests, view results, track pending reports with
+  automated notifications
+  - Research & Analytics: Patient outcome tracking, treatment effectiveness, clinical       
+  decision support
+
+  Functionality: Patient record access, prescription management, diagnostic tools,
+  treatment planning
+
+  ---
+  👩‍⚕️ NURSE Dashboard
+
+  Primary Focus: Patient monitoring and care coordination
+
+  Key Sections:
+  - Ward Management: Patient assignments, vital signs monitoring, medication schedules      
+  - Real-time Patient Status: Critical alerts, vital sign trends, medication reminders,     
+   care plan updates
+  - Task Management: Daily care tasks, medication administration, patient preparation       
+  for procedures
+  - Communication Center: Doctor instructions, shift handovers, patient family
+  communications
+  - Care Plan Tracking: Treatment progress, recovery milestones, discharge preparation      
+
+  Functionality: Vital signs entry, medication tracking, patient status updates, care       
+  coordination
+
+  ---
+  👩‍💼 RECEPTIONIST Dashboard
+
+  Primary Focus: Patient flow and administrative coordination
+
+  Key Sections:
+  - Patient Check-in/Check-out: Registration, insurance verification, appointment
+  scheduling
+  - Live Queue Management: Real-time patient flow, waiting times, department
+  assignments
+  - Appointment Scheduler: Calendar management, doctor availability, patient
+  preferences
+  - Insurance & Billing: Payment processing, insurance claims, billing inquiries
+  - Communication Hub: Patient notifications, appointment reminders, general inquiries      
+
+  Functionality: Patient registration, appointment management, payment processing,
+  queue coordination
+
+  ---
+  🔬 LAB TECHNICIAN Dashboard
+
+  Primary Focus: Laboratory operations and test management
+
+  Key Sections:
+  - Test Queue Management: Pending tests, priority samples, turnaround time tracking        
+  - Sample Processing: Barcode scanning, test execution, quality control monitoring
+  - Results Management: Data entry, result verification, automatic report generation        
+  - Equipment Monitoring: Machine status, calibration schedules, maintenance alerts
+  - Quality Assurance: Test accuracy tracking, error reporting, compliance monitoring       
+
+  Functionality: Test processing, result entry, equipment management, quality control       
+
+  ---
+  🎨 Common Design Principles
+
+  Visual Hierarchy:
+  - Role-specific color schemes for instant recognition
+  - Priority-based information display (urgent items prominently featured)
+  - Contextual widgets that adapt based on time of day and workload
+
+  Smart Notifications:
+  - Real-time alerts tailored to each role's responsibilities
+  - ML-powered priority sorting of tasks and information
+  - Cross-departmental communication streams
+
+  Responsive Design:
+  - Mobile-optimized for on-the-go access
+  - Tablet-friendly for bedside use (nurses/doctors)
+  - Desktop-optimized for administrative tasks
+
+  AI Integration:
+  - Predictive analytics for each role's specific needs
+  - Automated workflow suggestions
+  - Smart data visualization based on user preferences
+
+  Each dashboard should feel like a personalized command center, presenting exactly
+  what each user needs to excel in their role while maintaining seamless integration        
+  with the broader healthcare ecosystem.

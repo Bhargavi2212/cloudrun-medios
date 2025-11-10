@@ -1,0 +1,684 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medi OS - Hospital Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: {
+                    'inter': ['Inter', 'sans-serif'],
+                },
+                colors: {
+                    'medical-blue': '#1976D2',
+                    'health-green': '#4CAF50',
+                    'alert-orange': '#FF9800',
+                    'medical-gray': '#F5F5F5',
+                }
+            }
+        }
+    };
+    </script>
+</head>
+<body class="font-inter bg-gray-50 min-h-screen">
+
+    <!-- @COMPONENT: LoginScreen [initial authentication view] -->
+    <div id="loginScreen" class="hidden fixed inset-0 bg-white z-50 flex items-center justify-center">
+        <div class="w-full max-w-md p-8">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-medical-blue rounded-full mb-4">
+                    <i class="fas fa-hospital-alt text-white text-2xl"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Medi OS</h1>
+                <p class="text-gray-600">Hospital Management System</p>
+            </div>
+            
+            <form class="space-y-6" data-event="submit:handleLogin">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Employee ID / Patient ID</label>
+                    <input type="text" placeholder="Enter your ID" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent transition-all">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" placeholder="Enter your password"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent transition-all">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                    <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent transition-all">
+                        <option value="admin">Administrator</option>
+                        <option value="doctor">Doctor</option>
+                        <option value="nurse">Nurse</option>
+                        <option value="receptionist">Receptionist</option>
+                        <option value="patient">Patient</option>
+                    </select>
+                </div>
+                
+                <button type="button" onclick="showDashboard()" 
+                        class="w-full bg-medical-blue text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                    Sign In
+                </button>
+            </form>
+            
+            <div class="mt-6 text-center">
+                <button type="button" onclick="showPatientCheckin()" 
+                        class="text-medical-blue hover:text-blue-700 font-medium">
+                    <i class="fas fa-qrcode mr-2"></i>Quick Patient Check-in
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: LoginScreen -->
+
+    <!-- @COMPONENT: PatientCheckinModal [QR code scanning interface] -->
+    <div id="checkinModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-md w-full p-6">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Patient Check-in</h2>
+                <p class="text-gray-600">Scan QR code or tap your card</p>
+            </div>
+            
+            <div class="bg-gray-100 rounded-lg p-8 text-center mb-6">
+                <i class="fas fa-qrcode text-6xl text-gray-400 mb-4"></i>
+                <p class="text-gray-600">Position QR code within frame</p>
+                <!-- @FUNCTIONALITY: Implement camera API for QR code scanning -->
+            </div>
+            
+            <div class="text-center mb-6">
+                <p class="text-gray-500 mb-4">Or enter patient ID manually</p>
+                <input type="text" placeholder="Patient ID" 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+            </div>
+            
+            <div class="flex space-x-3">
+                <button onclick="hidePatientCheckin()" 
+                        class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors">
+                    Cancel
+                </button>
+                <button onclick="processCheckin()" 
+                        class="flex-1 bg-medical-blue text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                    Check In
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: PatientCheckinModal -->
+
+    <!-- @COMPONENT: MainDashboard [role-based dashboard layout] -->
+    <div id="mainDashboard" class="flex h-screen bg-gray-50">
+        
+        <!-- @COMPONENT: Sidebar [navigation and role switcher] -->
+        <div class="w-64 bg-white shadow-lg flex flex-col">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-medical-blue rounded-full flex items-center justify-center">
+                        <i class="fas fa-hospital-alt text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-900">Medi OS</h1>
+                        <p class="text-sm text-gray-600" data-bind="user.role">Administrator</p>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="flex-1 p-4 space-y-2">
+                <a href="#" onclick="switchView('dashboard')" 
+                   class="nav-item active flex items-center space-x-3 px-4 py-3 rounded-lg bg-medical-blue text-white">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" onclick="switchView('patients')" 
+                   class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-users"></i>
+                    <span>Patients</span>
+                </a>
+                <a href="#" onclick="switchView('queue')" 
+                   class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-list-ol"></i>
+                    <span>Queue Management</span>
+                </a>
+                <a href="#" onclick="switchView('staff')" 
+                   class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-user-md"></i>
+                    <span>Staff Tasks</span>
+                </a>
+                <a href="#" onclick="switchView('rooms')" 
+                   class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-door-open"></i>
+                    <span>Rooms & Resources</span>
+                </a>
+                <a href="#" onclick="switchView('analytics')" 
+                   class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Analytics</span>
+                </a>
+            </nav>
+            
+            <div class="p-4 border-t border-gray-200">
+                <div class="bg-medical-gray rounded-lg p-3">
+                    <div class="flex items-center space-x-3 mb-3">
+                        <!-- A professional headshot of a medical administrator in scrubs -->
+                        <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=40&h=40" 
+                             alt="Dr. Sarah Wilson" class="w-10 h-10 rounded-full object-cover">
+                        <div>
+                            <p class="font-medium text-gray-900" data-bind="user.name">Dr. Sarah Wilson</p>
+                            <p class="text-xs text-gray-600">Chief Administrator</p>
+                        </div>
+                    </div>
+                    <button onclick="logout()" 
+                            class="w-full text-left text-sm text-gray-600 hover:text-gray-900 flex items-center space-x-2">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Sign Out</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: Sidebar -->
+
+        <!-- @COMPONENT: MainContent [dynamic content area] -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            
+            <!-- @COMPONENT: TopBar [notifications and quick actions] -->
+            <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900" id="pageTitle">Dashboard Overview</h2>
+                        <p class="text-gray-600" id="pageSubtitle">Real-time hospital operations monitoring</p>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <!-- Role Switcher for Demo -->
+                        <select onchange="switchRole(this.value)" 
+                                class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                            <option value="admin">Admin View</option>
+                            <option value="doctor">Doctor View</option>
+                            <option value="nurse">Nurse View</option>
+                            <option value="receptionist">Receptionist View</option>
+                        </select>
+                        
+                        <div class="relative">
+                            <button class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
+                                <i class="fas fa-bell text-xl"></i>
+                                <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+                            </button>
+                        </div>
+                        
+                        <button onclick="showPatientCheckin()" 
+                                class="bg-health-green text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600 transition-colors flex items-center space-x-2">
+                            <i class="fas fa-qrcode"></i>
+                            <span>Quick Check-in</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+            <!-- @END_COMPONENT: TopBar -->
+            
+            <!-- @COMPONENT: DashboardContent [main dashboard statistics and widgets] -->
+            <main class="flex-1 overflow-y-auto p-6" id="mainContent">
+                
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Patients Today</p>
+                                <p class="text-3xl font-bold text-gray-900">124</p>
+                                <p class="text-sm text-health-green mt-1">
+                                    <i class="fas fa-arrow-up mr-1"></i>12% vs yesterday
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-users text-medical-blue text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">In Queue</p>
+                                <p class="text-3xl font-bold text-gray-900">18</p>
+                                <p class="text-sm text-alert-orange mt-1">
+                                    <i class="fas fa-clock mr-1"></i>Avg wait: 12 min
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-list-ol text-alert-orange text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Staff on Duty</p>
+                                <p class="text-3xl font-bold text-gray-900">32</p>
+                                <p class="text-sm text-health-green mt-1">
+                                    <i class="fas fa-check mr-1"></i>All shifts covered
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user-md text-health-green text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">Available Rooms</p>
+                                <p class="text-3xl font-bold text-gray-900">7</p>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    <i class="fas fa-door-open mr-1"></i>of 15 total
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-door-open text-purple-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Queue and Recent Activity -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    
+                    <!-- Live Queue -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-gray-900">Live Queue</h3>
+                                <span class="bg-green-100 text-health-green px-3 py-1 rounded-full text-sm font-medium">
+                                    <i class="fas fa-circle text-xs mr-1"></i>Live
+                                </span>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <!-- @MAP: queueItems.map(item => ( -->
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-medical-blue text-white rounded-full flex items-center justify-center font-semibold">
+                                            #1
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-gray-900" data-bind="patient.name">John Smith</p>
+                                            <p class="text-sm text-gray-600">ID: P-2024-0156 • Cardiology</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="bg-blue-100 text-medical-blue px-2 py-1 rounded text-xs font-medium">In Progress</span>
+                                        <p class="text-xs text-gray-500 mt-1">Started 5 min ago</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-4 bg-yellow-50 rounded-lg">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-alert-orange text-white rounded-full flex items-center justify-center font-semibold">
+                                            #2
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-gray-900" data-bind="patient.name">Maria Garcia</p>
+                                            <p class="text-sm text-gray-600">ID: P-2024-0157 • Emergency</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-medium">Urgent</span>
+                                        <p class="text-xs text-gray-500 mt-1">Waiting 8 min</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-gray-400 text-white rounded-full flex items-center justify-center font-semibold">
+                                            #3
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-gray-900" data-bind="patient.name">David Chen</p>
+                                            <p class="text-sm text-gray-600">ID: P-2024-0158 • General</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-medium">Waiting</span>
+                                        <p class="text-xs text-gray-500 mt-1">Waiting 15 min</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- @END_MAP )) -->
+                        </div>
+                    </div>
+                    
+                    <!-- Staff Task Alerts -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">Staff Task Alerts</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="space-y-4">
+                                <div class="flex items-start space-x-3 p-3 bg-red-50 rounded-lg border-l-4 border-red-400">
+                                    <i class="fas fa-exclamation-triangle text-red-500 mt-1"></i>
+                                    <div class="flex-1">
+                                        <p class="font-medium text-red-800">Room 205 needs cleaning</p>
+                                        <p class="text-sm text-red-600">Patient discharged 10 min ago</p>
+                                        <button class="text-xs text-red-700 hover:underline mt-1">Assign to cleaner →</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                                    <i class="fas fa-syringe text-blue-500 mt-1"></i>
+                                    <div class="flex-1">
+                                        <p class="font-medium text-blue-800">Patient needs vitals check</p>
+                                        <p class="text-sm text-blue-600">Room 102 - Due in 5 minutes</p>
+                                        <button class="text-xs text-blue-700 hover:underline mt-1">Assign to nurse →</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-start space-x-3 p-3 bg-green-50 rounded-lg border-l-4 border-green-400">
+                                    <i class="fas fa-check-circle text-health-green mt-1"></i>
+                                    <div class="flex-1">
+                                        <p class="font-medium text-green-800">Lab results ready</p>
+                                        <p class="text-sm text-green-600">Patient: John Smith - Blood work</p>
+                                        <button class="text-xs text-green-700 hover:underline mt-1">Notify doctor →</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Patient Activity -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-gray-900">Recent Patient Activity</h3>
+                            <button class="text-medical-blue hover:text-blue-700 text-sm font-medium">View All</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <!-- @MAP: recentActivity.map(activity => ( -->
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <!-- A professional medical consultation scene -->
+                                            <img src="https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=32&h=32" 
+                                                 alt="Patient" class="w-8 h-8 rounded-full object-cover">
+                                            <div class="ml-3">
+                                                <div class="text-sm font-medium text-gray-900" data-bind="patient.name">Emma Johnson</div>
+                                                <div class="text-sm text-gray-500">ID: P-2024-0159</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Orthopedics</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-health-green">
+                                            Completed
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2 hours ago</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <button class="text-medical-blue hover:text-blue-700 mr-3">View Record</button>
+                                        <button class="text-gray-600 hover:text-gray-900">Send Report</button>
+                                    </td>
+                                </tr>
+                                
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <!-- A professional medical examination setup -->
+                                            <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=32&h=32" 
+                                                 alt="Patient" class="w-8 h-8 rounded-full object-cover">
+                                            <div class="ml-3">
+                                                <div class="text-sm font-medium text-gray-900" data-bind="patient.name">Michael Brown</div>
+                                                <div class="text-sm text-gray-500">ID: P-2024-0160</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Cardiology</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-medical-blue">
+                                            In Progress
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">30 min ago</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <button class="text-medical-blue hover:text-blue-700 mr-3">View Record</button>
+                                        <button class="text-gray-600 hover:text-gray-900">Update Status</button>
+                                    </td>
+                                </tr>
+                                <!-- @END_MAP )) -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+            <!-- @END_COMPONENT: DashboardContent -->
+        </div>
+        <!-- @END_COMPONENT: MainContent -->
+    </div>
+    <!-- @END_COMPONENT: MainDashboard -->
+
+    <!-- @COMPONENT: VitalsModal [patient vitals recording interface] -->
+    <div id="vitalsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Record Patient Vitals</h2>
+                <button onclick="hideVitalsModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <div class="flex items-center space-x-3 p-4 bg-blue-50 rounded-lg">
+                    <!-- A patient receiving medical care in a modern hospital room -->
+                    <img src="https://pixabay.com/get/g5f28913c506fbbefae385712f48f1ed3c8ec2a38704b355fe69bea7dbd5e649bdbe29badcd50c7e2eb2e387fafa24491893ec48da1f73a636037a84bb0f8ba08_1280.jpg" 
+                         alt="Patient" class="w-10 h-10 rounded-full object-cover">
+                    <div>
+                        <p class="font-medium text-gray-900" data-bind="patient.name">John Smith</p>
+                        <p class="text-sm text-gray-600">ID: P-2024-0156 • Age: 45 • Room 102</p>
+                    </div>
+                </div>
+            </div>
+            
+            <form class="space-y-6" data-event="submit:saveVitals">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Blood Pressure</label>
+                        <div class="flex space-x-2">
+                            <input type="number" placeholder="120" 
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                            <span class="text-gray-500 self-center">/</span>
+                            <input type="number" placeholder="80" 
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                            <span class="text-gray-500 self-center text-sm">mmHg</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Heart Rate</label>
+                        <div class="flex">
+                            <input type="number" placeholder="72" 
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                            <span class="text-gray-500 self-center ml-2 text-sm">bpm</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Temperature</label>
+                        <div class="flex">
+                            <input type="number" step="0.1" placeholder="98.6" 
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                            <span class="text-gray-500 self-center ml-2 text-sm">°F</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Oxygen Saturation</label>
+                        <div class="flex">
+                            <input type="number" placeholder="98" 
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                            <span class="text-gray-500 self-center ml-2 text-sm">%</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Weight</label>
+                        <div class="flex">
+                            <input type="number" placeholder="150" 
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                            <span class="text-gray-500 self-center ml-2 text-sm">lbs</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Height</label>
+                        <div class="flex space-x-2">
+                            <input type="number" placeholder="5" 
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                            <span class="text-gray-500 self-center">ft</span>
+                            <input type="number" placeholder="8" 
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent">
+                            <span class="text-gray-500 self-center">in</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                    <textarea rows="3" placeholder="Additional observations or notes..."
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:border-transparent"></textarea>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button type="button" onclick="hideVitalsModal()" 
+                            class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="flex-1 bg-medical-blue text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                        Save Vitals
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: VitalsModal -->
+
+    <script>
+        // @STATE: currentView:string = 'dashboard'
+        // @STATE: currentRole:string = 'admin'
+        
+        (function() {
+            // Initialize the application
+            function init() {
+                // Show login screen initially for demo purposes
+                showLogin();
+            }
+            
+            // Authentication functions
+            window.showLogin = function() {
+                document.getElementById('loginScreen').classList.remove('hidden');
+                document.getElementById('mainDashboard').classList.add('hidden');
+            };
+            
+            window.showDashboard = function() {
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainDashboard').classList.remove('hidden');
+                // TODO: Implement authentication logic
+            };
+            
+            window.logout = function() {
+                showLogin();
+                // TODO: Clear session data
+            };
+            
+            // Patient check-in functions
+            window.showPatientCheckin = function() {
+                document.getElementById('checkinModal').classList.remove('hidden');
+            };
+            
+            window.hidePatientCheckin = function() {
+                document.getElementById('checkinModal').classList.add('hidden');
+            };
+            
+            window.processCheckin = function() {
+                // TODO: Process patient check-in
+                hidePatientCheckin();
+                alert('Patient checked in successfully!');
+            };
+            
+            // Vitals modal functions
+            window.showVitalsModal = function() {
+                document.getElementById('vitalsModal').classList.remove('hidden');
+            };
+            
+            window.hideVitalsModal = function() {
+                document.getElementById('vitalsModal').classList.add('hidden');
+            };
+            
+            // Navigation functions
+            window.switchView = function(view) {
+                // Update active navigation item
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active', 'bg-medical-blue', 'text-white');
+                    item.classList.add('text-gray-700', 'hover:bg-gray-100');
+                });
+                
+                event.target.closest('.nav-item').classList.add('active', 'bg-medical-blue', 'text-white');
+                event.target.closest('.nav-item').classList.remove('text-gray-700', 'hover:bg-gray-100');
+                
+                // Update page title
+                const titles = {
+                    'dashboard': 'Dashboard Overview',
+                    'patients': 'Patient Management',
+                    'queue': 'Queue Management',
+                    'staff': 'Staff Tasks',
+                    'rooms': 'Rooms & Resources',
+                    'analytics': 'Analytics & Reports'
+                };
+                
+                document.getElementById('pageTitle').textContent = titles[view] || 'Dashboard';
+                
+                // TODO: Load appropriate content for each view
+            };
+            
+            // Role switching for demo
+            window.switchRole = function(role) {
+                const roleNames = {
+                    'admin': 'Administrator',
+                    'doctor': 'Doctor',
+                    'nurse': 'Nurse',
+                    'receptionist': 'Receptionist'
+                };
+                
+                // Update sidebar role display
+                document.querySelector('[data-bind="user.role"]').textContent = roleNames[role];
+                
+                // TODO: Update dashboard content based on role
+                // TODO: Filter navigation items based on role permissions
+                // TODO: Adjust data visibility based on role
+            };
+            
+            // Initialize application
+            init();
+        })();
+    </script>
+
+</body>
+</html>

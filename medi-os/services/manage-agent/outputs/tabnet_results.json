@@ -1,0 +1,472 @@
+{
+  "timestamp": "2025-11-05T17:13:55.488147",
+  "model": "TabNet",
+  "training_time_minutes": 32.63890488147736,
+  "test_results": {
+    "accuracy": 0.4593476234855545,
+    "macro_f1": 0.3376527313913174,
+    "weighted_f1": 0.4715996656538545,
+    "critical_recall": 0.13047363717605004,
+    "classification_report": {
+      "Severity 1 (Critical)": {
+        "precision": 0.09611586570111916,
+        "recall": 0.13047363717605004,
+        "f1-score": 0.1106899166034875,
+        "support": 1119.0
+      },
+      "Severity 2 (Emergent)": {
+        "precision": 0.28606811145510835,
+        "recall": 0.4592445328031809,
+        "f1-score": 0.3525371995421595,
+        "support": 3018.0
+      },
+      "Severity 3 (Urgent)": {
+        "precision": 0.5989004824413777,
+        "recall": 0.4563953488372093,
+        "f1-score": 0.5180261050997137,
+        "support": 11696.0
+      },
+      "Severity 4 (Less Urgent)": {
+        "precision": 0.5415181379744182,
+        "recall": 0.542143381967041,
+        "f1-score": 0.5418305795961186,
+        "support": 9527.0
+      },
+      "Severity 5 (Non-Urgent)": {
+        "precision": 0.1427860696517413,
+        "recall": 0.19590443686006825,
+        "f1-score": 0.1651798561151079,
+        "support": 1465.0
+      },
+      "accuracy": 0.4593476234855545,
+      "macro avg": {
+        "precision": 0.33307773344475294,
+        "recall": 0.35683226752870983,
+        "f1-score": 0.3376527313913174,
+        "support": 26825.0
+      },
+      "weighted avg": {
+        "precision": 0.4974416458246973,
+        "recall": 0.4593476234855545,
+        "f1-score": 0.4715996656538545,
+        "support": 26825.0
+      }
+    },
+    "confusion_matrix": [
+      [
+        146,
+        206,
+        306,
+        374,
+        87
+      ],
+      [
+        179,
+        1386,
+        984,
+        372,
+        97
+      ],
+      [
+        613,
+        2371,
+        5338,
+        2845,
+        529
+      ],
+      [
+        502,
+        783,
+        2067,
+        5165,
+        1010
+      ],
+      [
+        79,
+        99,
+        218,
+        782,
+        287
+      ]
+    ]
+  },
+  "feature_count": 94,
+  "attention_weights": [
+    {
+      "feature": "is_pediatric",
+      "attention": 1.8301796539735369
+    },
+    {
+      "feature": "chf",
+      "attention": 0.4056446122609846
+    },
+    {
+      "feature": "tachycardia",
+      "attention": 0.3889198959230483
+    },
+    {
+      "feature": "respiration",
+      "attention": 0.31252112093225376
+    },
+    {
+      "feature": "age",
+      "attention": 0.2876920308829631
+    },
+    {
+      "feature": "pediatric_fever",
+      "attention": 0.28237346016929143
+    },
+    {
+      "feature": "rfv2_emb_17",
+      "attention": 0.2439469549089231
+    },
+    {
+      "feature": "rfv2_emb_11",
+      "attention": 0.19349601467056685
+    },
+    {
+      "feature": "rfv1_emb_9",
+      "attention": 0.1733013077415171
+    },
+    {
+      "feature": "diabetes",
+      "attention": 0.15265377600116334
+    },
+    {
+      "feature": "rfv2_3d",
+      "attention": 0.1294884696006775
+    },
+    {
+      "feature": "moderate_pain",
+      "attention": 0.1170918171852827
+    },
+    {
+      "feature": "rfv1_emb_13",
+      "attention": 0.0998161454281422
+    },
+    {
+      "feature": "rfv1_emb_7",
+      "attention": 0.06785616020284403
+    },
+    {
+      "feature": "rfv3_3d",
+      "attention": 0.05318413289450109
+    },
+    {
+      "feature": "pulse_pressure",
+      "attention": 0.03487997319735587
+    },
+    {
+      "feature": "rfv2_emb_1",
+      "attention": 0.03443772340593932
+    },
+    {
+      "feature": "sbp",
+      "attention": 0.03373510368690768
+    },
+    {
+      "feature": "severe_pain",
+      "attention": 0.02520904822378151
+    },
+    {
+      "feature": "pain",
+      "attention": 0.02308629970252514
+    },
+    {
+      "feature": "rfv1_emb_0",
+      "attention": 0.02001916794454155
+    },
+    {
+      "feature": "rfv1_emb_8",
+      "attention": 0.014971762813944224
+    },
+    {
+      "feature": "rfv2_emb_7",
+      "attention": 0.009999339489515932
+    },
+    {
+      "feature": "is_elderly",
+      "attention": 0.00967447141557932
+    },
+    {
+      "feature": "rfv1_emb_16",
+      "attention": 0.004800996446982026
+    },
+    {
+      "feature": "rfv1_emb_5",
+      "attention": 0.003517276605565712
+    },
+    {
+      "feature": "rfv1_emb_3",
+      "attention": 0.0025251416567277545
+    },
+    {
+      "feature": "rfv1_emb_19",
+      "attention": 0.0016707068463133509
+    },
+    {
+      "feature": "temp_c",
+      "attention": 0.0011550960514226443
+    },
+    {
+      "feature": "rfv2_emb_0",
+      "attention": 0.0004769035737990635
+    },
+    {
+      "feature": "rfv1_emb_11",
+      "attention": 0.00031526008602085546
+    },
+    {
+      "feature": "rfv1_emb_6",
+      "attention": 0.00019020952843129635
+    },
+    {
+      "feature": "is_infant",
+      "attention": 8.954482059925795e-05
+    },
+    {
+      "feature": "rfv2_emb_5",
+      "attention": 3.7426321912789716e-05
+    },
+    {
+      "feature": "bradycardia",
+      "attention": 1.8880303017795086e-05
+    },
+    {
+      "feature": "rfv1_emb_14",
+      "attention": 1.062844297848642e-05
+    },
+    {
+      "feature": "rfv2_emb_19",
+      "attention": 1.394642167724669e-06
+    },
+    {
+      "feature": "pulse",
+      "attention": 3.7182512460276485e-07
+    },
+    {
+      "feature": "rfv1_emb_1",
+      "attention": 0.0
+    },
+    {
+      "feature": "no_chronic_conditions",
+      "attention": 0.0
+    },
+    {
+      "feature": "ed_dialysis",
+      "attention": 0.0
+    },
+    {
+      "feature": "wait_time",
+      "attention": 0.0
+    },
+    {
+      "feature": "on_oxygen",
+      "attention": 0.0
+    },
+    {
+      "feature": "gcs",
+      "attention": 0.0
+    },
+    {
+      "feature": "rfv1_3d",
+      "attention": 0.0
+    },
+    {
+      "feature": "rfv3",
+      "attention": 0.0
+    },
+    {
+      "feature": "o2_sat",
+      "attention": 0.0
+    },
+    {
+      "feature": "dbp",
+      "attention": 0.0
+    },
+    {
+      "feature": "sex",
+      "attention": 0.0
+    },
+    {
+      "feature": "hiv",
+      "attention": 0.0
+    },
+    {
+      "feature": "past_visits",
+      "attention": 0.0
+    },
+    {
+      "feature": "seen_72h",
+      "attention": 0.0
+    },
+    {
+      "feature": "discharged_7d",
+      "attention": 0.0
+    },
+    {
+      "feature": "cebvd",
+      "attention": 0.0
+    },
+    {
+      "feature": "injury",
+      "attention": 0.0
+    },
+    {
+      "feature": "ambulance_arrival",
+      "attention": 0.0
+    },
+    {
+      "feature": "length_of_visit",
+      "attention": 0.0
+    },
+    {
+      "feature": "rfv1_emb_17",
+      "attention": 0.0
+    },
+    {
+      "feature": "rfv1_emb_4",
+      "attention": 0.0
+    },
+    {
+      "feature": "rfv1_emb_15",
+      "attention": 0.0
+    },
+    {
+      "feature": "rfv1_emb_10",
+      "attention": 0.0
+    },
+    {
+      "feature": "rfv1_emb_12",
+      "attention": 0.0
+    },
+    {
+      "feature": "rfv2_emb_13",
+      "attention": 0.0
+    },
+    {
+      "feature": "rfv2_emb_12",
+      "attention": 0.0
+    },
+    {
+      "feature": "rfv2_emb_10",
+      "attention": 0.0
+    },
+    {
+      "feature": "rfv2_emb_9",
+      "attention": 0.0
+    },
+    {
+      "feature": "rfv2_emb_6",
+      "attention": 0.0
+    },
+    {
+      "feature": "rfv2_emb_8",
+      "attention": 0.0
+    },
+    {
+      "feature": "rfv2_emb_3",
+      "attention": 0.0
+    },
+    {
+      "feature": "rfv2_emb_4",
+      "attention": 0.0
+    },
+    {
+      "feature": "rfv2_emb_2",
+      "attention": 0.0
+    },
+    {
+      "feature": "rfv1_emb_18",
+      "attention": 0.0
+    },
+    {
+      "feature": "rfv1_emb_2",
+      "attention": 0.0
+    },
+    {
+      "feature": "shock_index",
+      "attention": 0.0
+    },
+    {
+      "feature": "mean_arterial_pressure",
+      "attention": 0.0
+    },
+    {
+      "feature": "rfv2_emb_16",
+      "attention": 0.0
+    },
+    {
+      "feature": "rfv2_emb_15",
+      "attention": 0.0
+    },
+    {
+      "feature": "rfv2_emb_14",
+      "attention": 0.0
+    },
+    {
+      "feature": "hypoxia",
+      "attention": 0.0
+    },
+    {
+      "feature": "respiratory_distress",
+      "attention": 0.0
+    },
+    {
+      "feature": "tachypnea",
+      "attention": 0.0
+    },
+    {
+      "feature": "hypertension",
+      "attention": 0.0
+    },
+    {
+      "feature": "hypotension",
+      "attention": 0.0
+    },
+    {
+      "feature": "rfv2_emb_18",
+      "attention": 0.0
+    },
+    {
+      "feature": "is_flu_season",
+      "attention": 0.0
+    },
+    {
+      "feature": "severe_hypoxia",
+      "attention": 0.0
+    },
+    {
+      "feature": "is_weekend",
+      "attention": 0.0
+    },
+    {
+      "feature": "vital_abnormal_count",
+      "attention": 0.0
+    },
+    {
+      "feature": "shock_index_high",
+      "attention": 0.0
+    },
+    {
+      "feature": "elderly_hypotension",
+      "attention": 0.0
+    },
+    {
+      "feature": "month_sin",
+      "attention": 0.0
+    },
+    {
+      "feature": "month_cos",
+      "attention": 0.0
+    },
+    {
+      "feature": "day_of_week_sin",
+      "attention": 0.0
+    },
+    {
+      "feature": "day_of_week_cos",
+      "attention": 0.0
+    }
+  ]
+}

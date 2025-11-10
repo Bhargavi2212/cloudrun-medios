@@ -1,0 +1,58 @@
+{
+  "v8_rfv_clustered": {
+    "description": "RFV clustering (723 codes -> 10-15 medical clusters)",
+    "features": 58,
+    "logistic_regression": {
+      "accuracy": 0.0491,
+      "macro_f1": 0.0134,
+      "status": "BROKEN (predicts only ESI 7)"
+    },
+    "random_forest": {
+      "accuracy": 0.4953,
+      "macro_f1": 0.2782,
+      "status": "SIMILAR to previous (~53%)"
+    }
+  },
+  "v7_minimal": {
+    "description": "Minimal features (top 10 RFV + essential features)",
+    "features": 24,
+    "logistic_regression": {
+      "accuracy": 0.05,
+      "macro_f1": 0.01,
+      "status": "BROKEN"
+    },
+    "random_forest": {
+      "accuracy": 0.519,
+      "macro_f1": 0.3,
+      "status": "BEST so far"
+    }
+  },
+  "v4": {
+    "description": "RFV one-hot encoding (top 50 codes)",
+    "features": 100,
+    "logistic_regression": {
+      "accuracy": 0.05,
+      "macro_f1": 0.01,
+      "status": "BROKEN"
+    },
+    "random_forest": {
+      "accuracy": 0.53,
+      "macro_f1": 0.3,
+      "status": "GOOD"
+    }
+  },
+  "v3": {
+    "description": "RFV fix (selective scaling)",
+    "features": 28,
+    "logistic_regression": {
+      "accuracy": 0.28,
+      "macro_f1": 0.15,
+      "status": "POOR"
+    },
+    "random_forest": {
+      "accuracy": 0.53,
+      "macro_f1": 0.3,
+      "status": "GOOD"
+    }
+  }
+}

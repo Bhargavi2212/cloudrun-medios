@@ -1,0 +1,597 @@
+Based on the database queries I ran earlier, here's the complete detailed information about your Healthcare OS database:
+
+## **🏥 HEALTHCARE OS DATABASE SCHEMA**
+
+### **📊 DATABASE OVERVIEW**
+- **Database Name**: `healthos`
+- **Total Tables**: 35 tables
+- **Schema**: PostgreSQL with snake_case naming convention
+
+---
+
+## **📋 TABLE DETAILS**
+
+### **1. CORE ENTITIES**
+
+#### **🏥 hospitals**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `name` (varchar, NOT NULL)
+  - `address` (varchar, NOT NULL)
+  - `branch_code` (varchar, NOT NULL)
+  - `contact_info` (varchar, NOT NULL)
+  - `created_at` (timestamp, NOT NULL, default: CURRENT_TIMESTAMP)
+  - `updated_at` (timestamp, NOT NULL, default: CURRENT_TIMESTAMP)
+  - `location` (varchar, nullable)
+  - `phone` (varchar, nullable)
+  - `hipaacompliant` (boolean, nullable)
+
+#### **👥 users**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `username` (varchar, nullable, unique)
+  - `email` (varchar, NOT NULL)
+  - `password` (varchar, NOT NULL)
+  - `name` (varchar, NOT NULL)
+  - `is_active` (boolean, NOT NULL, default: true)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+  - `department_id` (integer, nullable, FK → departments.id)
+  - `role_id` (integer, nullable, FK → roles.id)
+  - `phone` (varchar, nullable)
+  - `salary` (numeric, nullable)
+  - `shift` (varchar, nullable)
+  - `role` (varchar, nullable)
+  - `deletedat` (timestamp, nullable)
+  - `deleted_at` (timestamp, nullable)
+
+#### **👤 patients**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `name` (varchar, nullable)
+  - `age` (integer, nullable)
+  - `phone` (varchar, nullable)
+  - `abhaid` (varchar, nullable)
+  - `mrn` (varchar, nullable)
+  - `height` (numeric, nullable)
+  - `weight` (numeric, nullable)
+  - `emergency_contact_name` (varchar, nullable)
+  - `emergency_contact_phone` (varchar, nullable)
+  - `deleted_at` (timestamp, nullable)
+
+#### **�� departments**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `name` (varchar, NOT NULL)
+  - `description` (varchar, nullable)
+  - `head_doctor_id` (integer, NOT NULL, FK → users.id)
+  - `hospital_id` (integer, NOT NULL, FK → hospitals.id)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+
+#### **🔐 roles**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `name` (varchar, NOT NULL)
+  - `description` (varchar, nullable)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+
+#### **�� permissions**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `name` (varchar, NOT NULL)
+  - `description` (varchar, nullable)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+
+### **2. RELATIONSHIP TABLES**
+
+#### **�� user_hospitals**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Foreign Keys**:
+  - `user_id` → users.id
+  - `hospital_id` → hospitals.id
+  - `role_id` → roles.id
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `is_primary` (boolean, NOT NULL, default: false)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+  - `user_id` (integer, NOT NULL, FK)
+  - `hospital_id` (integer, NOT NULL, FK)
+  - `role_id` (integer, NOT NULL, FK)
+
+#### **🔗 role_permissions**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Foreign Keys**:
+  - `role_id` → roles.id
+  - `permission_id` → permissions.id
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+  - `role_id` (integer, NOT NULL, FK)
+  - `permission_id` (integer, NOT NULL, FK)
+
+#### **👥 staff_assignments**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Foreign Keys**:
+  - `user_id` → users.id
+  - `department_id` → departments.id
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `user_id` (integer, NOT NULL, FK)
+  - `department_id` (integer, NOT NULL, FK)
+  - `shift` (varchar, nullable)
+  - `start_date` (timestamp, nullable)
+  - `end_date` (timestamp, nullable)
+  - `created_at` (timestamp, nullable, default: now())
+  - `updated_at` (timestamp, nullable, default: now())
+  - `deleted_at` (timestamp, nullable)
+
+### **3. CLINICAL TABLES**
+
+#### **💊 vitals**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Foreign Keys**:
+  - `patient_id` → patients.id
+  - `doctor_id` → users.id
+  - `consultation_id` → consultations.id
+  - `hospital_id` → hospitals.id
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `height_cm` (numeric, nullable)
+  - `weight_kg` (numeric, nullable)
+  - `blood_pressure` (varchar, nullable)
+  - `heart_rate` (integer, nullable)
+  - `respiratory_rate` (integer, nullable)
+  - `temperature_c` (numeric, nullable)
+  - `oxygen_saturation` (numeric, nullable)
+  - `recorded_at` (timestamp, NOT NULL)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+  - `patient_id` (integer, NOT NULL, FK)
+  - `doctor_id` (integer, nullable, FK)
+  - `consultation_id` (integer, nullable, FK)
+  - `hospital_id` (integer, NOT NULL, FK)
+
+#### **🏥 consultations**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Foreign Keys**:
+  - `patient_id` → patients.id
+  - `doctor_id` → users.id
+  - `hospital_id` → hospitals.id
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `consultation_time` (timestamp, NOT NULL)
+  - `notes` (text, nullable)
+  - `status` (varchar, NOT NULL, default: 'scheduled')
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+  - `patient_id` (integer, NOT NULL, FK)
+  - `doctor_id` (integer, NOT NULL, FK)
+  - `hospital_id` (integer, NOT NULL, FK)
+
+#### **📅 appointments**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Foreign Keys**:
+  - `patient_id` → patients.id
+  - `doctor_id` → users.id
+  - `hospital_id` → hospitals.id
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `appointment_date` (timestamp, NOT NULL)
+  - `duration` (integer, NOT NULL, default: 30)
+  - `status` (varchar, NOT NULL, default: 'scheduled')
+  - `notes` (text, nullable)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+  - `patient_id` (integer, NOT NULL, FK)
+  - `doctor_id` (integer, NOT NULL, FK)
+  - `hospital_id` (integer, NOT NULL, FK)
+
+#### **💊 prescriptions**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Foreign Keys**:
+  - `patient_id` → patients.id
+  - `doctor_id` → users.id
+  - `consultation_id` → consultations.id
+  - `hospital_id` → hospitals.id
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `medication_name` (varchar, NOT NULL)
+  - `dosage` (varchar, NOT NULL)
+  - `frequency` (varchar, NOT NULL)
+  - `duration` (varchar, NOT NULL)
+  - `instructions` (varchar, nullable)
+  - `is_active` (boolean, NOT NULL, default: true)
+  - `prescribed_at` (timestamp, NOT NULL)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+  - `patient_id` (integer, NOT NULL, FK)
+  - `doctor_id` (integer, NOT NULL, FK)
+  - `consultation_id` (integer, nullable, FK)
+  - `hospital_id` (integer, NOT NULL, FK)
+
+#### **�� medical_records**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Foreign Keys**:
+  - `patient_id` → patients.id
+  - `doctor_id` → users.id
+  - `consultation_id` → consultations.id
+  - `hospital_id` → hospitals.id
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `record_type` (varchar, NOT NULL)
+  - `content` (text, NOT NULL)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+  - `patient_id` (integer, NOT NULL, FK)
+  - `doctor_id` (integer, NOT NULL, FK)
+  - `consultation_id` (integer, nullable, FK)
+  - `hospital_id` (integer, NOT NULL, FK)
+
+#### **🔬 diagnoses**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Foreign Keys**:
+  - `patient_id` → patients.id
+  - `doctor_id` → users.id
+  - `consultation_id` → consultations.id
+  - `hospital_id` → hospitals.id
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `diagnosis_code` (varchar, NOT NULL)
+  - `diagnosis_name` (varchar, NOT NULL)
+  - `description` (text, nullable)
+  - `severity` (varchar, nullable)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+  - `patient_id` (integer, NOT NULL, FK)
+  - `doctor_id` (integer, NOT NULL, FK)
+  - `consultation_id` (integer, nullable, FK)
+  - `hospital_id` (integer, NOT NULL, FK)
+
+### **4. LABORATORY TABLES**
+
+#### **🔬 lab_tests**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Foreign Keys**:
+  - `department_id` → departments.id
+  - `hospital_id` → hospitals.id
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `test_name` (varchar, NOT NULL)
+  - `test_code` (varchar, NOT NULL)
+  - `description` (text, nullable)
+  - `price` (numeric, NOT NULL)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+  - `department_id` (integer, NOT NULL, FK)
+  - `hospital_id` (integer, NOT NULL, FK)
+
+#### **🔬 lab_orders**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Foreign Keys**:
+  - `patient_id` → patients.id
+  - `lab_test_id` → lab_tests.id
+  - `ordered_by` → users.id
+  - `hospital_id` → hospitals.id
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `order_date` (timestamp, NOT NULL)
+  - `status` (varchar, NOT NULL, default: 'pending')
+  - `notes` (text, nullable)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+  - `patient_id` (integer, NOT NULL, FK)
+  - `lab_test_id` (integer, NOT NULL, FK)
+  - `ordered_by` (integer, NOT NULL, FK)
+  - `hospital_id` (integer, NOT NULL, FK)
+
+#### **�� lab_results**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Foreign Keys**:
+  - `patient_id` → patients.id
+  - `lab_test_id` → lab_tests.id
+  - `consultation_id` → consultations.id
+  - `hospital_id` → hospitals.id
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `result_value` (varchar, NOT NULL)
+  - `reference_range` (varchar, nullable)
+  - `unit` (varchar, nullable)
+  - `status` (varchar, NOT NULL, default: 'normal')
+  - `reported_at` (timestamp, NOT NULL)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+  - `patient_id` (integer, NOT NULL, FK)
+  - `lab_test_id` (integer, NOT NULL, FK)
+  - `consultation_id` (integer, nullable, FK)
+  - `hospital_id` (integer, NOT NULL, FK)
+
+### **5. FACILITY MANAGEMENT**
+
+#### **🏥 rooms**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Foreign Keys**:
+  - `hospital_id` → hospitals.id
+  - `department_id` → departments.id
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `room_number` (varchar, NOT NULL)
+  - `room_type` (enum, NOT NULL)
+  - `capacity` (integer, NOT NULL, default: 0)
+  - `is_available` (boolean, NOT NULL, default: true)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+  - `hospital_id` (integer, NOT NULL, FK)
+  - `department_id` (integer, nullable, FK)
+
+#### **🛏️ beds**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Foreign Keys**:
+  - `patient_id` → patients.id
+  - `room_id` → rooms.id
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `bed_number` (varchar, NOT NULL)
+  - `is_occupied` (boolean, NOT NULL, default: false)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+  - `patient_id` (integer, nullable, FK)
+  - `room_id` (integer, NOT NULL, FK)
+
+#### **🏥 wards**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Foreign Keys**:
+  - `hospital_id` → hospitals.id
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `name` (varchar, NOT NULL)
+  - `capacity` (integer, NOT NULL)
+  - `created_at` (timestamp, nullable, default: now())
+  - `updated_at` (timestamp, nullable, default: now())
+  - `deleted_at` (timestamp, nullable)
+  - `hospital_id` (integer, NOT NULL, FK)
+
+### **6. OPERATIONAL TABLES**
+
+#### **📋 queue_entries**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Foreign Keys**:
+  - `patient_id` → patients.id
+  - `hospital_id` → hospitals.id
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `queue_number` (varchar, NOT NULL)
+  - `priority` (varchar, NOT NULL, default: 'normal')
+  - `status` (varchar, NOT NULL, default: 'waiting')
+  - `estimated_wait_time` (integer, nullable)
+  - `checked_in_at` (timestamp, NOT NULL)
+  - `called_at` (timestamp, nullable)
+  - `completed_at` (timestamp, nullable)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+  - `patient_id` (integer, NOT NULL, FK)
+  - `hospital_id` (integer, NOT NULL, FK)
+
+#### **�� analytics_logs**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `event_type` (varchar, NOT NULL)
+  - `event_data` (jsonb, nullable)
+  - `timestamp` (timestamp, NOT NULL, default: now())
+  - `user_id` (integer, nullable)
+  - `hospital_id` (integer, nullable)
+
+#### **📝 audit_logs**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Foreign Keys**:
+  - `user_id` → users.id
+  - `hospital_id` → hospitals.id
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `action` (varchar, NOT NULL)
+  - `table_name` (varchar, NOT NULL)
+  - `record_id` (integer, nullable)
+  - `old_values` (jsonb, nullable)
+  - `new_values` (jsonb, nullable)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `user_id` (integer, nullable, FK)
+  - `hospital_id` (integer, nullable, FK)
+
+### **7. FINANCIAL TABLES**
+
+#### **💰 invoices**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Foreign Keys**:
+  - `patient_id` → patients.id
+  - `hospital_id` → hospitals.id
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `invoice_number` (varchar, NOT NULL)
+  - `amount` (numeric, NOT NULL)
+  - `status` (varchar, NOT NULL, default: 'pending')
+  - `due_date` (timestamp, NOT NULL)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+  - `patient_id` (integer, NOT NULL, FK)
+  - `hospital_id` (integer, NOT NULL, FK)
+
+#### **🏥 insurance_claims**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Foreign Keys**:
+  - `patient_id` → patients.id
+  - `hospital_id` → hospitals.id
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `claim_number` (varchar, NOT NULL)
+  - `amount` (numeric, NOT NULL)
+  - `status` (varchar, NOT NULL, default: 'pending')
+  - `submitted_at` (timestamp, NOT NULL)
+  - `processed_at` (timestamp, nullable)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+  - `patient_id` (integer, NOT NULL, FK)
+  - `hospital_id` (integer, NOT NULL, FK)
+
+### **8. SUPPORTING TABLES**
+
+#### **📄 documents**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Foreign Keys**:
+  - `patient_id` → patients.id
+  - `hospital_id` → hospitals.id
+  - `uploaded_by` → users.id
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `file_name` (varchar, NOT NULL)
+  - `file_path` (varchar, NOT NULL)
+  - `file_type` (varchar, NOT NULL)
+  - `file_size` (integer, NOT NULL)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+  - `patient_id` (integer, NOT NULL, FK)
+  - `hospital_id` (integer, NOT NULL, FK)
+  - `uploaded_by` (integer, NOT NULL, FK)
+
+#### **🔔 notifications**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Foreign Keys**:
+  - `user_id` → users.id
+  - `hospital_id` → hospitals.id
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `title` (varchar, NOT NULL)
+  - `message` (text, NOT NULL)
+  - `type` (varchar, NOT NULL)
+  - `is_read` (boolean, NOT NULL, default: false)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `user_id` (integer, nullable, FK)
+  - `hospital_id` (integer, nullable, FK)
+
+#### **📝 patient_feedbacks**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `rating` (integer, NOT NULL)
+  - `comment` (text, nullable)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `patient_id` (integer, nullable)
+
+#### **🏥 patient_hospitals**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `patient_id` (integer, nullable)
+  - `hospital_id` (integer, nullable)
+
+#### **�� patient_insurances**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `patient_id` (integer, nullable)
+  - `insurance_id` (integer, nullable)
+
+#### **🏥 insurances**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `name` (varchar, NOT NULL)
+  - `policy_number` (varchar, NOT NULL)
+  - `provider` (varchar, NOT NULL)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+
+#### **�� inventories**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `item_name` (varchar, NOT NULL)
+  - `quantity` (integer, NOT NULL)
+  - `unit` (varchar, NOT NULL)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+
+#### **�� medications**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `name` (varchar, NOT NULL)
+  - `generic_name` (varchar, nullable)
+  - `dosage_form` (varchar, NOT NULL)
+  - `strength` (varchar, NOT NULL)
+  - `manufacturer` (varchar, nullable)
+  - `created_at` (timestamp, NOT NULL, default: now())
+  - `updated_at` (timestamp, NOT NULL, default: now())
+
+#### **📋 migrations**
+- **Primary Key**: `id` (integer, auto-increment)
+- **Columns**:
+  - `id` (integer, NOT NULL, PK)
+  - `name` (varchar, NOT NULL)
+  - `executed_at` (timestamp, NOT NULL, default: now())
+
+---
+
+## **🔗 KEY RELATIONSHIPS**
+
+### **Core Relationships:**
+1. **Hospitals** → **Departments** (1:many)
+2. **Hospitals** → **Users** (many:many via user_hospitals)
+3. **Users** → **Roles** (many:many via role_permissions)
+4. **Patients** → **Consultations** (1:many)
+5. **Consultations** → **Vitals** (1:many)
+6. **Consultations** → **Prescriptions** (1:many)
+7. **Consultations** → **Diagnoses** (1:many)
+8. **Patients** → **Appointments** (1:many)
+9. **Patients** → **Lab Orders** (1:many)
+10. **Lab Orders** → **Lab Results** (1:many)
+
+### **Facility Relationships:**
+1. **Hospitals** → **Rooms** (1:many)
+2. **Rooms** → **Beds** (1:many)
+3. **Hospitals** → **Wards** (1:many)
+4. **Departments** → **Rooms** (1:many)
+
+### **Operational Relationships:**
+1. **Patients** → **Queue Entries** (1:many)
+2. **Users** → **Staff Assignments** (1:many)
+3. **Departments** → **Staff Assignments** (1:many)
+
+---
+
+## **📊 DATABASE STATISTICS**
+
+- **Total Tables**: 35
+- **Total Foreign Key Relationships**: 64
+- **Core Entity Tables**: 5 (hospitals, users, patients, departments, roles)
+- **Clinical Tables**: 6 (vitals, consultations, appointments, prescriptions, medical_records, diagnoses)
+- **Laboratory Tables**: 3 (lab_tests, lab_orders, lab_results)
+- **Facility Tables**: 3 (rooms, beds, wards)
+- **Operational Tables**: 3 (queue_entries, analytics_logs, audit_logs)
+- **Financial Tables**: 2 (invoices, insurance_claims)
+- **Supporting Tables**: 17 (documents, notifications, etc.)
+
+---
+
+## **�� KEY FEATURES**
+
+1. **Multi-Hospital Support**: Users can belong to multiple hospitals
+2. **Role-Based Access Control**: Comprehensive permission system
+3. **Clinical Workflow**: Complete patient journey from appointment to diagnosis
+4. **Laboratory Integration**: Full lab test ordering and results system
+5. **Facility Management**: Room and bed allocation system
+6. **Financial Tracking**: Invoice and insurance claim management
+7. **Audit Trail**: Complete audit logging for compliance
+8. **Queue Management**: Patient queue system for efficient workflow
+
+This database schema provides a comprehensive healthcare management system with all necessary components for a modern hospital information system.

@@ -1,0 +1,361 @@
+{
+  "timestamp": "2025-11-06T10:54:01.800086",
+  "phase": "Selective Stacking with Attention-Based Routing",
+  "attention_method": "explain",
+  "critical_features": [
+    "is_pediatric",
+    "tachycardia",
+    "chf",
+    "shock_index_high",
+    "pediatric_fever",
+    "hypoxia",
+    "severe_pain",
+    "respiration",
+    "age"
+  ],
+  "threshold_results": [
+    {
+      "threshold": 0.1,
+      "tabnet_usage_pct": 99.61975768872321,
+      "metrics": {
+        "accuracy": 0.4599068033550792,
+        "macro_f1": 0.3379300479056438,
+        "weighted_f1": 0.4719974502289038,
+        "critical_recall": 0.13047363717605004,
+        "classification_report": {
+          "Severity 1 (Critical)": {
+            "precision": 0.09746328437917223,
+            "recall": 0.13047363717605004,
+            "f1-score": 0.11157814291173099,
+            "support": 1119.0
+          },
+          "Severity 2 (Emergent)": {
+            "precision": 0.285980534272106,
+            "recall": 0.45758780649436714,
+            "f1-score": 0.35198164903784884,
+            "support": 3018.0
+          },
+          "Severity 3 (Urgent)": {
+            "precision": 0.5985254691689008,
+            "recall": 0.4581053351573187,
+            "f1-score": 0.5189848895776831,
+            "support": 11696.0
+          },
+          "Severity 4 (Less Urgent)": {
+            "precision": 0.5415181379744182,
+            "recall": 0.542143381967041,
+            "f1-score": 0.5418305795961186,
+            "support": 9527.0
+          },
+          "Severity 5 (Non-Urgent)": {
+            "precision": 0.14292828685258965,
+            "recall": 0.19590443686006825,
+            "f1-score": 0.16527497840483732,
+            "support": 1465.0
+          },
+          "accuracy": 0.4599068033550792,
+          "macro avg": {
+            "precision": 0.33328314252943736,
+            "recall": 0.356842919530969,
+            "f1-score": 0.3379300479056438,
+            "support": 26825.0
+          },
+          "weighted avg": {
+            "precision": 0.49733225706521156,
+            "recall": 0.4599068033550792,
+            "f1-score": 0.4719974502289038,
+            "support": 26825.0
+          }
+        }
+      }
+    },
+    {
+      "threshold": 0.15,
+      "tabnet_usage_pct": 98.75116495806151,
+      "metrics": {
+        "accuracy": 0.46109972041006525,
+        "macro_f1": 0.33787711581965296,
+        "weighted_f1": 0.4729609197933405,
+        "critical_recall": 0.128686327077748,
+        "classification_report": {
+          "Severity 1 (Critical)": {
+            "precision": 0.09782608695652174,
+            "recall": 0.128686327077748,
+            "f1-score": 0.11115399459668082,
+            "support": 1119.0
+          },
+          "Severity 2 (Emergent)": {
+            "precision": 0.2853833192923336,
+            "recall": 0.44897282968853547,
+            "f1-score": 0.3489569920164821,
+            "support": 3018.0
+          },
+          "Severity 3 (Urgent)": {
+            "precision": 0.5977924944812362,
+            "recall": 0.4630642954856361,
+            "f1-score": 0.5218731932935055,
+            "support": 11696.0
+          },
+          "Severity 4 (Less Urgent)": {
+            "precision": 0.5416142557651992,
+            "recall": 0.5423533116406004,
+            "f1-score": 0.5419835317564379,
+            "support": 9527.0
+          },
+          "Severity 5 (Non-Urgent)": {
+            "precision": 0.143142144638404,
+            "recall": 0.19590443686006825,
+            "f1-score": 0.1654178674351585,
+            "support": 1465.0
+          },
+          "accuracy": 0.46109972041006525,
+          "macro avg": {
+            "precision": 0.3331516602267389,
+            "recall": 0.35579624015051764,
+            "f1-score": 0.33787711581965296,
+            "support": 26825.0
+          },
+          "weighted avg": {
+            "precision": 0.497006431349542,
+            "recall": 0.46109972041006525,
+            "f1-score": 0.4729609197933405,
+            "support": 26825.0
+          }
+        }
+      }
+    },
+    {
+      "threshold": 0.2,
+      "tabnet_usage_pct": 96.9170549860205,
+      "metrics": {
+        "accuracy": 0.462739981360671,
+        "macro_f1": 0.3362709534622337,
+        "weighted_f1": 0.47411018630737495,
+        "critical_recall": 0.12511170688114387,
+        "classification_report": {
+          "Severity 1 (Critical)": {
+            "precision": 0.09810791871058164,
+            "recall": 0.12511170688114387,
+            "f1-score": 0.10997643362136685,
+            "support": 1119.0
+          },
+          "Severity 2 (Emergent)": {
+            "precision": 0.2801590808661069,
+            "recall": 0.4201457919151756,
+            "f1-score": 0.3361611876988335,
+            "support": 3018.0
+          },
+          "Severity 3 (Urgent)": {
+            "precision": 0.5948118769428663,
+            "recall": 0.4744357045143639,
+            "f1-score": 0.5278478002378121,
+            "support": 11696.0
+          },
+          "Severity 4 (Less Urgent)": {
+            "precision": 0.5415313711113439,
+            "recall": 0.5426682061509395,
+            "f1-score": 0.5420991926182238,
+            "support": 9527.0
+          },
+          "Severity 5 (Non-Urgent)": {
+            "precision": 0.1432865731462926,
+            "recall": 0.19522184300341297,
+            "f1-score": 0.1652701531349321,
+            "support": 1465.0
+          },
+          "accuracy": 0.462739981360671,
+          "macro avg": {
+            "precision": 0.33157936415543826,
+            "recall": 0.3515166504930072,
+            "f1-score": 0.3362709534622337,
+            "support": 26825.0
+          },
+          "weighted avg": {
+            "precision": 0.4951092929003507,
+            "recall": 0.462739981360671,
+            "f1-score": 0.47411018630737495,
+            "support": 26825.0
+          }
+        }
+      }
+    },
+    {
+      "threshold": 0.25,
+      "tabnet_usage_pct": 93.28984156570364,
+      "metrics": {
+        "accuracy": 0.46788443616029823,
+        "macro_f1": 0.3348850544319594,
+        "weighted_f1": 0.4770572995749856,
+        "critical_recall": 0.10991957104557641,
+        "classification_report": {
+          "Severity 1 (Critical)": {
+            "precision": 0.10115131578947369,
+            "recall": 0.10991957104557641,
+            "f1-score": 0.10535331905781585,
+            "support": 1119.0
+          },
+          "Severity 2 (Emergent)": {
+            "precision": 0.2767518939393939,
+            "recall": 0.3873426110006627,
+            "f1-score": 0.32283899475283073,
+            "support": 3018.0
+          },
+          "Severity 3 (Urgent)": {
+            "precision": 0.589070480081716,
+            "recall": 0.49307455540355677,
+            "f1-score": 0.5368146700176859,
+            "support": 11696.0
+          },
+          "Severity 4 (Less Urgent)": {
+            "precision": 0.5417750494225366,
+            "recall": 0.5465519051117875,
+            "f1-score": 0.5441529940432647,
+            "support": 9527.0
+          },
+          "Severity 5 (Non-Urgent)": {
+            "precision": 0.1436491935483871,
+            "recall": 0.1945392491467577,
+            "f1-score": 0.16526529428819947,
+            "support": 1465.0
+          },
+          "accuracy": 0.46788443616029823,
+          "macro avg": {
+            "precision": 0.33047958655630144,
+            "recall": 0.3462855783416682,
+            "f1-score": 0.3348850544319594,
+            "support": 26825.0
+          },
+          "weighted avg": {
+            "precision": 0.4924559492156628,
+            "recall": 0.46788443616029823,
+            "f1-score": 0.4770572995749856,
+            "support": 26825.0
+          }
+        }
+      }
+    },
+    {
+      "threshold": 0.3,
+      "tabnet_usage_pct": 85.26747437092264,
+      "metrics": {
+        "accuracy": 0.48223671947809876,
+        "macro_f1": 0.3372714355651586,
+        "weighted_f1": 0.48617540152774386,
+        "critical_recall": 0.08310991957104558,
+        "classification_report": {
+          "Severity 1 (Critical)": {
+            "precision": 0.11712846347607053,
+            "recall": 0.08310991957104558,
+            "f1-score": 0.09722948248823837,
+            "support": 1119.0
+          },
+          "Severity 2 (Emergent)": {
+            "precision": 0.2847527828112866,
+            "recall": 0.36447978793903246,
+            "f1-score": 0.3197209707891295,
+            "support": 3018.0
+          },
+          "Severity 3 (Urgent)": {
+            "precision": 0.586534767575874,
+            "recall": 0.5221443228454172,
+            "f1-score": 0.5524696942283336,
+            "support": 11696.0
+          },
+          "Severity 4 (Less Urgent)": {
+            "precision": 0.5430510534846029,
+            "recall": 0.5627164899758581,
+            "f1-score": 0.5527089025207484,
+            "support": 9527.0
+          },
+          "Severity 5 (Non-Urgent)": {
+            "precision": 0.1459660297239915,
+            "recall": 0.18771331058020477,
+            "f1-score": 0.1642281277993431,
+            "support": 1465.0
+          },
+          "accuracy": 0.48223671947809876,
+          "macro avg": {
+            "precision": 0.33548661941436514,
+            "recall": 0.3440327661823116,
+            "f1-score": 0.3372714355651586,
+            "support": 26825.0
+          },
+          "weighted avg": {
+            "precision": 0.4934966975140752,
+            "recall": 0.48223671947809876,
+            "f1-score": 0.48617540152774386,
+            "support": 26825.0
+          }
+        }
+      }
+    }
+  ],
+  "best_threshold": 0.1,
+  "best_metrics": {
+    "accuracy": 0.4599068033550792,
+    "macro_f1": 0.3379300479056438,
+    "weighted_f1": 0.4719974502289038,
+    "critical_recall": 0.13047363717605004,
+    "classification_report": {
+      "Severity 1 (Critical)": {
+        "precision": 0.09746328437917223,
+        "recall": 0.13047363717605004,
+        "f1-score": 0.11157814291173099,
+        "support": 1119.0
+      },
+      "Severity 2 (Emergent)": {
+        "precision": 0.285980534272106,
+        "recall": 0.45758780649436714,
+        "f1-score": 0.35198164903784884,
+        "support": 3018.0
+      },
+      "Severity 3 (Urgent)": {
+        "precision": 0.5985254691689008,
+        "recall": 0.4581053351573187,
+        "f1-score": 0.5189848895776831,
+        "support": 11696.0
+      },
+      "Severity 4 (Less Urgent)": {
+        "precision": 0.5415181379744182,
+        "recall": 0.542143381967041,
+        "f1-score": 0.5418305795961186,
+        "support": 9527.0
+      },
+      "Severity 5 (Non-Urgent)": {
+        "precision": 0.14292828685258965,
+        "recall": 0.19590443686006825,
+        "f1-score": 0.16527497840483732,
+        "support": 1465.0
+      },
+      "accuracy": 0.4599068033550792,
+      "macro avg": {
+        "precision": 0.33328314252943736,
+        "recall": 0.356842919530969,
+        "f1-score": 0.3379300479056438,
+        "support": 26825.0
+      },
+      "weighted avg": {
+        "precision": 0.49733225706521156,
+        "recall": 0.4599068033550792,
+        "f1-score": 0.4719974502289038,
+        "support": 26825.0
+      }
+    }
+  },
+  "attention_analysis": {
+    "attention_score_stats": {
+      "mean": 0.39791179058891,
+      "std": 0.09587413104224213,
+      "min": 0.0,
+      "max": 0.9025881952709622,
+      "median": 0.4050283489955796
+    },
+    "tabnet_usage_by_class": {
+      "Severity 1": 99.64253798033958,
+      "Severity 2": 98.31013916500993,
+      "Severity 3": 99.66655266757866,
+      "Severity 4": 99.91602813057627,
+      "Severity 5": 100.0
+    }
+  }
+}

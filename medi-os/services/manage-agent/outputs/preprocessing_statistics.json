@@ -1,0 +1,115 @@
+{
+  "missing": {
+    "before": {
+      "total": 1372829,
+      "percentage": 20.74825752626085,
+      "columns_with_missing": 13,
+      "top_missing": {
+        "gcs": 147743,
+        "on_oxygen": 127911,
+        "rfv1_3d": 15601,
+        "rfv2_3d": 15601,
+        "rfv3_3d": 15601,
+        "length_of_visit": 28508,
+        "diag1": 140842,
+        "diag2": 159367,
+        "diag3": 170347,
+        "past_visits": 147743
+      }
+    },
+    "after": {
+      "train": 0,
+      "val": 0,
+      "test": 0,
+      "total": 0
+    }
+  },
+  "skewness": {
+    "before": {
+      "high_skew_count": 23,
+      "mean_abs_skew": 4.095154979111251,
+      "max_skew": 22.972647865503536,
+      "high_skew_features": {
+        "pulse": 15.338731642810501,
+        "respiration": 7.008962208710336,
+        "dbp": 22.972647865503536,
+        "o2_sat": -12.191484862847826,
+        "gcs": -11.892549063912384,
+        "on_oxygen": -1.6603349796173352,
+        "rfv1": 1.5346492581519027,
+        "rfv2": 1.6738397954928397,
+        "rfv3": 2.414001724883901,
+        "rfv1_3d": 1.5242423657895123,
+        "rfv2_3d": 1.673663709621309,
+        "rfv3_3d": 2.4380509145349984,
+        "wait_time": 6.996099610715834,
+        "length_of_visit": 6.942376925966186,
+        "ambulance_arrival": -2.0976469927023462,
+        "past_visits": 5.052704816815583,
+        "seen_72h": -2.5374672160062386,
+        "cebvd": 5.291416233663057,
+        "chf": 5.110105341848667,
+        "ed_dialysis": 10.331599850994603,
+        "hiv": 12.19886198667064,
+        "diabetes": 2.9019972260581546,
+        "temp_c": 1.7178851578468992
+      }
+    },
+    "after": {
+      "high_skew_count": 0,
+      "mean_abs_skew": 0.1,
+      "max_skew": 0.5
+    }
+  },
+  "distributions": {
+    "features_analyzed": 9
+  },
+  "class_dist": {
+    "before": {
+      "total": 178827,
+      "distribution": {
+        "0.0": 5583,
+        "1.0": 1878,
+        "2.0": 20120,
+        "3.0": 77968,
+        "4.0": 54729,
+        "5.0": 9769,
+        "7.0": 8780
+      },
+      "imbalance_ratio": 41.51650692225772,
+      "dominant_class": 3.0,
+      "dominant_pct": 43.5996801377868
+    },
+    "after": {
+      "total": 382039,
+      "distribution": {
+        "0.0": 54577,
+        "1.0": 54577,
+        "2.0": 54577,
+        "3.0": 54577,
+        "4.0": 54577,
+        "5.0": 54577,
+        "7.0": 54577
+      },
+      "imbalance_ratio": 1.0,
+      "samples_per_class": 54577
+    }
+  },
+  "feature_count": {
+    "before": 36,
+    "after": 34,
+    "difference": -2,
+    "dropped": [
+      "diag1",
+      "diag2",
+      "diag3",
+      "year"
+    ],
+    "added": [
+      "month_sin",
+      "month_cos",
+      "day_of_week_sin",
+      "day_of_week_cos"
+    ]
+  }
+}

@@ -1,0 +1,63 @@
+ Core Philosophy & Design
+The entire frontend is built on a "Role-First" design philosophy. This means that every user sees a clean, intuitive interface that is tailored specifically to their job. We will avoid clutter and show only the information and tools that are necessary for the user's immediate tasks.
+
+The visual design will be modern, professional, and consistent with the reference image we've discussed (image_bbd14c.jpg). It will use a clean color palette, clear typography, and a spacious layout built with React, TypeScript, and Tailwind CSS.
+
+## The Login & Main Layout
+Login: The user is first presented with a simple Login Page where they enter their credentials.
+
+Authentication: Upon successful login, the backend sends a JWT token containing the user's role (e.g., RECEPTIONIST, NURSE, DOCTOR). This role is stored globally in our Zustand state store.
+
+Main Layout: The user then enters the main application, which consists of a dynamic sidebar on the left and a main content area on the right. The links and options shown in the sidebar will change based on the user's role, ensuring they can only navigate to the sections they are authorized to see.
+
+## A Day in the Life: The User Experience by Role
+Here is a detailed breakdown of what each user will see and do.
+
+The Receptionist
+The receptionist's primary goal is to manage the flow of incoming patients and maintain a high-level view of the hospital floor.
+
+The Dashboard: The receptionist's main screen is the Live Patient Queue. This is a real-time dashboard that shows every patient in the system, their current status ("Awaiting Vitals," "Awaiting Doctor," etc.), the doctor they've been assigned to (if any), and their estimated wait time. This allows the receptionist to confidently answer patient questions.
+
+The Workflow:
+
+A new patient arrives. The receptionist clicks the prominent "Check-In Patient" button.
+
+They are presented with a clean form. They first search for the patient by name or ID. If the patient is new, a simple modal allows them to register the patient.
+
+Once the patient is selected, the receptionist enters their "Chief Complaint" (e.g., "chest pain," "fever").
+
+Upon clicking "Check-In," the patient instantly appears on the Live Patient Queue with the status AWAITING_VITALS.
+
+The Nurse
+The nurse's interface is a focused to-do list designed for efficient triage.
+
+The Dashboard: The nurse's main screen is the Triage Queue. This is a filtered list that shows only the patients who have the status AWAITING_VITALS. It is prioritized by who has been waiting the longest.
+
+The Workflow:
+
+The nurse selects the top patient from their Triage Queue.
+
+They are taken to a dedicated Vitals Form. This form is designed for rapid data entry on a tablet or desktop, with large, clear fields for heart rate, blood pressure, temperature, weight, etc.
+
+When the nurse submits the form, the ManageAgent in the backend is triggered. The AI instantly calculates a triage level, and the patient's status is updated to AWAITING_DOCTOR_ASSIGNMENT.
+
+The patient is automatically removed from the nurse's Triage Queue, and the nurse can immediately move on to the next patient.
+
+The Doctor
+The doctor's interface is a calm, focused workspace designed to eliminate distractions and allow them to focus on patient care.
+
+The Dashboard: The doctor's main screen is their Personal Queue. This is a prioritized list of patients that the ManageAgent has specifically assigned to them. They do not see the full hospital queue, only their own workload.
+
+The Workflow:
+
+The doctor selects the highest-priority patient from their personal queue.
+
+They are taken to the Consultation View. This screen is divided into two stages. Initially, it presents a Pre-Consultation Summary, which is a read-only view of:
+
+The Chief Complaint from the receptionist.
+
+The complete Vitals from the nurse.
+
+After reviewing this summary, the doctor clicks "Start Consultation."
+
+The view then activates the MakeAgent AI Scribe. The "Record Audio" button appears, and the screen is ready to display the live transcript, the extracted medical entities, and the AI-generated clinical note, allowing the doctor to focus entirely on the conversation with the patient.

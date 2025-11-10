@@ -1,0 +1,48 @@
+Nurse Dashboard: The Prep & Task Station
+Structure & Design
+Layout: Header (role, logout), patient list left, vitals/task center, doctor assignment right.
+Design: White/blue, large inputs for vitals, offline mode (saves vitals/tasks, syncs later).
+Key Features
+Patient List: List from receptionist—name, reason (e.g., "fever"), status (Waiting for Vitals).
+Color-coded urgency (Green/Yellow/Red from ManageAgent).
+Quick Search bar for patients.
+Vitals & Task Area: Form for vitals (HR/temp/BP), text for symptoms—auto-flags urgent (e.g., "High fever: Urgent - Possible dengue, reason: rapid pulse") using Step 12 ML (93.6% F1).
+Task list (e.g., "Check saline Room 2," "Change dressing Room 4") from ManageAgent—mark done/add new.
+Example: "Ravi - Fever - Flag Urgent, Task: Check oxygen."
+Doctor Assignment: Suggest/assign doctor (e.g., "Fever → GP - Dr. Patel")—adds to doctor's queue without admit.
+User Flow & Experience
+Log in → see "Priya - Cough - Waiting." Tap → input vitals/symptoms → flag urgent → add task "Check saline" → assign doctor → update "With Dr. Patel." During rush, prioritize red flags—offline saves, syncs later.
+Benefits & Add-Ons
+Benefits: Quick vitals/flags/tasks—frees time for care, reduces errors.
+Add: "Task Reminder" alerts (e.g., "Room 2 saline due")—better for rush.
+Doctor Frontend: The Care Delivery Center
+Structure & Design
+Layout: Header (role, logout), queue panel left, calendar center, consult/discharge right.
+Design: White/blue, large buttons, offline mode (saves notes, syncs later).
+Key Features
+Patient Queue Panel: List of assigned patients (name/reason/flag from nurse)—sorted by urgency.
+Example: "Ravi - Fever - Urgent (Red)."
+Personalized Calendar: Daily view (breaks/treating/surgery)—drag-drop adjust, auto-updates for walk-ins.
+Example: "10:00 AM Break, 10:15 AM Ravi (Fever)."
+Consult & Discharge Area: Tap patient → view records/reports (searchable timeline), scribe notes (auto-write from talk), AI consult (e.g., "Fever: Suggest test" from Step 12), options (prescription write, order labs/imaging, admit, surgery schedule, discharge mark).
+Discharge notifies nurse for room clean.
+User Flow & Experience
+Log in → see queue/calendar. Tap "Priya - Cough" → view records → consult with scribe/AI → order lab/prescription → discharge → calendar updates. Offline saves, syncs later.
+Benefits & Add-Ons
+Benefits: Full tools in one view—handles walk-ins, reduces errors.
+Add: "Quick Order" templates for common prescriptions—better for rush.
+Admin Frontend: The Oversight Command Room
+Structure & Design
+Layout: Header (role, logout), customizable widgets top, staff tab middle, resource bottom.
+Design: White/green, drag-drop widgets, offline mode.
+Key Features
+Overview Widgets: Patient flow/staff util/resource alerts (drag-drop arrange)—AI summaries (e.g., "Queue high—add staff").
+Example: "50 Patients, 12 Staff, 5 Rooms Free."
+Staff Management Tab: Calendar for all (drag-drop adjust), performance charts, role assignment.
+Resource & Room Tab: Inventory (e.g., "Saline: 50 low"), room/bed status (e.g., "Rooms: 5 Total, 2 Free").
+Alerts & Reports: Real-time alerts (e.g., "Fever spike"), daily reports (export PDF).
+User Flow & Experience
+Log in → customize widgets → adjust calendar → track costs → review alerts. Offline saves, syncs later.
+Benefits & Add-Ons
+Benefits: Full visibility/control—no surprises in rush.
+Add: "AI Report" button for trends—better for decisions.
