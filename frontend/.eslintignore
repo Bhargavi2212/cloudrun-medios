@@ -1,0 +1,13 @@
+node_modules
+dist
+build
+coverage
+.vite
+.cache
+Resource/
+Resource/**
+*.config.js
+*.config.ts
+tests/e2e
+**/Resource/**
+
