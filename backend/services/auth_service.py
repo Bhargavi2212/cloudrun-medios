@@ -9,7 +9,6 @@ from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
 import jwt
-
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 
@@ -26,7 +25,7 @@ settings = get_settings()
 class AuthService:
     def __init__(self, session_factory: Optional[Any] = None) -> None:
         """Initialize AuthService.
-        
+
         Args:
             session_factory: Optional session factory for testing. If not provided,
                            uses the default get_session dependency.
@@ -43,9 +42,16 @@ class AuthService:
     ) -> User:
         email_normalized = email.lower()
         with self._session_factory() as session:
-            existing = session.query(User).filter(User.email == email_normalized, User.is_deleted.is_(False)).first()
+            existing = (
+                session.query(User)
+                .filter(User.email == email_normalized, User.is_deleted.is_(False))
+                .first()
+            )
             if existing:
-                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Email already registered",
+                )
 
             hashed_password = password_hasher.hash(password)
             user = crud.create_instance(
@@ -73,15 +79,24 @@ class AuthService:
                 .first()
             )
             if not user or not password_hasher.verify(password, user.password_hash):
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid credentials",
+                )
 
             if user.status != UserStatus.ACTIVE:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User inactive")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, detail="User inactive"
+                )
 
             user.last_login_at = datetime.now(timezone.utc)
             session.add(user)
-            access_token = create_access_token(str(user.id), {"roles": [role.name for role in user.roles]})
-            refresh_token, refresh_record = self._create_refresh_token_record(session, user)
+            access_token = create_access_token(
+                str(user.id), {"roles": [role.name for role in user.roles]}
+            )
+            refresh_token, refresh_record = self._create_refresh_token_record(
+                session, user
+            )
             session.add(refresh_record)
             session.flush()
             return access_token, refresh_token, user
@@ -95,15 +110,24 @@ class AuthService:
                     algorithms=[settings.jwt_algorithm],
                 )
             except Exception as exc:  # noqa: BLE001
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token") from exc
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid refresh token",
+                ) from exc
 
             if payload.get("type") != "refresh":
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid token type",
+                )
 
             token_id = payload.get("jti")
             user_id = payload.get("sub")
             if not token_id or not user_id:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid token payload",
+                )
 
             hashed = self._hash_token(refresh_token)
             record = (
@@ -118,7 +142,10 @@ class AuthService:
                 .first()
             )
             if not record:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token revoked")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Refresh token revoked",
+                )
 
             expires_at = record.expires_at
             if expires_at.tzinfo is None:
@@ -126,17 +153,31 @@ class AuthService:
             if expires_at < datetime.now(timezone.utc):
                 record.revoked = True
                 session.add(record)
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token expired")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Refresh token expired",
+                )
 
-            user = session.query(User).options(joinedload(User.roles)).filter(User.id == user_id).first()
+            user = (
+                session.query(User)
+                .options(joinedload(User.roles))
+                .filter(User.id == user_id)
+                .first()
+            )
             if not user or user.status != UserStatus.ACTIVE:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User inactive")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN, detail="User inactive"
+                )
 
             record.revoked = True
             session.add(record)
 
-            access_token = create_access_token(str(user.id), {"roles": [role.name for role in user.roles]})
-            new_refresh_token, new_record = self._create_refresh_token_record(session, user)
+            access_token = create_access_token(
+                str(user.id), {"roles": [role.name for role in user.roles]}
+            )
+            new_refresh_token, new_record = self._create_refresh_token_record(
+                session, user
+            )
             session.add(new_record)
             session.flush()
             return access_token, new_refresh_token
@@ -146,7 +187,9 @@ class AuthService:
             hashed = self._hash_token(refresh_token)
             record = (
                 session.query(RefreshToken)
-                .filter(RefreshToken.token_hash == hashed, RefreshToken.revoked.is_(False))
+                .filter(
+                    RefreshToken.token_hash == hashed, RefreshToken.revoked.is_(False)
+                )
                 .first()
             )
             if record:
@@ -169,7 +212,9 @@ class AuthService:
                 .first()
             )
             if not user:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+                )
 
             if first_name is not None:
                 user.first_name = first_name
@@ -183,7 +228,9 @@ class AuthService:
             session.refresh(user)
             return user
 
-    def change_password(self, user_id: str, current_password: str, new_password: str) -> None:
+    def change_password(
+        self, user_id: str, current_password: str, new_password: str
+    ) -> None:
         with self._session_factory() as session:
             user: Optional[User] = (
                 session.query(User)
@@ -191,10 +238,15 @@ class AuthService:
                 .first()
             )
             if not user:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+                )
 
             if not password_hasher.verify(current_password, user.password_hash):
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Current password is incorrect",
+                )
 
             user.password_hash = password_hasher.hash(new_password)
             user.must_reset_password = False
@@ -202,7 +254,7 @@ class AuthService:
 
     def request_password_reset(self, email: str) -> str:
         """Generate a password reset token and return it.
-        
+
         In a production environment, this token would be sent via email.
         For now, we return it so the frontend can use it for testing.
         """
@@ -216,12 +268,14 @@ class AuthService:
             # Don't reveal if email exists (security best practice)
             if not user:
                 return ""  # Return empty string, but don't raise error
-            
+
             # Generate reset token
             reset_token = secrets.token_urlsafe(32)
             token_hash = self._hash_token(reset_token)
-            expires_at = datetime.now(timezone.utc) + timedelta(hours=1)  # 1 hour expiry
-            
+            expires_at = datetime.now(timezone.utc) + timedelta(
+                hours=1
+            )  # 1 hour expiry
+
             # Create access token record for password reset
             reset_token_record = AccessToken(
                 user_id=str(user.id),
@@ -232,7 +286,7 @@ class AuthService:
             )
             session.add(reset_token_record)
             session.flush()
-            
+
             # TODO: In production, send email with reset link
             # For now, return the token (frontend can use it for testing)
             return reset_token
@@ -252,13 +306,13 @@ class AuthService:
                 )
                 .first()
             )
-            
+
             if not reset_token_record:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Invalid or expired reset token"
+                    detail="Invalid or expired reset token",
                 )
-            
+
             # Check if token has expired
             expires_at = reset_token_record.expires_at
             if expires_at.tzinfo is None:
@@ -266,27 +320,31 @@ class AuthService:
             if expires_at < datetime.now(timezone.utc):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Reset token has expired"
+                    detail="Reset token has expired",
                 )
-            
+
             # Get user and update password
             user: Optional[User] = (
                 session.query(User)
-                .filter(User.id == reset_token_record.user_id, User.is_deleted.is_(False))
+                .filter(
+                    User.id == reset_token_record.user_id, User.is_deleted.is_(False)
+                )
                 .first()
             )
             if not user:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-            
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+                )
+
             # Update password
             user.password_hash = password_hasher.hash(new_password)
             user.must_reset_password = False
             session.add(user)
-            
+
             # Mark token as consumed
             reset_token_record.consumed_at = datetime.now(timezone.utc)
             session.add(reset_token_record)
-            
+
             # Revoke all refresh tokens for this user (security best practice)
             session.query(RefreshToken).filter(
                 RefreshToken.user_id == str(user.id),
@@ -307,7 +365,9 @@ class AuthService:
             "last_name": user.last_name,
             "phone": user.phone,
             "status": user.status.value,
-            "last_login_at": user.last_login_at.isoformat() if user.last_login_at else None,
+            "last_login_at": (
+                user.last_login_at.isoformat() if user.last_login_at else None
+            ),
             "created_at": user.created_at.isoformat() if user.created_at else None,
             "updated_at": user.updated_at.isoformat() if user.updated_at else None,
             "role": primary_role,
@@ -315,10 +375,14 @@ class AuthService:
             "full_name": full_name,
         }
 
-    def _create_refresh_token_record(self, session: Session, user: User) -> Tuple[str, RefreshToken]:
+    def _create_refresh_token_record(
+        self, session: Session, user: User
+    ) -> Tuple[str, RefreshToken]:
         token_id = str(uuid4())
         refresh_token = create_refresh_token(str(user.id), token_id)
-        expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.jwt_refresh_expires_minutes)
+        expires_at = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.jwt_refresh_expires_minutes
+        )
         hashed = self._hash_token(refresh_token)
         record = RefreshToken(
             id=token_id,
@@ -331,14 +395,23 @@ class AuthService:
 
     def _lookup_roles(self, session: Session, role_names: List[str]) -> List[Role]:
         if not role_names:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="At least one role required")
-        roles = session.query(Role).filter(Role.name.in_(role_names), Role.is_deleted.is_(False)).all()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="At least one role required",
+            )
+        roles = (
+            session.query(Role)
+            .filter(Role.name.in_(role_names), Role.is_deleted.is_(False))
+            .all()
+        )
         missing = set(role_names) - {role.name for role in roles}
         if missing:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unknown roles: {', '.join(missing)}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Unknown roles: {', '.join(missing)}",
+            )
         return roles
 
     @staticmethod
     def _hash_token(token: str) -> str:
         return hashlib.sha256(token.encode("utf-8")).hexdigest()
-

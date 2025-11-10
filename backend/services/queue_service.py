@@ -11,6 +11,7 @@ from backend.database import crud
 from backend.database.models import ConsultationStatus, QueueStage, QueueState
 from backend.database.schemas import QueueStateRead
 from backend.database.session import get_session
+
 ALLOWED_TRANSITIONS: Dict[QueueStage, List[QueueStage]] = {
     QueueStage.WAITING: [QueueStage.TRIAGE],
     QueueStage.TRIAGE: [QueueStage.SCRIBE],
@@ -189,16 +190,23 @@ class QueueService:
             crud.update_queue_state(session, state, **updates)
 
             if state.consultation_id:
-                consultation = state.consultation or crud.get_consultation(session, state.consultation_id)
+                consultation = state.consultation or crud.get_consultation(
+                    session, state.consultation_id
+                )
                 if consultation:
                     consultation_updates: Dict[str, Any] = {}
                     new_status = self._derive_consultation_status(next_stage)
                     if new_status and consultation.status != new_status:
                         consultation_updates["status"] = new_status
-                    if priority_level is not None and consultation.triage_level != priority_level:
+                    if (
+                        priority_level is not None
+                        and consultation.triage_level != priority_level
+                    ):
                         consultation_updates["triage_level"] = priority_level
                     if consultation_updates:
-                        crud.update_consultation(session, consultation, **consultation_updates)
+                        crud.update_consultation(
+                            session, consultation, **consultation_updates
+                        )
 
             crud.log_queue_event(
                 session,
@@ -230,9 +238,13 @@ class QueueService:
             crud.update_queue_state(session, state, assigned_to=assigned_to)
 
             if state.consultation_id:
-                consultation = state.consultation or crud.get_consultation(session, state.consultation_id)
+                consultation = state.consultation or crud.get_consultation(
+                    session, state.consultation_id
+                )
                 if consultation and consultation.assigned_doctor_id != assigned_to:
-                    crud.update_consultation(session, consultation, assigned_doctor_id=assigned_to)
+                    crud.update_consultation(
+                        session, consultation, assigned_doctor_id=assigned_to
+                    )
 
             crud.log_queue_event(
                 session,
@@ -261,7 +273,9 @@ class QueueService:
     ) -> QueueStateRead:
         with get_session() as session:
             state = self._get_state_or_raise(session, queue_state_id)
-            crud.update_queue_state(session, state, estimated_wait_seconds=estimated_wait_seconds)
+            crud.update_queue_state(
+                session, state, estimated_wait_seconds=estimated_wait_seconds
+            )
             crud.log_queue_event(
                 session,
                 queue_state_id=state.id,
@@ -294,7 +308,9 @@ class QueueService:
         wait_count = 0
 
         for state in state_models:
-            totals[state.current_stage.value] = totals.get(state.current_stage.value, 0) + 1
+            totals[state.current_stage.value] = (
+                totals.get(state.current_stage.value, 0) + 1
+            )
             if state.estimated_wait_seconds:
                 wait_accumulator += state.estimated_wait_seconds
                 wait_count += 1
@@ -376,4 +392,3 @@ queue_service = QueueService()
 
 
 __all__ = ["QueueService", "queue_service", "QueueNotifier", "QueueSnapshot"]
-

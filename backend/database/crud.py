@@ -10,30 +10,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from . import Base  # noqa: F401
-from .models import (
-    AudioFile,
-    Consultation,
-    ConsultationStatus,
-    DocumentProcessingStatus,
-    FileAsset,
-    JobQueue,
-    LLMUsage,
-    Note,
-    NoteVersion,
-    Patient,
-    QueueEvent,
-    QueueStage,
-    QueueState,
-    Role,
-    ServiceMetric,
-    TimelineEvent,
-    TimelineEventStatus,
-    TimelineEventType,
-    PatientSummary,
-    SummaryCache,
-    SummaryType,
-    User,
-)
+from .models import (AudioFile, Consultation, ConsultationStatus,
+                     DocumentProcessingStatus, FileAsset, JobQueue, LLMUsage,
+                     Note, NoteVersion, Patient, PatientSummary, QueueEvent,
+                     QueueStage, QueueState, Role, ServiceMetric, SummaryCache,
+                     SummaryType, TimelineEvent, TimelineEventStatus,
+                     TimelineEventType, User)
 
 ModelT = TypeVar("ModelT", bound=Base)
 
@@ -48,7 +30,9 @@ def get_user_by_id(session: Session, user_id: UUID) -> Optional[User]:
     return session.execute(stmt).scalars().first()
 
 
-def list_patients(session: Session, skip: int = 0, limit: int = 50) -> Sequence[Patient]:
+def list_patients(
+    session: Session, skip: int = 0, limit: int = 50
+) -> Sequence[Patient]:
     stmt = (
         select(Patient)
         .where(Patient.is_deleted.is_(False))
@@ -89,7 +73,9 @@ def create_consultation(session: Session, **kwargs) -> Consultation:
     return create_instance(session, Consultation, **kwargs)
 
 
-def update_consultation(session: Session, consultation: Consultation, **kwargs) -> Consultation:
+def update_consultation(
+    session: Session, consultation: Consultation, **kwargs
+) -> Consultation:
     for key, value in kwargs.items():
         setattr(consultation, key, value)
     session.add(consultation)
@@ -98,7 +84,9 @@ def update_consultation(session: Session, consultation: Consultation, **kwargs) 
     return consultation
 
 
-def get_active_consultation_for_patient(session: Session, patient_id: str) -> Optional[Consultation]:
+def get_active_consultation_for_patient(
+    session: Session, patient_id: str
+) -> Optional[Consultation]:
     active_statuses = (
         ConsultationStatus.INTAKE,
         ConsultationStatus.TRIAGE,
@@ -156,7 +144,9 @@ def create_audio_file(session: Session, **kwargs) -> AudioFile:
 
 
 def get_audio_file(session: Session, audio_id: str) -> Optional[AudioFile]:
-    stmt = select(AudioFile).where(AudioFile.id == audio_id, AudioFile.is_deleted.is_(False))
+    stmt = select(AudioFile).where(
+        AudioFile.id == audio_id, AudioFile.is_deleted.is_(False)
+    )
     return session.execute(stmt).scalars().first()
 
 
@@ -165,7 +155,9 @@ def create_file_asset(session: Session, **kwargs) -> FileAsset:
 
 
 def get_file_asset(session: Session, file_id: str) -> Optional[FileAsset]:
-    stmt = select(FileAsset).where(FileAsset.id == file_id, FileAsset.is_deleted.is_(False))
+    stmt = select(FileAsset).where(
+        FileAsset.id == file_id, FileAsset.is_deleted.is_(False)
+    )
     return session.execute(stmt).scalars().first()
 
 
@@ -224,7 +216,9 @@ def create_timeline_event(session: Session, **kwargs) -> TimelineEvent:
 
 
 def get_timeline_event(session: Session, event_id: str) -> Optional[TimelineEvent]:
-    stmt = select(TimelineEvent).where(TimelineEvent.id == event_id, TimelineEvent.is_deleted.is_(False))
+    stmt = select(TimelineEvent).where(
+        TimelineEvent.id == event_id, TimelineEvent.is_deleted.is_(False)
+    )
     return session.execute(stmt).scalars().first()
 
 
@@ -245,10 +239,12 @@ def list_timeline_events_for_patient(
     if not include_pending:
         # Explicitly include only COMPLETED and NEEDS_REVIEW events, exclude PENDING and FAILED
         stmt = stmt.where(
-            TimelineEvent.status.in_([
-                TimelineEventStatus.COMPLETED,
-                TimelineEventStatus.NEEDS_REVIEW,
-            ])
+            TimelineEvent.status.in_(
+                [
+                    TimelineEventStatus.COMPLETED,
+                    TimelineEventStatus.NEEDS_REVIEW,
+                ]
+            )
         )
     return session.execute(stmt).scalars().all()
 
@@ -410,17 +406,20 @@ def create_note_with_version(
     is_ai_generated: bool,
 ) -> NoteVersion:
     import logging
+
     logger = logging.getLogger(__name__)
-    
-    logger.info(f"🔍 create_note_with_version: consultation_id={consultation_id}, content_length={len(note_content)}, is_ai_generated={is_ai_generated}")
-    
+
+    logger.info(
+        f"🔍 create_note_with_version: consultation_id={consultation_id}, content_length={len(note_content)}, is_ai_generated={is_ai_generated}"
+    )
+
     # Check if note already exists
     note = (
         session.query(Note)
         .filter(Note.consultation_id == consultation_id, Note.is_deleted.is_(False))
         .first()
     )
-    
+
     if note is None:
         logger.info(f"📝 Creating new note for consultation {consultation_id}")
         note = create_instance(
@@ -433,7 +432,9 @@ def create_note_with_version(
         session.flush()  # Ensure note.id is available
         logger.info(f"✅ Created new note: note_id={note.id}")
     else:
-        logger.info(f"📝 Using existing note: note_id={note.id}, current_version_id={note.current_version_id}")
+        logger.info(
+            f"📝 Using existing note: note_id={note.id}, current_version_id={note.current_version_id}"
+        )
 
     # Create new version
     logger.info(f"📝 Creating new note version for note_id={note.id}")
@@ -448,7 +449,7 @@ def create_note_with_version(
         is_ai_generated=is_ai_generated,
         created_by=author_id,
     )
-    
+
     # Update note to point to new version
     note.current_version_id = version.id
     note.status = "draft"  # Reset to draft when updated
@@ -456,9 +457,11 @@ def create_note_with_version(
     session.flush()  # Ensure version.id is available
     session.refresh(version)
     session.refresh(note)
-    
-    logger.info(f"✅ Created note version: version_id={version.id}, note_id={note.id}, current_version_id={note.current_version_id}")
-    
+
+    logger.info(
+        f"✅ Created note version: version_id={version.id}, note_id={note.id}, current_version_id={note.current_version_id}"
+    )
+
     return version
 
 
@@ -482,7 +485,7 @@ def update_note_content(
     note = get_note_for_consultation(session, consultation_id)
     if not note:
         raise ValueError(f"No note found for consultation {consultation_id}")
-    
+
     version = create_instance(
         session,
         NoteVersion,
@@ -494,7 +497,7 @@ def update_note_content(
         is_ai_generated=False,
         created_by=author_id,
     )
-    
+
     note.current_version_id = version.id
     note.status = "draft"  # Reset to draft when updated
     session.add(note)
@@ -512,10 +515,10 @@ def approve_note(
     note = get_note_for_consultation(session, consultation_id)
     if not note:
         raise ValueError(f"No note found for consultation {consultation_id}")
-    
+
     if note.status == "approved":
         return note  # Already approved
-    
+
     note.status = "approved"
     session.add(note)
     session.flush()
@@ -533,7 +536,7 @@ def reject_note(
     note = get_note_for_consultation(session, consultation_id)
     if not note:
         raise ValueError(f"No note found for consultation {consultation_id}")
-    
+
     note.status = "rejected"
     # Store rejection reason in processing_notes if available (or we could add a rejection_reason field)
     if note.current_version:
@@ -554,10 +557,10 @@ def submit_note_for_approval(
     note = get_note_for_consultation(session, consultation_id)
     if not note:
         raise ValueError(f"No note found for consultation {consultation_id}")
-    
+
     if not note.current_version or not note.current_version.content:
         raise ValueError("Note has no content to submit for approval")
-    
+
     note.status = "pending_approval"
     session.add(note)
     session.flush()
@@ -635,12 +638,16 @@ def create_queue_state(
 
 
 def get_queue_state(session: Session, queue_state_id: str) -> Optional[QueueState]:
-    stmt = select(QueueState).where(
-        QueueState.id == queue_state_id,
-        QueueState.is_deleted.is_(False),
-    ).options(
-        selectinload(QueueState.patient),
-        selectinload(QueueState.consultation),
+    stmt = (
+        select(QueueState)
+        .where(
+            QueueState.id == queue_state_id,
+            QueueState.is_deleted.is_(False),
+        )
+        .options(
+            selectinload(QueueState.patient),
+            selectinload(QueueState.consultation),
+        )
     )
     return session.execute(stmt).scalars().first()
 
@@ -661,11 +668,15 @@ def list_queue_states(
     )
     if stage is not None:
         stmt = stmt.where(QueueState.current_stage == stage)
-    stmt = stmt.order_by(QueueState.priority_level.asc(), QueueState.created_at.asc()).limit(limit)
+    stmt = stmt.order_by(
+        QueueState.priority_level.asc(), QueueState.created_at.asc()
+    ).limit(limit)
     return session.execute(stmt).scalars().all()
 
 
-def update_queue_state(session: Session, queue_state: QueueState, **updates) -> QueueState:
+def update_queue_state(
+    session: Session, queue_state: QueueState, **updates
+) -> QueueState:
     for key, value in updates.items():
         setattr(queue_state, key, value)
     session.add(queue_state)
@@ -694,4 +705,3 @@ def log_queue_event(
         notes=notes,
         created_by=created_by,
     )
-

@@ -10,7 +10,7 @@ from passlib.context import CryptContext
 class PasswordHasher:
     def __init__(self) -> None:
         """Initialize password hasher with bcrypt.
-        
+
         Handles bcrypt compatibility issues by configuring CryptContext
         to avoid problematic bug detection during initialization.
         """
@@ -44,8 +44,8 @@ class PasswordHasher:
             if "password cannot be longer than 72 bytes" in str(e):
                 # Truncate password to 72 bytes if it's too long
                 # This handles the bcrypt limitation
-                password_bytes = password.encode('utf-8')[:72]
-                password = password_bytes.decode('utf-8', errors='ignore')
+                password_bytes = password.encode("utf-8")[:72]
+                password = password_bytes.decode("utf-8", errors="ignore")
                 return self._pwd_context.hash(password)
             raise
 
@@ -56,8 +56,8 @@ class PasswordHasher:
         except ValueError as e:
             if "password cannot be longer than 72 bytes" in str(e):
                 # Truncate password to 72 bytes if it's too long
-                password_bytes = password.encode('utf-8')[:72]
-                password = password_bytes.decode('utf-8', errors='ignore')
+                password_bytes = password.encode("utf-8")[:72]
+                password = password_bytes.decode("utf-8", errors="ignore")
                 return self._pwd_context.verify(password, hashed_password)
             raise
 
@@ -83,4 +83,3 @@ except Exception:
     # If initialization fails (e.g., in tests), create a minimal instance
     # This will be overridden in conftest.py for tests
     password_hasher = PasswordHasher()
-

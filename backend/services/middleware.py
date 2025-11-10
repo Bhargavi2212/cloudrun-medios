@@ -15,7 +15,9 @@ logger = get_logger(__name__)
 
 
 class RequestIDMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next: Callable[[Request], Response]) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Response]
+    ) -> Response:
         request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
         set_request_id(request_id)
         response = await call_next(request)
@@ -24,7 +26,9 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
 
 
 class AccessLogMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next: Callable[[Request], Response]) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Response]
+    ) -> Response:
         start = time.perf_counter()
         response: Response
         try:
@@ -55,4 +59,3 @@ class AccessLogMiddleware(BaseHTTPMiddleware):
 
 
 __all__ = ["RequestIDMiddleware", "AccessLogMiddleware"]
-

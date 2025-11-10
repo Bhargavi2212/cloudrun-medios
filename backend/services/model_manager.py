@@ -43,9 +43,7 @@ def initialize_models() -> Tuple[bool, Optional[str]]:
     model_size = settings.model_size
 
     if whisper is None:
-        error_message = (
-            "Whisper dependency not installed. Install openai-whisper to enable transcription."
-        )
+        error_message = "Whisper dependency not installed. Install openai-whisper to enable transcription."
         logger.warning(error_message)
         _WHISPER_MODEL = None
         _WHISPER_ERROR = error_message
@@ -86,4 +84,3 @@ def get_whisper_model():
         return _WHISPER_MODEL
 
     raise RuntimeError(error or "Whisper model not available")
-

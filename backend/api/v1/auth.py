@@ -42,6 +42,8 @@ class UserResponse(BaseModel):
             role=data.get("role", "GUEST"),
             roles=data.get("roles", []),
         )
+
+
 from backend.security.dependencies import get_current_user
 from backend.services.auth_service import AuthService
 from backend.services.error_response import StandardResponse
@@ -103,7 +105,9 @@ def _build_user_response(user) -> UserResponse:
     return UserResponse.from_dict(payload)
 
 
-@router.post("/register", response_model=StandardResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register", response_model=StandardResponse, status_code=status.HTTP_201_CREATED
+)
 def register(request: RegisterRequest) -> StandardResponse:
     user = auth_service.register_user(
         email=request.email,
@@ -117,7 +121,9 @@ def register(request: RegisterRequest) -> StandardResponse:
 
 @router.post("/login", response_model=StandardResponse)
 def login(request: LoginRequest) -> StandardResponse:
-    access_token, refresh_token, user = auth_service.authenticate_user(request.email, request.password)
+    access_token, refresh_token, user = auth_service.authenticate_user(
+        request.email, request.password
+    )
     token_response = TokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,
@@ -151,7 +157,9 @@ def me(current_user=Depends(get_current_user)) -> StandardResponse:
 
 
 @router.put("/me", response_model=StandardResponse)
-def update_profile(request: UpdateProfileRequest, current_user=Depends(get_current_user)) -> StandardResponse:
+def update_profile(
+    request: UpdateProfileRequest, current_user=Depends(get_current_user)
+) -> StandardResponse:
     user = auth_service.update_user_profile(
         str(current_user.id),
         first_name=request.first_name,
@@ -162,15 +170,19 @@ def update_profile(request: UpdateProfileRequest, current_user=Depends(get_curre
 
 
 @router.post("/change-password", response_model=StandardResponse)
-def change_password(request: ChangePasswordRequest, current_user=Depends(get_current_user)) -> StandardResponse:
-    auth_service.change_password(str(current_user.id), request.current_password, request.new_password)
+def change_password(
+    request: ChangePasswordRequest, current_user=Depends(get_current_user)
+) -> StandardResponse:
+    auth_service.change_password(
+        str(current_user.id), request.current_password, request.new_password
+    )
     return StandardResponse(success=True)
 
 
 @router.post("/forgot-password", response_model=StandardResponse)
 def forgot_password(request: ForgotPasswordRequest) -> StandardResponse:
     """Request a password reset token.
-    
+
     For security, this always returns success even if the email doesn't exist.
     In production, the reset token would be sent via email.
     """
@@ -180,7 +192,11 @@ def forgot_password(request: ForgotPasswordRequest) -> StandardResponse:
     return StandardResponse(
         success=True,
         data={"reset_token": reset_token} if reset_token else None,
-        message="If the email exists, a password reset link has been sent." if not reset_token else "Password reset token generated.",
+        message=(
+            "If the email exists, a password reset link has been sent."
+            if not reset_token
+            else "Password reset token generated."
+        ),
     )
 
 
@@ -188,5 +204,6 @@ def forgot_password(request: ForgotPasswordRequest) -> StandardResponse:
 def reset_password(request: ResetPasswordRequest) -> StandardResponse:
     """Reset password using a reset token."""
     auth_service.reset_password(request.reset_token, request.new_password)
-    return StandardResponse(success=True, message="Password has been reset successfully.")
-
+    return StandardResponse(
+        success=True, message="Password has been reset successfully."
+    )

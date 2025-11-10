@@ -7,7 +7,7 @@ import os
 # Set environment variable to indicate we're in a test environment
 # This must be done BEFORE importing anything that might import the app
 # so that services can detect the test environment during initialization
-os.environ['MEDI_OS_TEST_ENV'] = '1'
+os.environ["MEDI_OS_TEST_ENV"] = "1"
 
 # CRITICAL: Patch bcrypt.hashpw to handle >72 byte passwords gracefully
 # This must happen before passlib.context.CryptContext is imported/initialized
@@ -15,10 +15,10 @@ os.environ['MEDI_OS_TEST_ENV'] = '1'
 # which causes ValueError in newer bcrypt versions
 try:
     import bcrypt as _bcrypt_lib
-    
+
     # Store original hashpw
     _original_bcrypt_hashpw = _bcrypt_lib.hashpw
-    
+
     def _safe_bcrypt_hashpw(secret, salt):
         """Safe bcrypt.hashpw that truncates >72 byte passwords."""
         # If secret is too long, truncate it to 72 bytes
@@ -26,12 +26,12 @@ try:
         if isinstance(secret, bytes) and len(secret) > 72:
             secret = secret[:72]
         elif isinstance(secret, str):
-            secret_bytes = secret.encode('utf-8')
+            secret_bytes = secret.encode("utf-8")
             if len(secret_bytes) > 72:
                 secret_bytes = secret_bytes[:72]
                 # Try to decode, but if it fails, use the bytes directly
                 try:
-                    secret = secret_bytes.decode('utf-8', errors='ignore')
+                    secret = secret_bytes.decode("utf-8", errors="ignore")
                 except:
                     secret = secret_bytes
         try:
@@ -42,20 +42,25 @@ try:
                 if isinstance(secret, bytes):
                     secret = secret[:72]
                 else:
-                    secret = secret.encode('utf-8')[:72].decode('utf-8', errors='ignore')
+                    secret = secret.encode("utf-8")[:72].decode(
+                        "utf-8", errors="ignore"
+                    )
                 return _original_bcrypt_hashpw(secret, salt)
             raise
-    
+
     # Replace bcrypt.hashpw with our safe version
     _bcrypt_lib.hashpw = _safe_bcrypt_hashpw
-    
+
     # Also patch passlib's detect_wrap_bug to return False
     import passlib.handlers.bcrypt as _bcrypt_mod
-    if hasattr(_bcrypt_mod, 'detect_wrap_bug'):
+
+    if hasattr(_bcrypt_mod, "detect_wrap_bug"):
+
         @staticmethod
         def _patched_detect_wrap_bug(ident):
             """Patched version that skips the 72-byte password test."""
             return False  # Always return False to skip bug detection
+
         _bcrypt_mod.detect_wrap_bug = _patched_detect_wrap_bug
 except (ImportError, AttributeError, Exception):
     # If patching fails, we'll handle errors in password hasher initialization
@@ -69,9 +74,9 @@ from typing import Generator
 from uuid import uuid4
 
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
-from fastapi.testclient import TestClient
 
 # Now we can safely import the password hasher
 from backend.security.password import password_hasher
@@ -95,36 +100,40 @@ stub_langgraph = types.ModuleType("langgraph")
 stub_langgraph_checkpoint = types.ModuleType("langgraph.checkpoint")
 stub_langgraph_checkpoint_memory = types.ModuleType("langgraph.checkpoint.memory")
 
+
 class StubMemorySaver:
     def __init__(self, *args, **kwargs):
         pass
+
 
 stub_langgraph_checkpoint_memory.MemorySaver = StubMemorySaver
 
 stub_langgraph_graph = types.ModuleType("langgraph.graph")
 
+
 class StubStateGraph:
     def __init__(self, *args, **kwargs):
         self.nodes = {}
         self.edges = []
-    
+
     def add_node(self, *args, **kwargs):
         pass
-    
+
     def add_edge(self, *args, **kwargs):
         pass
-    
+
     def set_entry_point(self, *args, **kwargs):
         pass
-    
+
     def compile(self, *args, **kwargs):
         return self
-    
+
     def invoke(self, *args, **kwargs):
         return {}
-    
+
     def astream(self, *args, **kwargs):
         yield {}
+
 
 stub_langgraph_graph.StateGraph = StubStateGraph
 stub_langgraph_graph.END = "END"
@@ -135,20 +144,10 @@ sys.modules.setdefault("langgraph.checkpoint.memory", stub_langgraph_checkpoint_
 sys.modules.setdefault("langgraph.graph", stub_langgraph_graph)
 
 from backend.database.base import Base
-from backend.database.models import (
-    User,
-    Role,
-    Patient,
-    Consultation,
-    QueueState,
-    QueueStage,
-    ConsultationStatus,
-    Note,
-    NoteVersion,
-    AudioFile,
-    FileAsset,
-    AccessToken,
-)
+from backend.database.models import (AccessToken, AudioFile, Consultation,
+                                     ConsultationStatus, FileAsset, Note,
+                                     NoteVersion, Patient, QueueStage,
+                                     QueueState, Role, User)
 from backend.main import app  # noqa: E402
 from backend.security.password import password_hasher
 
@@ -156,15 +155,20 @@ from backend.security.password import password_hasher
 @pytest.fixture(scope="function")
 def db_session() -> Generator[Session, None, None]:
     """Create an in-memory SQLite database session for testing."""
-    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+    engine = create_engine(
+        "sqlite:///:memory:", connect_args={"check_same_thread": False}
+    )
     # Create all tables before creating session
     Base.metadata.create_all(bind=engine)
-    TestingSessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False, expire_on_commit=False)
-    
+    TestingSessionLocal = sessionmaker(
+        bind=engine, autocommit=False, autoflush=False, expire_on_commit=False
+    )
+
     session = TestingSessionLocal()
     try:
         # Verify tables exist
         from sqlalchemy import inspect
+
         inspector = inspect(engine)
         tables = inspector.get_table_names()
         if not tables:
@@ -180,17 +184,18 @@ def db_session() -> Generator[Session, None, None]:
 @pytest.fixture(scope="function")
 def client(db_session: Session) -> Generator[TestClient, None, None]:
     """Create a FastAPI test client with database session override."""
+    from contextlib import contextmanager
+
+    from backend.api.v1 import auth as auth_router
     from backend.database.session import get_db_session, get_session
     from backend.services.auth_service import AuthService
-    from backend.api.v1 import auth as auth_router
-    from contextlib import contextmanager
-    
+
     def override_get_db_session():
         try:
             yield db_session
         finally:
             pass
-    
+
     # Override get_session to use test database
     def override_get_session():
         try:
@@ -199,7 +204,7 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
         except Exception:
             db_session.rollback()
             raise
-    
+
     # Create an auth service that uses the test session
     @contextmanager
     def test_session_factory():
@@ -209,19 +214,19 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
         except Exception:
             db_session.rollback()
             raise
-    
+
     test_auth_service = AuthService(session_factory=test_session_factory)
-    
+
     # Override the auth_service in the auth router to use the test session
     original_auth_service = auth_router.auth_service
     auth_router.auth_service = test_auth_service
-    
+
     # Override both database session dependencies
     app.dependency_overrides[get_db_session] = override_get_db_session
     app.dependency_overrides[get_session] = override_get_session
-    
+
     yield TestClient(app)
-    
+
     # Restore original
     app.dependency_overrides.clear()
     auth_router.auth_service = original_auth_service
@@ -230,8 +235,8 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
 @pytest.fixture
 def test_user(db_session: Session) -> User:
     """Create a test user."""
-    from backend.database.models import UserStatus, Role, UserRole
-    
+    from backend.database.models import Role, UserRole, UserStatus
+
     # Create a role first
     role = Role(
         id=str(uuid4()),
@@ -241,7 +246,7 @@ def test_user(db_session: Session) -> User:
     )
     db_session.add(role)
     db_session.flush()
-    
+
     # Create user
     user = User(
         id=str(uuid4()),
@@ -254,7 +259,7 @@ def test_user(db_session: Session) -> User:
     )
     db_session.add(user)
     db_session.flush()
-    
+
     # Associate role with user through UserRole
     user_role = UserRole(
         user_id=user.id,
@@ -286,7 +291,9 @@ def test_patient(db_session: Session) -> Patient:
 
 
 @pytest.fixture
-def test_consultation(db_session: Session, test_patient: Patient, test_user: User) -> Consultation:
+def test_consultation(
+    db_session: Session, test_patient: Patient, test_user: User
+) -> Consultation:
     """Create a test consultation."""
     consultation = Consultation(
         id=str(uuid4()),
@@ -302,7 +309,9 @@ def test_consultation(db_session: Session, test_patient: Patient, test_user: Use
 
 
 @pytest.fixture
-def test_queue_state(db_session: Session, test_consultation: Consultation) -> QueueState:
+def test_queue_state(
+    db_session: Session, test_consultation: Consultation
+) -> QueueState:
     """Create a test queue state."""
     queue_state = QueueState(
         id=str(uuid4()),
@@ -317,7 +326,9 @@ def test_queue_state(db_session: Session, test_consultation: Consultation) -> Qu
 
 
 @pytest.fixture
-def test_note(db_session: Session, test_consultation: Consultation, test_user: User) -> Note:
+def test_note(
+    db_session: Session, test_consultation: Consultation, test_user: User
+) -> Note:
     """Create a test note."""
     note = Note(
         id=str(uuid4()),
@@ -327,7 +338,7 @@ def test_note(db_session: Session, test_consultation: Consultation, test_user: U
         is_deleted=False,
     )
     db_session.add(note)
-    
+
     note_version = NoteVersion(
         id=str(uuid4()),
         note_id=note.id,
@@ -355,4 +366,3 @@ def auth_headers(test_user: User, client: TestClient) -> dict[str, str]:
     data = response.json()
     token = data["data"]["access_token"]
     return {"Authorization": f"Bearer {token}"}
-

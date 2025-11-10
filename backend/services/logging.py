@@ -37,4 +37,3 @@ def get_logger(name: Optional[str] = None) -> logging.Logger:
 
 
 __all__ = ["configure_logging", "get_logger"]
-

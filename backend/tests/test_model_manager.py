@@ -20,7 +20,11 @@ def test_initialize_models_success(monkeypatch):
         load_calls.append((name, download_root))
         return object()
 
-    monkeypatch.setattr(model_manager, "whisper", type("WhisperModule", (), {"load_model": staticmethod(fake_load_model)}))
+    monkeypatch.setattr(
+        model_manager,
+        "whisper",
+        type("WhisperModule", (), {"load_model": staticmethod(fake_load_model)}),
+    )
     monkeypatch.setenv("MODEL_SIZE", "tiny")
 
     success, error = model_manager.initialize_models()
@@ -35,11 +39,14 @@ def test_initialize_models_failure(monkeypatch):
     def raise_error(*args, **kwargs):
         raise RuntimeError("boom")
 
-    monkeypatch.setattr(model_manager, "whisper", type("WhisperModule", (), {"load_model": staticmethod(raise_error)}))
+    monkeypatch.setattr(
+        model_manager,
+        "whisper",
+        type("WhisperModule", (), {"load_model": staticmethod(raise_error)}),
+    )
 
     success, error = model_manager.initialize_models()
 
     assert success is False
     assert error == "boom"
     assert model_manager._WHISPER_MODEL is None
-

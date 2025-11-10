@@ -15,7 +15,6 @@ from typing import Optional, Protocol
 from uuid import uuid4
 
 from fastapi import UploadFile
-
 from sqlalchemy import select
 
 from ..database import crud
@@ -53,7 +52,9 @@ class StorageProvider(Protocol):
 
     def delete_file(self, storage_path: str) -> None: ...
 
-    def generate_signed_url(self, storage_path: str, *, expires_in: int) -> Optional[str]: ...
+    def generate_signed_url(
+        self, storage_path: str, *, expires_in: int
+    ) -> Optional[str]: ...
 
 
 class LocalStorageProvider(StorageProvider):
@@ -107,18 +108,24 @@ class LocalStorageProvider(StorageProvider):
         except OSError as exc:  # pragma: no cover - best effort cleanup
             raise StorageError(str(exc)) from exc
 
-    def generate_signed_url(self, storage_path: str, *, expires_in: int) -> Optional[str]:
+    def generate_signed_url(
+        self, storage_path: str, *, expires_in: int
+    ) -> Optional[str]:
         # Local backend does not issue signed URLs; clients can proxy via API.
         return None
 
 
 class GCSStorageProvider(StorageProvider):
-    def __init__(self, bucket_name: str, credentials_path: Optional[Path], signed_url_expiry: int) -> None:
+    def __init__(
+        self, bucket_name: str, credentials_path: Optional[Path], signed_url_expiry: int
+    ) -> None:
         if gcs_storage is None:  # pragma: no cover - optional dependency
             raise StorageError("google-cloud-storage is not installed")
 
         if credentials_path:
-            self.client = gcs_storage.Client.from_service_account_json(str(credentials_path))
+            self.client = gcs_storage.Client.from_service_account_json(
+                str(credentials_path)
+            )
         else:
             self.client = gcs_storage.Client()
 
@@ -153,7 +160,9 @@ class GCSStorageProvider(StorageProvider):
             rewind=True,
         )
 
-        signed_url = self.generate_signed_url(blob_name, expires_in=self._default_signed_url_expiry)
+        signed_url = self.generate_signed_url(
+            blob_name, expires_in=self._default_signed_url_expiry
+        )
         return StoredFile(
             file_id=file_id,
             storage_path=blob_name,
@@ -179,7 +188,9 @@ class GCSStorageProvider(StorageProvider):
         if blob.exists():
             blob.delete()
 
-    def generate_signed_url(self, storage_path: str, *, expires_in: int) -> Optional[str]:
+    def generate_signed_url(
+        self, storage_path: str, *, expires_in: int
+    ) -> Optional[str]:
         blob = self.bucket.blob(storage_path)
         if not blob.exists():
             return None
@@ -198,7 +209,9 @@ class StorageService:
             return LocalStorageProvider(self.settings.storage_local_path)
         if backend == "gcs":
             if not self.settings.storage_gcs_bucket:
-                raise StorageError("STORAGE_GCS_BUCKET is required when using GCS backend")
+                raise StorageError(
+                    "STORAGE_GCS_BUCKET is required when using GCS backend"
+                )
             return GCSStorageProvider(
                 self.settings.storage_gcs_bucket,
                 self.settings.storage_gcs_credentials,
@@ -262,29 +275,29 @@ class StorageService:
 
     def _get_retention_policy(self, file_type: Optional[str] = None) -> Optional[str]:
         """Get retention policy string based on file type.
-        
+
         Args:
             file_type: Optional file type hint ("audio", "document", etc.)
-            
+
         Returns:
             Retention policy string (e.g., "365d", "2555d") or None if disabled
         """
         if not self.settings.storage_retention_enabled:
             return None
-        
+
         if file_type == "audio":
             return f"{self.settings.storage_retention_audio_days}d"
         elif file_type == "document":
             return f"{self.settings.storage_retention_document_days}d"
         else:
             return f"{self.settings.storage_retention_default_days}d"
-    
+
     def _parse_retention_days(self, retention_policy: Optional[str]) -> Optional[int]:
         """Parse retention policy string to days.
-        
+
         Args:
             retention_policy: Retention policy string (e.g., "365d", "2555d")
-            
+
         Returns:
             Number of days or None if invalid
         """
@@ -297,7 +310,7 @@ class StorageService:
         except (ValueError, AttributeError):
             logger.warning(f"Invalid retention policy format: {retention_policy}")
             return None
-    
+
     async def save_file_asset(
         self,
         upload_file: UploadFile,
@@ -310,7 +323,7 @@ class StorageService:
         retention_policy: Optional[str] = None,
     ) -> tuple[FileAsset, StoredFile]:
         """Save file asset with retention policy.
-        
+
         Args:
             upload_file: File to upload
             owner_type: Owner type (e.g., "patient", "consultation")
@@ -325,7 +338,7 @@ class StorageService:
             stored_file.storage_path,
             expires_in=self.settings.storage_signed_url_expiry_seconds,
         )
-        
+
         # Determine retention policy
         if retention_policy is None:
             retention_policy = self._get_retention_policy(file_type)
@@ -368,19 +381,19 @@ class StorageService:
 
     def get_files_for_cleanup(self, batch_size: int = 100) -> list[FileAsset]:
         """Get files that have exceeded their retention policy.
-        
+
         Args:
             batch_size: Maximum number of files to return
-            
+
         Returns:
             List of FileAsset objects that should be deleted
         """
         if not self.settings.storage_retention_enabled:
             return []
-        
+
         cutoff_date = datetime.now(timezone.utc)
         expired_files = []
-        
+
         with get_session() as session:
             # Query all non-deleted file assets with retention policies
             stmt = (
@@ -393,63 +406,66 @@ class StorageService:
                 .limit(batch_size * 2)  # Get more to filter
             )
             files = session.execute(stmt).scalars().all()
-            
+
             for file_asset in files:
                 # Parse retention policy
                 retention_days = self._parse_retention_days(file_asset.retention_policy)
                 if retention_days is None:
                     # Invalid retention policy, skip
                     continue
-                
+
                 # Calculate expiry date
                 expiry_date = file_asset.created_at + timedelta(days=retention_days)
-                
+
                 # Check if expired
                 if expiry_date < cutoff_date:
                     expired_files.append(file_asset)
                     if len(expired_files) >= batch_size:
                         break
-        
+
         return expired_files
-    
+
     def cleanup_expired_files(self, batch_size: int = 100) -> dict[str, int]:
         """Clean up files that have exceeded their retention policy.
-        
+
         Args:
             batch_size: Maximum number of files to process in one run
-            
+
         Returns:
             Dictionary with cleanup statistics: {"deleted": count, "errors": count}
         """
         if not self.settings.storage_retention_enabled:
             logger.info("Storage retention cleanup is disabled")
             return {"deleted": 0, "errors": 0}
-        
+
         expired_files = self.get_files_for_cleanup(batch_size=batch_size)
         deleted_count = 0
         error_count = 0
-        
+
         logger.info(f"Found {len(expired_files)} files exceeding retention policy")
-        
+
         for file_asset in expired_files:
             try:
                 # Delete the physical file
                 self.provider.delete_file(file_asset.storage_path)
-                
+
                 # Soft delete the database record
                 with get_session() as session:
                     crud.soft_delete(session, file_asset)
-                
+
                 deleted_count += 1
-                logger.debug(f"Deleted expired file: {file_asset.id} ({file_asset.original_filename})")
+                logger.debug(
+                    f"Deleted expired file: {file_asset.id} ({file_asset.original_filename})"
+                )
             except Exception as exc:
                 error_count += 1
                 logger.error(f"Failed to delete expired file {file_asset.id}: {exc}")
-        
-        logger.info(f"Retention cleanup completed: {deleted_count} deleted, {error_count} errors")
+
+        logger.info(
+            f"Retention cleanup completed: {deleted_count} deleted, {error_count} errors"
+        )
         return {"deleted": deleted_count, "errors": error_count}
-    
+
     @property
     def is_local_backend(self) -> bool:
         return self._is_local_backend
-

@@ -38,7 +38,7 @@ class MakeAgentPipeline:
         self, audio_file_path: str
     ) -> AsyncIterator[Dict[str, Any]]:
         """Process audio with streaming updates for each stage.
-        
+
         Yields updates as each stage completes:
         - {"stage": "transcription", "status": "in_progress", ...}
         - {"stage": "transcription", "status": "completed", "transcription": "...", ...}
@@ -48,7 +48,7 @@ class MakeAgentPipeline:
         - {"stage": "note_generation", "status": "completed", "generated_note": "...", ...}
         """
         state = MakeAgentState(audio_file_path=audio_file_path)
-        
+
         # Stage 1: Transcription
         yield {
             "stage": "transcription",
@@ -56,14 +56,18 @@ class MakeAgentPipeline:
             "progress": 0.33,
             "message": "Transcribing audio...",
         }
-        
+
         transcription_result = await self.ai_models.transcribe_audio(audio_file_path)
-        state.confidence_scores["transcription"] = transcription_result.get("confidence", 0.0)
+        state.confidence_scores["transcription"] = transcription_result.get(
+            "confidence", 0.0
+        )
         state.warnings.extend(_collect_optional(transcription_result.get("warning")))
         state.is_stub = state.is_stub or transcription_result.get("is_stub", False)
-        
+
         if not transcription_result.get("success"):
-            state.errors.append(transcription_result.get("error", "Transcription failed."))
+            state.errors.append(
+                transcription_result.get("error", "Transcription failed.")
+            )
             state.stage_completed = "transcription_failed"
             yield {
                 "stage": "transcription",
@@ -73,7 +77,7 @@ class MakeAgentPipeline:
                 **state.model_dump(),
             }
             return
-        
+
         state.transcription = transcription_result.get("transcription", "")
         yield {
             "stage": "transcription",
@@ -83,7 +87,7 @@ class MakeAgentPipeline:
             "confidence": state.confidence_scores.get("transcription", 0.0),
             **state.model_dump(),
         }
-        
+
         # Stage 2: Entity extraction
         yield {
             "stage": "entity_extraction",
@@ -91,12 +95,14 @@ class MakeAgentPipeline:
             "progress": 0.66,
             "message": "Extracting entities...",
         }
-        
+
         entity_result = await self.ai_models.extract_entities(state.transcription)
-        state.confidence_scores["entity_extraction"] = entity_result.get("confidence", 0.0)
+        state.confidence_scores["entity_extraction"] = entity_result.get(
+            "confidence", 0.0
+        )
         state.warnings.extend(_collect_optional(entity_result.get("warning")))
         state.is_stub = state.is_stub or entity_result.get("is_stub", False)
-        
+
         if not entity_result.get("success"):
             state.errors.append(entity_result.get("error", "Entity extraction failed."))
             state.stage_completed = "entity_extraction_failed"
@@ -108,7 +114,7 @@ class MakeAgentPipeline:
                 **state.model_dump(),
             }
             return
-        
+
         state.entities = entity_result.get("entities", {})
         yield {
             "stage": "entity_extraction",
@@ -118,7 +124,7 @@ class MakeAgentPipeline:
             "confidence": state.confidence_scores.get("entity_extraction", 0.0),
             **state.model_dump(),
         }
-        
+
         # Stage 3: Note generation
         yield {
             "stage": "note_generation",
@@ -126,12 +132,14 @@ class MakeAgentPipeline:
             "progress": 0.90,
             "message": "Generating clinical note...",
         }
-        
-        note_result = await self.ai_models.generate_note(state.transcription, state.entities)
+
+        note_result = await self.ai_models.generate_note(
+            state.transcription, state.entities
+        )
         state.confidence_scores["note_generation"] = note_result.get("confidence", 0.0)
         state.warnings.extend(_collect_optional(note_result.get("warning")))
         state.is_stub = state.is_stub or note_result.get("is_stub", False)
-        
+
         if not note_result.get("success"):
             state.errors.append(note_result.get("error", "Note generation failed."))
             state.stage_completed = "note_generation_failed"
@@ -149,7 +157,7 @@ class MakeAgentPipeline:
                 **result_dict,
             }
             return
-        
+
         state.generated_note = note_result.get("generated_note", "")
         state.stage_completed = "completed"
         result_dict = state.model_dump()
@@ -158,7 +166,7 @@ class MakeAgentPipeline:
         result_dict["tokens_completion"] = note_result.get("tokens_completion", 0)
         result_dict["cost_cents"] = note_result.get("cost_cents", 0.0)
         result_dict["success"] = note_result.get("success", True)
-        
+
         yield {
             "stage": "note_generation",
             "status": "completed",
@@ -173,11 +181,15 @@ class MakeAgentPipeline:
 
         # Stage 1: Transcription
         transcription_result = await self.ai_models.transcribe_audio(audio_file_path)
-        state.confidence_scores["transcription"] = transcription_result.get("confidence", 0.0)
+        state.confidence_scores["transcription"] = transcription_result.get(
+            "confidence", 0.0
+        )
         state.warnings.extend(_collect_optional(transcription_result.get("warning")))
         state.is_stub = state.is_stub or transcription_result.get("is_stub", False)
         if not transcription_result.get("success"):
-            state.errors.append(transcription_result.get("error", "Transcription failed."))
+            state.errors.append(
+                transcription_result.get("error", "Transcription failed.")
+            )
             state.stage_completed = "transcription_failed"
             return state.model_dump()
 
@@ -185,7 +197,9 @@ class MakeAgentPipeline:
 
         # Stage 2: Entity extraction
         entity_result = await self.ai_models.extract_entities(state.transcription)
-        state.confidence_scores["entity_extraction"] = entity_result.get("confidence", 0.0)
+        state.confidence_scores["entity_extraction"] = entity_result.get(
+            "confidence", 0.0
+        )
         state.warnings.extend(_collect_optional(entity_result.get("warning")))
         state.is_stub = state.is_stub or entity_result.get("is_stub", False)
         if not entity_result.get("success"):
@@ -196,7 +210,9 @@ class MakeAgentPipeline:
         state.entities = entity_result.get("entities", {})
 
         # Stage 3: Note generation
-        note_result = await self.ai_models.generate_note(state.transcription, state.entities)
+        note_result = await self.ai_models.generate_note(
+            state.transcription, state.entities
+        )
         state.confidence_scores["note_generation"] = note_result.get("confidence", 0.0)
         state.warnings.extend(_collect_optional(note_result.get("warning")))
         state.is_stub = state.is_stub or note_result.get("is_stub", False)
@@ -228,4 +244,3 @@ def _collect_optional(value: Optional[str]) -> List[str]:
     if value:
         return [value]
     return []
-

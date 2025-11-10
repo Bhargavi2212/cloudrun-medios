@@ -46,4 +46,3 @@ def record_service_metric(
             metric_value=metric_value,
             metadata=metadata or {},
         )
-

@@ -9,11 +9,11 @@ from typing import Any, Dict, Optional
 from ..database import crud
 from ..database.models import JobQueue
 from ..database.session import get_session
-from .make_agent import MakeAgentService
-from .storage import StorageService, StorageError
-from .telemetry import record_service_metric
-from .document_processing import DocumentProcessingService
 from .config import get_settings
+from .document_processing import DocumentProcessingService
+from .make_agent import MakeAgentService
+from .storage import StorageError, StorageService
+from .telemetry import record_service_metric
 
 
 class JobQueueService:
@@ -26,12 +26,16 @@ class JobQueueService:
     ) -> None:
         self.make_agent_service = make_agent_service or MakeAgentService()
         self.storage_service = storage_service or StorageService()
-        self.document_processing_service = document_processing_service or DocumentProcessingService()
+        self.document_processing_service = (
+            document_processing_service or DocumentProcessingService()
+        )
 
     async def enqueue_audio_processing(self, audio_id: str) -> JobQueue:
         payload = {"audio_id": audio_id}
         with get_session() as session:
-            job = crud.create_job(session, task_type="scribe.audio_pipeline", payload=payload)
+            job = crud.create_job(
+                session, task_type="scribe.audio_pipeline", payload=payload
+            )
             session.refresh(job)
         asyncio.create_task(self._process_job(job.id))
         return job
@@ -49,23 +53,27 @@ class JobQueueService:
             "consultation_id": consultation_id,
         }
         with get_session() as session:
-            job = crud.create_job(session, task_type="documents.process", payload=payload)
+            job = crud.create_job(
+                session, task_type="documents.process", payload=payload
+            )
             session.refresh(job)
         asyncio.create_task(self._process_job(job.id))
         return job
-    
+
     async def enqueue_retention_cleanup(self, batch_size: int = 100) -> JobQueue:
         """Enqueue a retention cleanup job.
-        
+
         Args:
             batch_size: Maximum number of files to process in one run
-            
+
         Returns:
             JobQueue instance
         """
         payload = {"batch_size": batch_size}
         with get_session() as session:
-            job = crud.create_job(session, task_type="storage.retention_cleanup", payload=payload)
+            job = crud.create_job(
+                session, task_type="storage.retention_cleanup", payload=payload
+            )
             session.refresh(job)
         asyncio.create_task(self._process_job(job.id))
         return job
@@ -113,7 +121,7 @@ class JobQueueService:
                     result_dict = result.dict()
                 else:
                     result_dict = result if isinstance(result, dict) else {}
-                
+
                 # Determine success from result
                 success = result_dict.get("success", True)
                 if not success:
@@ -123,16 +131,22 @@ class JobQueueService:
                         success = False
                     elif result_dict.get("stage_completed") == "failed":
                         success = False
-                
+
                 payload["result"] = result_dict
                 status = "completed" if success else "failed"
-                error_message = result_dict.get("error") or "; ".join(result_dict.get("errors", [])) or None
+                error_message = (
+                    result_dict.get("error")
+                    or "; ".join(result_dict.get("errors", []))
+                    or None
+                )
                 metric_service = "scribe"
             elif task_type == "documents.process":
                 file_id = payload.get("file_id")
                 patient_id = payload.get("patient_id")
                 if not file_id or not patient_id:
-                    raise ValueError("file_id and patient_id required for document processing jobs")
+                    raise ValueError(
+                        "file_id and patient_id required for document processing jobs"
+                    )
                 result = await self.document_processing_service.process_document(
                     file_id,
                     patient_id=patient_id,
@@ -146,7 +160,9 @@ class JobQueueService:
             elif task_type == "storage.retention_cleanup":
                 # Retention cleanup job
                 batch_size = payload.get("batch_size", 100)
-                cleanup_stats = self.storage_service.cleanup_expired_files(batch_size=batch_size)
+                cleanup_stats = self.storage_service.cleanup_expired_files(
+                    batch_size=batch_size
+                )
                 payload["result"] = cleanup_stats
                 success = True
                 status = "completed"
@@ -186,4 +202,3 @@ class JobQueueService:
             metric_value=duration,
             metadata={"job_id": job_id, "status": status},
         )
-

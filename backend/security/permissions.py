@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Dict, List
-
 from enum import Enum
+from typing import Dict, List
 
 
 class UserRole(str, Enum):
@@ -40,4 +39,3 @@ ROLE_DEFAULT_PERMISSIONS: Dict[str, List[str]] = {
 
 
 __all__ = ["UserRole", "ROLE_DEFAULT_PERMISSIONS"]
-

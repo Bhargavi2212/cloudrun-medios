@@ -7,10 +7,9 @@ Create Date: 2025-11-09 19:05:00.000000
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
-
 
 # revision identifiers, used by Alembic.
 revision: str = "d4a9b8fe4d1f"
@@ -37,7 +36,13 @@ def _create_enum_if_missing(enum_name: str, values: Sequence[str]) -> None:
 
 
 def upgrade() -> None:
-    document_status_values = ["uploaded", "processing", "completed", "needs_review", "failed"]
+    document_status_values = [
+        "uploaded",
+        "processing",
+        "completed",
+        "needs_review",
+        "failed",
+    ]
     timeline_status_values = ["pending", "completed", "needs_review", "failed"]
     timeline_event_values = ["document", "lab_result", "medication", "vitals", "note"]
 
@@ -61,7 +66,9 @@ def upgrade() -> None:
         create_type=False,
     )
 
-    op.add_column("files", sa.Column("document_type", sa.String(length=50), nullable=True))
+    op.add_column(
+        "files", sa.Column("document_type", sa.String(length=50), nullable=True)
+    )
     op.add_column(
         "files",
         sa.Column(
@@ -175,4 +182,3 @@ def downgrade() -> None:
     op.execute("DROP TYPE IF EXISTS timelineeventtype")
     op.execute("DROP TYPE IF EXISTS timelineeventstatus")
     op.execute("DROP TYPE IF EXISTS documentprocessingstatus")
-

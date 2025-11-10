@@ -51,4 +51,3 @@ async def test_local_storage_saves_and_resolves(monkeypatch):
             assert fetched.id == record.id
         finally:
             session_module.engine.dispose()
-

@@ -25,4 +25,3 @@ def get_rate_limit_config() -> RateLimitConfig:
         default_per_minute=settings.rate_limit_default_per_minute,
         burst_multiplier=settings.rate_limit_burst_multiplier,
     )
-

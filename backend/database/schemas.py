@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, date
+from datetime import date, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -125,4 +125,3 @@ class PaginatedResponse(ORMBase):
     total: int = Field(ge=0)
     page: int = Field(ge=1)
     size: int = Field(ge=1)
-

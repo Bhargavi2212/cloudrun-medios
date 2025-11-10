@@ -125,4 +125,3 @@ def test_predict_rejects_unsupported_model():
 
     with pytest.raises(ValueError):
         service.predict(features, model="invalid-model")
-

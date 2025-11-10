@@ -19,4 +19,3 @@ class FeatureFlagService:
 
 
 feature_flags = FeatureFlagService()
-

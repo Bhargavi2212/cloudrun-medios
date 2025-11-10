@@ -4,20 +4,27 @@ from pathlib import Path
 
 import pytest
 
+from backend.services import config as config_module
+from backend.services.error_response import StandardResponse
 from backend.services.job_queue import JobQueueService
 from backend.services.make_agent import MakeAgentService
 from backend.services.storage import StorageService
-from backend.services.error_response import StandardResponse
-from backend.services import config as config_module
 
 
 class FakeMakeAgentService(MakeAgentService):
-    async def process_audio_pipeline(self, audio_file_path: str, *, consultation_id=None, author_id=None) -> StandardResponse:
+    async def process_audio_pipeline(
+        self, audio_file_path: str, *, consultation_id=None, author_id=None
+    ) -> StandardResponse:
         return StandardResponse(
             success=True,
             data={
                 "transcription": "hello",
-                "entities": {"symptoms": [], "medications": [], "diagnoses": [], "vitals": {}},
+                "entities": {
+                    "symptoms": [],
+                    "medications": [],
+                    "diagnoses": [],
+                    "vitals": {},
+                },
                 "generated_note": "S: ...",
                 "confidence_scores": {},
                 "stage_completed": "completed",
@@ -50,7 +57,9 @@ async def test_enqueue_and_process_job(tmp_path, monkeypatch):
 
     storage_service = StorageService()
     upload = UploadFileMock("sample.wav", b"fake audio data", "audio/wav")
-    record, _ = await storage_service.save_audio_file(upload, consultation_id="consult-123")
+    record, _ = await storage_service.save_audio_file(
+        upload, consultation_id="consult-123"
+    )
 
     job_service = JobQueueService(
         make_agent_service=FakeMakeAgentService(),
@@ -76,5 +85,3 @@ class UploadFileMock:
 
     async def read(self, size: int = -1) -> bytes:
         return self.file.read(size)
-
-

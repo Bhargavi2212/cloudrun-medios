@@ -4,8 +4,8 @@ High-level facade for the AI Scribe pipeline.
 
 from __future__ import annotations
 
-from typing import Dict, Any, Optional
 from time import perf_counter
+from typing import Any, Dict, Optional
 
 from backend.database import crud
 from backend.database.session import get_session
@@ -27,12 +27,14 @@ class MakeAgentService:
         result = await self.ai_models.transcribe_audio(audio_file_path)
         return StandardResponse(
             success=result.get("success", False),
-            data={
-                "transcription": result.get("transcription", ""),
-                "confidence": result.get("confidence", 0.0),
-            }
-            if result.get("success")
-            else None,
+            data=(
+                {
+                    "transcription": result.get("transcription", ""),
+                    "confidence": result.get("confidence", 0.0),
+                }
+                if result.get("success")
+                else None
+            ),
             error=result.get("error"),
             is_stub=result.get("is_stub", False),
             warning=result.get("warning"),
@@ -42,12 +44,14 @@ class MakeAgentService:
         result = await self.ai_models.extract_entities(transcription)
         return StandardResponse(
             success=result.get("success", False),
-            data={
-                "entities": result.get("entities", {}),
-                "confidence": result.get("confidence", 0.0),
-            }
-            if result.get("success")
-            else None,
+            data=(
+                {
+                    "entities": result.get("entities", {}),
+                    "confidence": result.get("confidence", 0.0),
+                }
+                if result.get("success")
+                else None
+            ),
             error=result.get("error"),
             is_stub=result.get("is_stub", False),
             warning=result.get("warning"),
@@ -80,7 +84,10 @@ class MakeAgentService:
             service_name="scribe",
             metric_name="note_generation_seconds",
             metric_value=duration,
-            metadata={"consultation_id": consultation_id, "success": result.get("success", False)},
+            metadata={
+                "consultation_id": consultation_id,
+                "success": result.get("success", False),
+            },
         )
         record_llm_usage(
             request_id=None,
@@ -94,13 +101,15 @@ class MakeAgentService:
 
         return StandardResponse(
             success=result.get("success", False),
-            data={
-                "note": result.get("generated_note", ""),
-                "confidence": result.get("confidence", 0.0),
-                "note_version_id": getattr(version, "id", None),
-            }
-            if result.get("success")
-            else None,
+            data=(
+                {
+                    "note": result.get("generated_note", ""),
+                    "confidence": result.get("confidence", 0.0),
+                    "note_version_id": getattr(version, "id", None),
+                }
+                if result.get("success")
+                else None
+            ),
             error=result.get("error"),
             is_stub=result.get("is_stub", False),
             warning=result.get("warning"),
@@ -115,7 +124,9 @@ class MakeAgentService:
     ) -> StandardResponse:
         start = perf_counter()
         state = await self.pipeline.process_audio(audio_file_path)
-        success = state.get("stage_completed") == "completed" and not state.get("errors")
+        success = state.get("stage_completed") == "completed" and not state.get(
+            "errors"
+        )
         warnings = state.get("warnings", [])
         errors = state.get("errors", [])
 
@@ -174,4 +185,3 @@ class MakeAgentService:
             )
             session.refresh(version)
             return version
-

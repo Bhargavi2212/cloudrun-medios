@@ -53,7 +53,15 @@ DEFAULT_USERS = [
 ]
 
 
-def _ensure_user(session, *, email: str, password: str, first_name: str, last_name: str, role_name: str) -> None:
+def _ensure_user(
+    session,
+    *,
+    email: str,
+    password: str,
+    first_name: str,
+    last_name: str,
+    role_name: str,
+) -> None:
     existing = (
         session.query(User)
         .filter(User.email == email)
@@ -63,9 +71,15 @@ def _ensure_user(session, *, email: str, password: str, first_name: str, last_na
     if existing:
         return
 
-    role = session.query(Role).filter(Role.name == role_name, Role.is_deleted.is_(False)).first()
+    role = (
+        session.query(Role)
+        .filter(Role.name == role_name, Role.is_deleted.is_(False))
+        .first()
+    )
     if role is None:
-        raise ValueError(f"Required role '{role_name}' not found. Seed roles before users.")
+        raise ValueError(
+            f"Required role '{role_name}' not found. Seed roles before users."
+        )
 
     user = create_instance(
         session,
@@ -115,4 +129,3 @@ def seed_patients(count: int = 50) -> None:
 
 if __name__ == "__main__":
     seed_patients()
-

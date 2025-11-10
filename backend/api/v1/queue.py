@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from typing import Optional
-
-from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect, status
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
 import asyncio
 import json
 import logging
+from typing import Optional
+
+from fastapi import (APIRouter, Depends, HTTPException, Query, WebSocket,
+                     WebSocketDisconnect, status)
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, Field
 
 from backend.database.models import QueueStage
 from backend.security.dependencies import require_roles
@@ -113,7 +114,9 @@ async def advance_queue_state(
 @router.post(
     "/{queue_state_id}/assign",
     response_model=StandardResponse,
-    dependencies=[Depends(require_roles([UserRole.NURSE, UserRole.DOCTOR, UserRole.RECEPTIONIST]))],
+    dependencies=[
+        Depends(require_roles([UserRole.NURSE, UserRole.DOCTOR, UserRole.RECEPTIONIST]))
+    ],
 )
 async def assign_queue_state(
     queue_state_id: str,
@@ -174,23 +177,24 @@ async def queue_stream(
     stage: Optional[QueueStage] = Query(default=None),
 ) -> StreamingResponse:
     """Server-Sent Events (SSE) endpoint for real-time queue updates.
-    
+
     This endpoint streams queue updates as they happen, providing an alternative
     to WebSocket for clients that don't support WebSocket connections.
-    
+
     The stream sends:
     - Initial snapshot on connection
     - Updates whenever the queue changes (new entries, state transitions, etc.)
     """
+
     async def generate_stream():
         """Generate SSE stream for queue updates."""
         # Create a queue for this SSE connection
         message_queue: asyncio.Queue = asyncio.Queue()
-        
+
         try:
             # Register this SSE connection
             await queue_service.notifier.register_sse(message_queue)
-            
+
             # Send initial snapshot
             snapshot = queue_service.snapshot(stage=stage)
             initial_message = {
@@ -202,7 +206,7 @@ async def queue_stream(
                 },
             }
             yield f"data: {json.dumps(initial_message)}\n\n"
-            
+
             # Listen for updates
             while True:
                 try:
@@ -221,7 +225,7 @@ async def queue_stream(
         finally:
             # Unregister this SSE connection
             await queue_service.notifier.unregister_sse(message_queue)
-    
+
     return StreamingResponse(
         generate_stream(),
         media_type="text/event-stream",
@@ -231,4 +235,3 @@ async def queue_stream(
             "X-Accel-Buffering": "no",
         },
     )
-

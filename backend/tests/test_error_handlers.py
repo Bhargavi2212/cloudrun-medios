@@ -29,4 +29,3 @@ def test_validation_error_returns_standard_response():
     assert data["success"] is False
     assert data["error"] == "Validation failed."
     assert "data" in data
-

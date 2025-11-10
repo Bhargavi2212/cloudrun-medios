@@ -43,4 +43,3 @@ def _set_updated_at(mapper, connection, target):
 
 
 event.listen(Base, "before_update", _set_updated_at)
-

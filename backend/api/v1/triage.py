@@ -66,7 +66,7 @@ async def predict_triage(payload: TriagePredictRequest) -> StandardResponse:
 @router.post("/explain", response_model=StandardResponse)
 async def explain_triage_prediction(payload: TriagePredictRequest) -> StandardResponse:
     """Explain a triage prediction using SHAP values.
-    
+
     This endpoint provides detailed explanations for why a particular
     severity level was predicted, including feature contributions.
     """
@@ -75,20 +75,22 @@ async def explain_triage_prediction(payload: TriagePredictRequest) -> StandardRe
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="features payload must include at least one feature.",
         )
-    
+
     try:
         explanation = service.explain_prediction(
             payload.features,
             model=payload.model,
             top_k=payload.top_k,
-            use_shap=payload.use_shap if payload.use_shap else True,  # Default to SHAP for explain endpoint
+            use_shap=(
+                payload.use_shap if payload.use_shap else True
+            ),  # Default to SHAP for explain endpoint
         )
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),
         ) from exc
-    
+
     return StandardResponse(
         success=True,
         data=explanation,
@@ -107,4 +109,3 @@ async def triage_metadata() -> StandardResponse:
             "supported_models": service.supported_models,
         },
     )
-

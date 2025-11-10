@@ -10,9 +10,10 @@ from backend.api import api_router
 from backend.api.error_handlers import register_exception_handlers
 from backend.services.config import get_settings
 from backend.services.error_response import StandardResponse
-from backend.services.model_manager import initialize_models
 from backend.services.logging import configure_logging, get_logger
-from backend.services.middleware import AccessLogMiddleware, RequestIDMiddleware
+from backend.services.middleware import (AccessLogMiddleware,
+                                         RequestIDMiddleware)
+from backend.services.model_manager import initialize_models
 
 settings = get_settings()
 configure_logging(settings.app_env)
@@ -58,4 +59,3 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(app, host="0.0.0.0", port=8000)
-

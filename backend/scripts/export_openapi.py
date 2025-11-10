@@ -18,4 +18,3 @@ def export_openapi(path: Path) -> None:
 if __name__ == "__main__":
     output = Path("openapi-schema.json")
     export_openapi(output)
-

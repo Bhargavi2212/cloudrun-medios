@@ -17,4 +17,3 @@ def get_request_id() -> Optional[str]:
 
 
 __all__ = ["set_request_id", "get_request_id"]
-

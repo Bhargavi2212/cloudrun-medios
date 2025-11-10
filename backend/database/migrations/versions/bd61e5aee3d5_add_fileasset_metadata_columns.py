@@ -7,9 +7,8 @@ Create Date: 2025-11-09 18:15:00.000000
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "bd61e5aee3d5"
@@ -19,11 +18,12 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column("files", sa.Column("original_filename", sa.String(length=255), nullable=True))
+    op.add_column(
+        "files", sa.Column("original_filename", sa.String(length=255), nullable=True)
+    )
     op.add_column("files", sa.Column("description", sa.Text(), nullable=True))
 
 
 def downgrade() -> None:
     op.drop_column("files", "description")
     op.drop_column("files", "original_filename")
-

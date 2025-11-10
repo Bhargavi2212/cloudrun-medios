@@ -14,8 +14,8 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from backend.database.base import Base
 from backend.database import models  # noqa: F401
+from backend.database.base import Base
 from backend.services.config import get_settings
 
 # this is the Alembic Config object, which provides
@@ -67,4 +67,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-

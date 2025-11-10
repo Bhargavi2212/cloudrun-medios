@@ -2,8 +2,8 @@ import os
 from pathlib import Path
 
 from backend.services.config import get_settings
-from backend.services.rate_limit import get_rate_limit_config
 from backend.services.feature_flags import FeatureFlagService
+from backend.services.rate_limit import get_rate_limit_config
 
 
 def setup_function():
@@ -59,4 +59,3 @@ def test_feature_flags_and_rate_limit(tmp_path, monkeypatch):
     assert rl.enabled is True
     assert rl.default_per_minute == 200
     assert rl.burst_limit == int(200 * 2.5)
-

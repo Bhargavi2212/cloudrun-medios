@@ -2,26 +2,30 @@
 
 from __future__ import annotations
 
-import pytest
 from io import BytesIO
 from uuid import uuid4
 
+import pytest
 from fastapi import UploadFile
 
-from backend.services.document_processing import DocumentProcessingService
-from backend.database.models import FileAsset, Consultation, Patient, ConsultationStatus
+from backend.database.models import (Consultation, ConsultationStatus,
+                                     FileAsset, Patient)
 from backend.database.session import get_session
+from backend.services.document_processing import DocumentProcessingService
 
 
 @pytest.fixture
 def document_processing_service(db_session):
     """Create a document processing service with test database session."""
+
     def get_session_override():
         yield db_session
-    
+
     # Mock storage service
     class MockStorageService:
-        async def save_file_asset(self, file: UploadFile, consultation_id: str, uploaded_by: str, **kwargs):
+        async def save_file_asset(
+            self, file: UploadFile, consultation_id: str, uploaded_by: str, **kwargs
+        ):
             file_asset = FileAsset(
                 id=str(uuid4()),
                 consultation_id=consultation_id,
@@ -35,7 +39,7 @@ def document_processing_service(db_session):
             db_session.add(file_asset)
             db_session.commit()
             return file_asset, file_asset
-    
+
     service = DocumentProcessingService(
         session_factory=get_session_override,
         storage_service=MockStorageService(),
@@ -44,7 +48,9 @@ def document_processing_service(db_session):
 
 
 @pytest.mark.asyncio
-async def test_process_document_success(document_processing_service, test_consultation, test_user, db_session):
+async def test_process_document_success(
+    document_processing_service, test_consultation, test_user, db_session
+):
     """Test successful document processing."""
     file_content = b"Test PDF content"
     upload_file = UploadFile(
@@ -52,13 +58,13 @@ async def test_process_document_success(document_processing_service, test_consul
         file=BytesIO(file_content),
         headers={"content-type": "application/pdf"},
     )
-    
+
     result = await document_processing_service.process_document(
         file=upload_file,
         consultation_id=test_consultation.id,
         uploaded_by=test_user.id,
     )
-    
+
     assert result is not None
     assert result["file_id"] is not None
     assert result["status"] in ["completed", "needs_review"]
@@ -70,24 +76,25 @@ async def test_process_document_creates_timeline_event(
 ):
     """Test that document processing creates a timeline event."""
     from backend.database.models import TimelineEvent
-    
+
     file_content = b"Test PDF content"
     upload_file = UploadFile(
         filename="test.pdf",
         file=BytesIO(file_content),
         headers={"content-type": "application/pdf"},
     )
-    
+
     result = await document_processing_service.process_document(
         file=upload_file,
         consultation_id=test_consultation.id,
         uploaded_by=test_user.id,
     )
-    
+
     # Verify timeline event was created
-    events = db_session.query(TimelineEvent).filter(
-        TimelineEvent.consultation_id == test_consultation.id
-    ).all()
+    events = (
+        db_session.query(TimelineEvent)
+        .filter(TimelineEvent.consultation_id == test_consultation.id)
+        .all()
+    )
     assert len(events) > 0
     assert any(e.event_type.value == "document" for e in events)
-

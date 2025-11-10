@@ -54,4 +54,3 @@ def test_medical_summarizer_stub_when_core_missing(monkeypatch):
 
     assert result.is_stub is True
     assert "Summarizer Unavailable" in result.summary_markdown
-

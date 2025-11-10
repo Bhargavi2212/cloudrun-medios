@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Callable, Any, Sequence
 from enum import Enum
+from typing import Any, Callable, Sequence
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
@@ -14,7 +14,6 @@ from ..database.models import User, UserStatus
 from ..database.session import get_db_session
 from .jwt import decode_access_token
 
-
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
@@ -23,7 +22,7 @@ def get_current_user(
     session: Session = Depends(get_db_session),
 ) -> User:
     """Get the current authenticated user.
-    
+
     Returns 401 Unauthorized if no credentials are provided.
     Returns 401 Unauthorized if the token is invalid.
     Returns 403 Forbidden if the user is inactive.
@@ -34,7 +33,7 @@ def get_current_user(
             detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     token = credentials.credentials
     try:
         payload = decode_access_token(token)
@@ -75,7 +74,9 @@ def get_current_user(
         )
 
     if user.status != UserStatus.ACTIVE:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User inactive")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="User inactive"
+        )
 
     return user
 
@@ -100,8 +101,9 @@ def require_roles(*allowed_roles: Any) -> Callable[[User], User]:
         role_names = {role.name for role in user.roles or []}
         normalized_roles = _normalize_roles(allowed_roles)
         if normalized_roles and role_names.isdisjoint(normalized_roles):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+            )
         return user
 
     return dependency
-

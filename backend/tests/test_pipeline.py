@@ -13,18 +13,33 @@ class StubModels(AIModelsService):
         pass
 
     async def transcribe_audio(self, path: str):
-        return {"success": True, "transcription": "Patient has chest pain.", "confidence": 0.9, "is_stub": False}
+        return {
+            "success": True,
+            "transcription": "Patient has chest pain.",
+            "confidence": 0.9,
+            "is_stub": False,
+        }
 
     async def extract_entities(self, text: str):
         return {
             "success": True,
-            "entities": {"symptoms": ["chest pain"], "medications": [], "diagnoses": [], "vitals": {}},
+            "entities": {
+                "symptoms": ["chest pain"],
+                "medications": [],
+                "diagnoses": [],
+                "vitals": {},
+            },
             "confidence": 0.6,
             "is_stub": False,
         }
 
     async def generate_note(self, transcription, entities):
-        return {"success": True, "generated_note": "S: chest pain.\nO: ...", "confidence": 0.8, "is_stub": False}
+        return {
+            "success": True,
+            "generated_note": "S: chest pain.\nO: ...",
+            "confidence": 0.8,
+            "is_stub": False,
+        }
 
 
 @pytest.mark.asyncio
@@ -37,4 +52,3 @@ async def test_pipeline_completes_successfully(tmp_path):
 
     assert result["stage_completed"] == "completed"
     assert result["generated_note"].startswith("S:")
-
