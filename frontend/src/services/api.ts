@@ -45,16 +45,22 @@ const requestErrorHandler: ResponseErrorHandler = (error) => Promise.reject(erro
 
 const responseHandler = (response: AxiosResponse) => response
 
+interface RetryableAxiosRequestConfig {
+  _retry?: boolean
+  headers?: Record<string, string>
+  [key: string]: unknown
+}
+
 const responseErrorHandler: ResponseErrorHandler = async (error) => {
-  const originalRequest: any = error.config
-  if (error.response?.status === 401 && !originalRequest?._retry) {
+  const originalRequest = error.config as RetryableAxiosRequestConfig | undefined
+  if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
     const store = useAuthStore.getState()
     const refreshed = await store.tryRefresh()
     if (refreshed) {
       originalRequest._retry = true
       originalRequest.headers = originalRequest.headers ?? {}
       originalRequest.headers.Authorization = `Bearer ${useAuthStore.getState().token}`
-      return api(originalRequest)
+      return api(originalRequest as Parameters<typeof api>[0])
     }
     store.logout()
   }
@@ -72,11 +78,19 @@ const unwrap = <T>(response: AxiosResponse<StandardResponse<T>>): T => {
   return (payload.data ?? null) as T
 }
 
+interface RegisterPayload {
+  email: string
+  password: string
+  first_name?: string
+  last_name?: string
+  roles: string[]
+}
+
 export const authAPI = {
   login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }),
   getCurrentUser: () => api.get('/auth/me'),
-  register: (payload: any) => api.post('/auth/register', payload),
+  register: (payload: RegisterPayload) => api.post('/auth/register', payload),
   refresh: (refreshToken: string) =>
     api.post('/auth/refresh', { refresh_token: refreshToken }),
   logout: (refreshToken: string) =>

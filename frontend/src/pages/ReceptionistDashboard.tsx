@@ -181,8 +181,10 @@ const ReceptionistDashboard = () => {
       setSelectedPatient(null)
       setChiefComplaint('')
       refetch()
-    } catch (error: any) {
-      const message = error?.response?.data?.detail || error?.message || 'Unable to check in patient'
+    } catch (error) {
+      const message = error instanceof Error 
+        ? error.message 
+        : (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Unable to check in patient'
       toast({ title: 'Check-in failed', description: message, variant: 'destructive' })
     } finally {
       setIsCheckInPending(false)
@@ -216,8 +218,10 @@ const ReceptionistDashboard = () => {
         contact_phone: '',
         contact_email: '',
       })
-    } catch (error: any) {
-      const message = error?.response?.data?.detail || error?.message || 'Unable to create patient'
+    } catch (error) {
+      const message = error instanceof Error 
+        ? error.message 
+        : (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Unable to create patient'
       toast({ title: 'Creation failed', description: message, variant: 'destructive' })
     }
   }

@@ -36,10 +36,11 @@ const AccountSettingsPage: React.FC = () => {
       })
       await refreshUser()
       toast({ title: 'Profile updated', description: 'Your account details were saved.' })
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Please try again later.'
       toast({
         title: 'Unable to update profile',
-        description: error?.message || 'Please try again later.',
+        description: errorMessage,
         variant: 'destructive',
       })
     } finally {
@@ -61,10 +62,13 @@ const AccountSettingsPage: React.FC = () => {
       })
       setPasswordForm({ current_password: '', new_password: '', confirm_password: '' })
       toast({ title: 'Password updated', description: 'Use your new password next time you sign in.' })
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : (error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Please verify your current password.'
       toast({
         title: 'Unable to change password',
-        description: error?.response?.data?.error || error?.message || 'Please verify your current password.',
+        description: errorMessage,
         variant: 'destructive',
       })
     } finally {

@@ -241,8 +241,10 @@ const DoctorWorkflow = () => {
       const summary = await manageAPI.getTimelineSummary(patientId, { forceRefresh: true })
       queryClient.setQueryData(['patient-timeline', patientId], summary)
       toast({ title: 'Summary refreshed' })
-    } catch (error: any) {
-      const message = error?.response?.data?.detail || error?.message || 'Unable to refresh summary'
+    } catch (error) {
+      const message = error instanceof Error 
+        ? error.message 
+        : (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Unable to refresh summary'
       toast({ title: 'Refresh failed', description: message, variant: 'destructive' })
     }
   }
@@ -256,8 +258,10 @@ const DoctorWorkflow = () => {
         result,
       )
       toast({ title: 'Records refreshed' })
-    } catch (error: any) {
-      const message = error?.response?.data?.detail || error?.message || 'Unable to refresh records'
+    } catch (error) {
+      const message = error instanceof Error 
+        ? error.message 
+        : (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Unable to refresh records'
       toast({ title: 'Refresh failed', description: message, variant: 'destructive' })
     }
   }
@@ -311,9 +315,11 @@ const DoctorWorkflow = () => {
         description: 'Review the generated SOAP note before finalizing.',
       })
     },
-    onError: (error: any) => {
+    onError: (error) => {
       setProcessingStatus((prev) => ({ ...prev, noteGeneration: 'failed' }))
-      const message = error?.response?.data?.detail || error?.message || 'Unable to generate note'
+      const message = error instanceof Error 
+        ? error.message 
+        : (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Unable to generate note'
       toast({ title: 'Generation failed', description: message, variant: 'destructive' })
     },
   })
@@ -333,8 +339,10 @@ const DoctorWorkflow = () => {
       setSelectedConsultationId(patient.consultation_id)
       queryClient.invalidateQueries({ queryKey: ['queue-data'] })
     },
-    onError: (error: any) => {
-      const message = error?.response?.data?.detail || error?.message || 'Unable to assign patient'
+    onError: (error) => {
+      const message = error instanceof Error 
+        ? error.message 
+        : (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Unable to assign patient'
       toast({ title: 'Assignment failed', description: message, variant: 'destructive' })
     },
   })
@@ -358,8 +366,10 @@ const DoctorWorkflow = () => {
       setIsConsultationActive(true)
       queryClient.invalidateQueries({ queryKey: ['queue-data'] })
     },
-    onError: (error: any) => {
-      const message = error?.response?.data?.detail || error?.message || 'Unable to start consultation'
+    onError: (error) => {
+      const message = error instanceof Error 
+        ? error.message 
+        : (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Unable to start consultation'
       toast({ title: 'Action failed', description: message, variant: 'destructive' })
     },
   })
@@ -380,8 +390,10 @@ const DoctorWorkflow = () => {
       setIsConsultationActive(false)
       queryClient.invalidateQueries({ queryKey: ['queue-data'] })
     },
-    onError: (error: any) => {
-      const message = error?.response?.data?.detail || error?.message || 'Unable to complete consultation'
+    onError: (error) => {
+      const message = error instanceof Error 
+        ? error.message 
+        : (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Unable to complete consultation'
       toast({ title: 'Action failed', description: message, variant: 'destructive' })
     },
   })
@@ -500,8 +512,10 @@ const DoctorWorkflow = () => {
         title: 'Audio processed',
         description: 'Transcription and AI note generated from the conversation.',
       })
-    } catch (error: any) {
-      const message = error?.response?.data?.detail || error?.message || 'Unable to process audio'
+    } catch (error) {
+      const message = error instanceof Error 
+        ? error.message 
+        : (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Unable to process audio'
       toast({ title: 'Processing failed', description: message, variant: 'destructive' })
     } finally {
       setIsAudioProcessing(false)
@@ -1531,10 +1545,11 @@ const DoctorWorkflow = () => {
                                   title: 'Note updated',
                                   description: 'Clinical note has been saved.',
                                 })
-                              } catch (error: any) {
+                              } catch (error) {
+                                const errorMessage = error instanceof Error ? error.message : 'Failed to update note'
                                 toast({
                                   title: 'Update failed',
-                                  description: error?.message || 'Failed to update note',
+                                  description: errorMessage,
                                   variant: 'destructive',
                                 })
                               }
@@ -1603,7 +1618,6 @@ const DoctorWorkflow = () => {
           {noteOutput && selectedConsultationId && (
             <NoteApprovalWorkflow
               noteStatus={noteStatus}
-              consultationId={selectedConsultationId}
               onSubmit={handleSubmitNoteForApproval}
               onApprove={handleApproveNote}
               onReject={handleRejectNote}

@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface MetricsChartProps {
   title: string
-  data: Array<{ name: string; value: number; [key: string]: any }>
+  data: Array<{ name: string; value: number; [key: string]: string | number }>
   type?: 'bar' | 'line'
   dataKey?: string
   color?: string

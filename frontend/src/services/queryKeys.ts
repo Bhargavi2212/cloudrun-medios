@@ -10,7 +10,7 @@ export const queryKeys = {
   patients: {
     all: ['patients'] as const,
     lists: () => [...queryKeys.patients.all, 'list'] as const,
-    list: (filters?: any) => [...queryKeys.patients.lists(), { filters }] as const,
+    list: (filters?: Record<string, unknown>) => [...queryKeys.patients.lists(), { filters }] as const,
     details: () => [...queryKeys.patients.all, 'detail'] as const,
     detail: (id: number) => [...queryKeys.patients.details(), id] as const,
     search: (query: string) => [...queryKeys.patients.all, 'search', query] as const,
@@ -20,7 +20,7 @@ export const queryKeys = {
   consultations: {
     all: ['consultations'] as const,
     lists: () => [...queryKeys.consultations.all, 'list'] as const,
-    list: (filters?: any) => [...queryKeys.consultations.lists(), { filters }] as const,
+    list: (filters?: Record<string, unknown>) => [...queryKeys.consultations.lists(), { filters }] as const,
     details: () => [...queryKeys.consultations.all, 'detail'] as const,
     detail: (id: number) => [...queryKeys.consultations.details(), id] as const,
     patient: (patientId: number) => [...queryKeys.consultations.all, 'patient', patientId] as const,

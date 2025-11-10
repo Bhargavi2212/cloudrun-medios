@@ -14,6 +14,7 @@ ${description}` : title
     if (typeof window !== 'undefined') {
       window.alert(message)
     } else {
+      // eslint-disable-next-line no-console
       console.log(message)
     }
   }

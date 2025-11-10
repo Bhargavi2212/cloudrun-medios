@@ -1,4 +1,3 @@
-import React from 'react'
 import { useSessionTimeout } from '@/hooks/useSessionTimeout'
 
 /**

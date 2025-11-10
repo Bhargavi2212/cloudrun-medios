@@ -53,10 +53,13 @@ const RegisterPage: React.FC = () => {
         description: 'You can now sign in with your credentials.',
       })
       navigate('/login', { replace: true })
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : (error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Could not create account.'
       toast({
         title: 'Registration Failed',
-        description: error?.response?.data?.error || error?.message || 'Could not create account.',
+        description: errorMessage,
         variant: 'destructive',
       })
     } finally {

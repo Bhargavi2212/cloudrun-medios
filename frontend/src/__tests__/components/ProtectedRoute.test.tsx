@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import { render, screen } from '../utils'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { useAuthStore } from '@/store/authStore'
@@ -9,6 +9,12 @@ vi.mock('@/store/authStore', () => ({
   ROLE_CONFIG: {},
 }))
 
+interface MockAuthStoreReturn {
+  isAuthenticated: boolean
+  user: { id: string; email: string; role: string } | null
+  isLoading: boolean
+}
+
 describe('ProtectedRoute', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -16,11 +22,11 @@ describe('ProtectedRoute', () => {
 
   it('shows loading state when isLoading is true', () => {
     // Mock loading state
-    ;(useAuthStore as any).mockReturnValue({
+    (useAuthStore as Mock).mockReturnValue({
       isAuthenticated: false,
       user: null,
       isLoading: true,
-    })
+    } as MockAuthStoreReturn)
 
     render(
       <ProtectedRoute>
@@ -34,13 +40,13 @@ describe('ProtectedRoute', () => {
 
   it('redirects to login when not authenticated', () => {
     // Mock unauthenticated state
-    ;(useAuthStore as any).mockReturnValue({
+    (useAuthStore as Mock).mockReturnValue({
       isAuthenticated: false,
       user: null,
       isLoading: false,
-    })
+    } as MockAuthStoreReturn)
 
-    const { container } = render(
+    render(
       <ProtectedRoute>
         <div>Protected Content</div>
       </ProtectedRoute>
@@ -53,7 +59,7 @@ describe('ProtectedRoute', () => {
 
   it('renders children when authenticated', () => {
     // Mock authenticated state
-    ;(useAuthStore as any).mockReturnValue({
+    (useAuthStore as Mock).mockReturnValue({
       isAuthenticated: true,
       user: {
         id: '1',
@@ -61,7 +67,7 @@ describe('ProtectedRoute', () => {
         role: 'doctor',
       },
       isLoading: false,
-    })
+    } as MockAuthStoreReturn)
 
     render(
       <ProtectedRoute>

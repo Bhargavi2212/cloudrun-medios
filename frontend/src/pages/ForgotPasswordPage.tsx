@@ -9,7 +9,6 @@ import { authAPI } from '@/services/api'
 const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [resetToken, setResetToken] = useState<string | null>(null)
   const { toast } = useToast()
   const navigate = useNavigate()
 
@@ -29,7 +28,6 @@ const ForgotPasswordPage: React.FC = () => {
       const token = data.data?.reset_token
       if (token) {
         // For development: show token and allow navigation to reset page
-        setResetToken(token)
         toast({
           title: 'Reset Token Generated',
           description: 'In production, this would be sent via email. Redirecting to reset page...',
@@ -45,10 +43,13 @@ const ForgotPasswordPage: React.FC = () => {
         })
         setEmail('')
       }
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : (error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Please try again later.'
       toast({
         title: 'Unable to send reset link',
-        description: error?.response?.data?.error || error?.message || 'Please try again later.',
+        description: errorMessage,
         variant: 'destructive',
       })
     } finally {

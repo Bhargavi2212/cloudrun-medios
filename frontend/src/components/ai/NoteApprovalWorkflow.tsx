@@ -11,7 +11,6 @@ export type NoteStatus = 'draft' | 'pending_approval' | 'approved' | 'rejected'
 
 interface NoteApprovalWorkflowProps {
   noteStatus: NoteStatus
-  consultationId?: string
   onStatusChange?: (newStatus: NoteStatus) => void
   onSubmit?: () => Promise<void>
   onApprove?: () => Promise<void>
@@ -23,7 +22,6 @@ interface NoteApprovalWorkflowProps {
 
 export const NoteApprovalWorkflow: React.FC<NoteApprovalWorkflowProps> = ({
   noteStatus,
-  consultationId,
   onStatusChange,
   onSubmit,
   onApprove,
@@ -62,10 +60,11 @@ export const NoteApprovalWorkflow: React.FC<NoteApprovalWorkflowProps> = ({
         title: 'Note submitted',
         description: 'Note has been submitted for approval.',
       })
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to submit note for approval'
       toast({
         title: 'Submission failed',
-        description: error?.message || 'Failed to submit note for approval',
+        description: errorMessage,
         variant: 'destructive',
       })
     } finally {
@@ -83,10 +82,11 @@ export const NoteApprovalWorkflow: React.FC<NoteApprovalWorkflowProps> = ({
         title: 'Note approved',
         description: 'Note has been approved.',
       })
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to approve note'
       toast({
         title: 'Approval failed',
-        description: error?.message || 'Failed to approve note',
+        description: errorMessage,
         variant: 'destructive',
       })
     } finally {
@@ -106,10 +106,11 @@ export const NoteApprovalWorkflow: React.FC<NoteApprovalWorkflowProps> = ({
         title: 'Note rejected',
         description: 'Note has been rejected.',
       })
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to reject note'
       toast({
         title: 'Rejection failed',
-        description: error?.message || 'Failed to reject note',
+        description: errorMessage,
         variant: 'destructive',
       })
     } finally {

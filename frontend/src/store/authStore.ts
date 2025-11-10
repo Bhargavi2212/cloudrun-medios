@@ -76,7 +76,18 @@ interface AuthState {
   getRoleConfig: () => RoleConfig | null
 }
 
-const buildUser = (raw: any): User => {
+interface RawUser {
+  id: string
+  email: string
+  first_name?: string
+  last_name?: string
+  full_name?: string
+  role: string
+  roles?: string[]
+  phone?: string
+}
+
+const buildUser = (raw: RawUser): User => {
   const fullName = raw?.full_name ?? [raw?.first_name, raw?.last_name].filter(Boolean).join(' ').trim()
   return {
     id: raw.id,
@@ -143,21 +154,22 @@ export const useAuthStore = create<AuthState>()(
             throw new Error(payload?.error || 'Unable to load profile')
           }
 
-          const user = buildUser(payload.data)
+          const user = buildUser(payload.data as RawUser)
           set({
             user,
             isAuthenticated: true,
             permissions: getPermissionsForRole(user.role),
             error: null,
           })
-        } catch (error: any) {
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Authentication required'
           set({
             user: null,
             token: null,
             refreshToken: null,
             isAuthenticated: false,
             permissions: [],
-            error: error?.message || 'Authentication required',
+            error: errorMessage,
           })
         } finally {
           set({ isLoading: false })
@@ -174,7 +186,7 @@ export const useAuthStore = create<AuthState>()(
           }
 
           const { access_token, refresh_token, user: rawUser } = payload.data
-          const user = buildUser(rawUser)
+          const user = buildUser(rawUser as RawUser)
           set({
             token: access_token,
             refreshToken: refresh_token,
@@ -183,8 +195,10 @@ export const useAuthStore = create<AuthState>()(
             permissions: getPermissionsForRole(user.role),
             error: null,
           })
-        } catch (error: any) {
-          const message = error?.response?.data?.error || error?.message || 'Unable to login'
+        } catch (error) {
+          const message = error instanceof Error 
+            ? error.message 
+            : (error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Unable to login'
           set({
             error: message,
             isAuthenticated: false,
@@ -249,7 +263,7 @@ export const useAuthStore = create<AuthState>()(
           if (!payload?.success) {
             throw new Error(payload?.error || 'Unable to load profile')
           }
-          const user = buildUser(payload.data)
+          const user = buildUser(payload.data as RawUser)
           set({ user, permissions: getPermissionsForRole(user.role) })
         } catch (error) {
           await get().logout()
@@ -299,7 +313,7 @@ export const useAuthStore = create<AuthState>()(
         if (!data?.success) {
           throw new Error(data?.error || 'Unable to update profile')
         }
-        const user = buildUser(data.data)
+        const user = buildUser(data.data as RawUser)
         set({ user, permissions: getPermissionsForRole(user.role) })
       },
 

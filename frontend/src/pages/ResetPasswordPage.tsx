@@ -65,10 +65,13 @@ const ResetPasswordPage: React.FC = () => {
       
       // Navigate to login page
       navigate('/login', { replace: true })
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : (error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'The reset token may be invalid or expired. Please request a new one.'
       toast({
         title: 'Password Reset Failed',
-        description: error?.response?.data?.error || error?.message || 'The reset token may be invalid or expired. Please request a new one.',
+        description: errorMessage,
         variant: 'destructive',
       })
     } finally {

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { useToast } from '@/components/ui/use-toast'
@@ -7,7 +7,7 @@ interface JWTPayload {
   exp: number
   iat: number
   sub: string
-  [key: string]: any
+  [key: string]: string | number | boolean | undefined
 }
 
 /**
@@ -57,7 +57,7 @@ export function useSessionTimeout() {
     return decoded.exp * 1000 // Convert to milliseconds
   }
 
-  const checkTokenExpiry = async () => {
+  const checkTokenExpiry = useCallback(async () => {
     if (!isAuthenticated || !token) {
       setTimeUntilExpiry(null)
       setShowWarning(false)
@@ -125,7 +125,7 @@ export function useSessionTimeout() {
         })
       }
     }
-  }
+  }, [isAuthenticated, token, refreshToken, tryRefresh, logout, navigate, toast])
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -151,7 +151,7 @@ export function useSessionTimeout() {
         intervalRef.current = null
       }
     }
-  }, [isAuthenticated, token, refreshToken])
+  }, [isAuthenticated, checkTokenExpiry])
 
   // Reset warning when token changes (after refresh)
   useEffect(() => {

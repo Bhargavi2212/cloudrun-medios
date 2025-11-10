@@ -35,10 +35,11 @@ export default function LoginPage() {
       })
       const redirectTo = location.state?.from?.pathname || defaultRoute
       navigate(redirectTo, { replace: true })
-    } catch (err: any) {
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Invalid credentials. Please try again.'
       toast({
         title: 'Login Failed',
-        description: err?.message || 'Invalid credentials. Please try again.',
+        description: errorMessage,
         variant: 'destructive',
       })
     }

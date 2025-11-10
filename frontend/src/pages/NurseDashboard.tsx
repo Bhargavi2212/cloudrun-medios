@@ -369,9 +369,10 @@ const NurseDashboard = () => {
             title: 'Records uploaded',
             description: `${uploadResult.records?.length ?? attachments.length} file(s) attached to consultation.`,
           })
-        } catch (uploadError: any) {
-          const message =
-            uploadError?.response?.data?.detail || uploadError?.message || 'Failed to upload records.'
+        } catch (uploadError) {
+          const message = uploadError instanceof Error 
+            ? uploadError.message 
+            : (uploadError as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Failed to upload records.'
           toast({
             title: 'Record upload failed',
             description: message,
@@ -391,9 +392,10 @@ const NurseDashboard = () => {
 
       handleCloseDialog()
       refetch()
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.detail || error?.message || 'Failed to submit vitals.'
+    } catch (error) {
+      const message = error instanceof Error 
+        ? error.message 
+        : (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Failed to submit vitals.'
       toast({ title: 'Submission failed', description: message, variant: 'destructive' })
     } finally {
       setIsSubmitting(false)

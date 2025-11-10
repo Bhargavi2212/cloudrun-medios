@@ -24,6 +24,26 @@ interface UseQueueDataSSEResult {
 const stageFilter = (patients: QueuePatient[], stage: QueueStage) =>
   patients.filter((patient) => patient.status === stage)
 
+interface QueueStateMessage {
+  patient_id: string
+  patient_name?: string
+  stage: QueueStage
+  priority_level?: number
+  chief_complaint?: string
+  wait_time_seconds?: number
+  assigned_to?: string
+  assigned_to_name?: string
+  consultation_id?: string
+  created_at?: string
+}
+
+interface QueueSSEMessage {
+  type: string
+  data: {
+    states?: QueueStateMessage[]
+  }
+}
+
 /**
  * Hook for real-time queue data using Server-Sent Events (SSE).
  * Falls back to polling if SSE is not available.
@@ -66,13 +86,13 @@ export const useQueueDataSSE = (): UseQueueDataSSEResult => {
 
     eventSource.onmessage = (event) => {
       try {
-        const message = JSON.parse(event.data)
+        const message = JSON.parse(event.data) as QueueSSEMessage
         
         if (message.type === 'queue.snapshot' || message.type === 'queue.update') {
           const queueData = message.data
           if (queueData.states) {
             // Convert queue states to patients format
-            const updatedPatients: QueuePatient[] = queueData.states.map((state: any) => ({
+            const updatedPatients: QueuePatient[] = queueData.states.map((state: QueueStateMessage) => ({
               id: state.patient_id,
               patient_id: state.patient_id,
               patient_name: state.patient_name || 'Unknown',

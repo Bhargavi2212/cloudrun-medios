@@ -58,4 +58,5 @@ const ToastPrimitive = Object.assign(Toast, {
 export type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>
 export type ToastActionElement = React.ReactElement<typeof ToastAction>
 
+// eslint-disable-next-line react-refresh/only-export-components
 export { toastVariants, ToastPrimitive as Toast, ToastProvider, ToastViewport, ToastTitle, ToastDescription, ToastAction }
