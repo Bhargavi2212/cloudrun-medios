@@ -220,31 +220,42 @@ def db_session() -> Generator[Session, None, None]:
 
 
 @pytest.fixture(scope="function")
-def client(db_session: Session) -> Generator[TestClient, None, None]:
+def client(db_session: Session, monkeypatch) -> Generator[TestClient, None, None]:
     """Create a FastAPI test client with database session override."""
     from contextlib import contextmanager
 
     from backend.api.v1 import auth as auth_router
+    from backend.database import session as session_module
     from backend.database.session import get_db_session, get_session
     from backend.services.auth_service import AuthService
 
-    # Ensure tables exist by binding the session to the engine that has tables
-    # This ensures all queries use the same engine with tables
+    # CRITICAL: Replace the engine in session.py with the test engine
+    # This ensures both use the same SQLite in-memory database
     engine = db_session.bind
     if engine:
         # Force create all tables on the engine if they don't exist
         Base.metadata.create_all(bind=engine)
 
-    def override_get_db_session():
-        # CRITICAL: Ensure we're using the test session, not the one from session.py
-        # The test session is bound to the engine with tables and test data
-        # Verify the session is bound to the correct engine
-        if db_session.bind is not engine:
-            # Rebind the session to the test engine if needed
-            db_session.bind = engine
+        # Replace the engine in session.py with the test engine
+        # This ensures session.py uses the same database as the test fixtures
+        monkeypatch.setattr(session_module, "engine", engine)
+        # Also update SessionLocal to use the test engine
+        from sqlalchemy.orm import sessionmaker
 
-        # Ensure tables exist on the engine
-        Base.metadata.create_all(bind=engine)
+        session_module.SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False, expire_on_commit=False)
+
+    def override_get_db_session():
+        # CRITICAL: Always use the test session from fixtures, not session.py
+        # The test session is bound to the engine with tables and test data
+        # Ensure the session is bound to the test engine
+        test_engine = db_session.bind
+        if test_engine is None or test_engine is not engine:
+            # Force rebind to test engine
+            db_session.bind = engine
+            test_engine = engine
+
+        # Ensure tables exist on the test engine
+        Base.metadata.create_all(bind=test_engine)
 
         # Commit any pending changes from fixtures to ensure they're persisted
         try:
@@ -266,7 +277,7 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
             # Begin a new transaction to ensure we can see committed data
             db_session.begin()
 
-        # The session is ready to query
+        # The session is ready to query - it's bound to the test engine with tables and data
         try:
             yield db_session
         finally:
