@@ -35,6 +35,11 @@ wheels/
 .env
 .env.local
 
+# Google Cloud credentials
+gcp-key.json
+*-key.json
+*.json.key
+
 # Database
 *.db
 *.sqlite
