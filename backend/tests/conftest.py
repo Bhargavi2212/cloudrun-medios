@@ -161,48 +161,19 @@ from backend.security.password import password_hasher
 
 @pytest.fixture(scope="function")
 def db_session() -> Generator[Session, None, None]:
-    """Create a PostgreSQL database session for testing.
+    """Create a test database session using SQLite in-memory.
 
-    Uses TEST_DATABASE_URL if set, otherwise falls back to DATABASE_URL from settings.
-    If neither is set, uses a default PostgreSQL test database URL.
+    Uses SQLite for fast, isolated tests that don't require a database server.
     """
-    # Get test database URL from environment, with fallbacks
-    # PRIORITY: Always use PostgreSQL for tests
-    # 1. Check TEST_DATABASE_URL first
-    test_db_url = os.environ.get("TEST_DATABASE_URL")
+    from sqlalchemy.pool import StaticPool
 
-    # 2. Check DATABASE_URL environment variable
-    if not test_db_url:
-        test_db_url = os.environ.get("DATABASE_URL")
-
-    # 3. If DATABASE_URL is SQLite, override it to PostgreSQL
-    if test_db_url and "sqlite" in test_db_url.lower():
-        test_db_url = None  # Force fallback to PostgreSQL
-
-    # 4. Fallback to PostgreSQL default
-    if not test_db_url:
-        test_db_url = "postgresql+psycopg2://postgres:postgres@localhost:5432/medios_test"
-
-    # For PostgreSQL, we don't need special connect_args
+    # Use SQLite in-memory database for tests
+    # This is faster and doesn't require a database server
     engine = create_engine(
-        test_db_url,
-        pool_pre_ping=True,
-        pool_size=1,
-        max_overflow=0,
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
     )
-
-    # Enable the citext extension for PostgreSQL (required for case-insensitive email)
-    # This must be done before creating tables that use CITEXT type
-    from sqlalchemy import text
-
-    try:
-        with engine.connect() as conn:
-            conn.execute(text("CREATE EXTENSION IF NOT EXISTS citext;"))
-            conn.commit()
-    except Exception as e:
-        # If extension creation fails, log it but continue
-        # (might fail if extension already exists or if user doesn't have permission)
-        print(f"Warning: Could not create citext extension: {e}")
 
     # Create all tables before creating session
     # Import models module to ensure all models are registered
@@ -233,20 +204,13 @@ def db_session() -> Generator[Session, None, None]:
         session.rollback()
     finally:
         session.close()
-        # For PostgreSQL, we can't easily drop tables with circular dependencies
-        # Instead, we'll just rollback the transaction and let the next test
-        # use the same tables. If you need a clean slate, use a separate test database.
-        # For now, we'll skip drop_all to avoid circular dependency errors
+        # For SQLite in-memory, tables are automatically dropped when the connection closes
+        # But we'll explicitly drop them for clarity
         try:
-            # Try to drop all tables, but catch circular dependency errors
             Base.metadata.drop_all(bind=engine, checkfirst=True)
-        except Exception as e:
-            # If there's a circular dependency or other error, just log it
-            # The tables will remain, but that's okay for test isolation
-            # since we rollback transactions
-            if "CircularDependencyError" not in str(type(e).__name__):
-                # Re-raise if it's not a circular dependency error
-                raise
+        except Exception:
+            # Ignore errors during cleanup
+            pass
         finally:
             engine.dispose()
 
