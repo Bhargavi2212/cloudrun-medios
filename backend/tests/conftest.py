@@ -274,9 +274,8 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
         except Exception:
             db_session.rollback()
         # Expire all objects to force fresh queries from the database
+        # This ensures the session will query the database directly instead of using cached objects
         db_session.expire_all()
-        # Ensure the session is in a clean state for queries
-        db_session.flush()
         try:
             yield db_session
         finally:
@@ -445,7 +444,7 @@ def test_note(db_session: Session, test_consultation: Consultation, test_user: U
     # Ensure the note is visible to subsequent queries
     # Expire all objects to clear the session cache, then re-query
     db_session.expire_all()
-    
+
     # Query the note again to ensure it's visible with all relationships
     # This ensures the note is actually in the database and can be found by API queries
     stmt = (
