@@ -183,9 +183,7 @@ def db_session() -> Generator[Session, None, None]:
 
     # Use autocommit=False but with explicit transaction management
     # This ensures we can control when transactions start/end
-    TestingSessionLocal = sessionmaker(
-        bind=engine, autocommit=False, autoflush=False, expire_on_commit=False
-    )
+    TestingSessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False, expire_on_commit=False)
 
     session = TestingSessionLocal()
     try:

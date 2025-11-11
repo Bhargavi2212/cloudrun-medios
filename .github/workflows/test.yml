@@ -16,21 +16,6 @@ jobs:
     name: Backend Tests
     runs-on: ubuntu-latest
     
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: medios_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -53,20 +38,12 @@ jobs:
           pip install -r requirements.txt
           pip install pytest-cov pytest-asyncio
 
-      - name: Wait for PostgreSQL
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client
-          until pg_isready -h localhost -p 5432 -U postgres; do
-            echo "Waiting for PostgreSQL to be ready..."
-            sleep 2
-          done
-          echo "PostgreSQL is ready!"
-
       - name: Run tests
         working-directory: ./backend
         env:
-          DATABASE_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/medios_test
+          # Tests use SQLite in-memory (configured in conftest.py)
+          # DATABASE_URL is not used by tests, but set for consistency
+          DATABASE_URL: sqlite:///./test.db
           JWT_ACCESS_SECRET: test-secret-key-for-ci
           JWT_REFRESH_SECRET: test-refresh-secret-key-for-ci
           APP_ENV: test
