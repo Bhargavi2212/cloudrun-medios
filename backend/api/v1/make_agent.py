@@ -517,9 +517,7 @@ async def process_audio_stream(payload: ProcessAudioRequest) -> StreamingRespons
 
 
 @router.get("/consultations/{consultation_id}/note", response_model=StandardResponse)
-async def get_consultation_note(
-    consultation_id: str, session: Session = Depends(get_db_session)
-) -> StandardResponse:
+async def get_consultation_note(consultation_id: str, session: Session = Depends(get_db_session)) -> StandardResponse:
     """Get the current note for a consultation."""
     note = crud.get_note_for_consultation(session, consultation_id)
     if not note:

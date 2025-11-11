@@ -253,9 +253,13 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
         Base.metadata.create_all(bind=engine)
 
     def override_get_db_session():
+        # Ensure any pending changes are committed before yielding
+        # This makes data created in fixtures visible to API endpoints
+        db_session.commit()
         try:
             yield db_session
         finally:
+            # Don't auto-commit here - let the endpoint handle it if needed
             pass
 
     # Override get_session to use test database
