@@ -10,11 +10,11 @@ from fastapi import UploadFile
 
 from backend.database.models import Consultation, ConsultationStatus, DocumentProcessingStatus, FileAsset, Patient
 from backend.database.session import get_session
-from backend.services.document_processing import DocumentProcessingService
+from backend.services.document_processing import DocumentExtraction, DocumentProcessingService
 
 
 @pytest.fixture
-def document_processing_service(db_session):
+def document_processing_service(db_session, monkeypatch):
     """Create a document processing service with test database session."""
     from contextlib import contextmanager
 
@@ -39,10 +39,47 @@ def document_processing_service(db_session):
             db_session.commit()
             return file_asset, file_asset
 
+        def resolve_file_asset_path(self, asset: FileAsset) -> str:
+            """Resolve the file path for a FileAsset."""
+            # Return a fake path that looks real
+            return f"/tmp/storage/{asset.storage_path}"
+
     service = DocumentProcessingService(
         session_factory=get_session_override,
         storage_service=MockStorageService(),
     )
+
+    # Mock the internal file-reading method so it doesn't
+    # try to open the fake path "/tmp/storage/..."
+    async def mock_extract_document(*args, **kwargs):
+        return DocumentExtraction(
+            text="This is the mock extracted text from the PDF.",
+            pages=["page 1"],
+            page_count=1,
+            content_type="application/pdf",
+            document_type="pdf",
+            confidence=0.9,
+            is_handwritten=False,
+            warnings=[],
+        )
+
+    monkeypatch.setattr(service, "_extract_document", mock_extract_document)
+
+    # Mock the AI service so it doesn't try to call Gemini
+    class MockAIModels:
+        async def summarize_document(self, text, metadata):
+            return {
+                "summary": "This is a mock summary.",
+                "highlights": ["Mock highlight"],
+                "confidence": 0.9,
+                "is_stub": False,
+                "success": True,
+                "model": "mock_model",
+            }
+
+    # Replace the service's internal ai_models instance
+    monkeypatch.setattr(service, "ai_models", MockAIModels())
+
     return service
 
 
@@ -73,7 +110,8 @@ async def test_process_document_success(document_processing_service, test_consul
 
     assert result is not None
     assert result.success is True
-    assert result.status in [DocumentProcessingStatus.COMPLETED, DocumentProcessingStatus.UPLOADED]
+    # The status should now be COMPLETED, not UPLOADED
+    assert result.status == DocumentProcessingStatus.COMPLETED
 
 
 @pytest.mark.asyncio

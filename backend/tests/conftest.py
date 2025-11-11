@@ -141,11 +141,10 @@ sys.modules.setdefault("langgraph.checkpoint", stub_langgraph_checkpoint)
 sys.modules.setdefault("langgraph.checkpoint.memory", stub_langgraph_checkpoint_memory)
 sys.modules.setdefault("langgraph.graph", stub_langgraph_graph)
 
-from backend.database.base import Base
-
 # Import all models to ensure all tables are registered with Base.metadata
 # This must happen before Base.metadata.create_all() is called
 from backend.database import models  # noqa: F401 - Import entire module to register all models
+from backend.database.base import Base
 from backend.database.models import (
     Consultation,
     ConsultationStatus,
