@@ -269,18 +269,18 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
 
     def override_get_db_session():
         # Ensure committed data is visible to API queries
-        # Commit any pending changes first to ensure they're persisted
+        # The key is to commit any pending changes, then rollback to start fresh
+        # This ensures the session can see data committed in fixtures
         try:
             db_session.commit()
         except Exception:
-            db_session.rollback()
+            pass
+        # Rollback to end any existing transaction and start fresh
+        # This is critical for PostgreSQL to see committed data from fixtures
+        db_session.rollback()
         # Expire all objects to force fresh queries from the database
-        # This ensures the session will query the database directly instead of using cached objects
+        # This ensures queries will fetch from the database, not from session cache
         db_session.expire_all()
-        # Ensure we're in a clean transaction state to see committed data
-        # If session is not in a transaction, begin one
-        if not db_session.in_transaction():
-            db_session.begin()
         try:
             yield db_session
         finally:
