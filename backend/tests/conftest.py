@@ -189,6 +189,19 @@ def db_session() -> Generator[Session, None, None]:
         max_overflow=0,
     )
 
+    # Enable the citext extension for PostgreSQL (required for case-insensitive email)
+    # This must be done before creating tables that use CITEXT type
+    from sqlalchemy import text
+
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("CREATE EXTENSION IF NOT EXISTS citext;"))
+            conn.commit()
+    except Exception as e:
+        # If extension creation fails, log it but continue
+        # (might fail if extension already exists or if user doesn't have permission)
+        print(f"Warning: Could not create citext extension: {e}")
+
     # Create all tables before creating session
     # Import models module to ensure all models are registered
     from backend.database import models  # noqa: F401
