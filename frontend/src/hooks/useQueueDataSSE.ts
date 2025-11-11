@@ -93,17 +93,19 @@ export const useQueueDataSSE = (): UseQueueDataSSEResult => {
           if (queueData.states) {
             // Convert queue states to patients format
             const updatedPatients: QueuePatient[] = queueData.states.map((state: QueueStateMessage) => ({
-              id: state.patient_id,
+              queue_state_id: state.patient_id, // Use patient_id as queue_state_id if not provided
+              consultation_id: state.consultation_id || '',
               patient_id: state.patient_id,
               patient_name: state.patient_name || 'Unknown',
+              age: null, // Age not available in QueueStateMessage
               status: state.stage,
-              triage_level: state.priority_level,
-              chief_complaint: state.chief_complaint,
-              wait_time_minutes: state.wait_time_seconds ? state.wait_time_seconds / 60 : null,
+              triage_level: state.priority_level ?? null,
+              chief_complaint: state.chief_complaint ?? null,
+              wait_time_minutes: state.wait_time_seconds ? Math.floor(state.wait_time_seconds / 60) : 0,
+              estimated_wait_minutes: state.wait_time_seconds ? Math.floor(state.wait_time_seconds / 60) : null,
               assigned_doctor_id: state.assigned_to,
               assigned_doctor: state.assigned_to_name,
-              consultation_id: state.consultation_id,
-              checked_in_at: state.created_at,
+              check_in_time: state.created_at,
             }))
             setPatients(updatedPatients)
           }

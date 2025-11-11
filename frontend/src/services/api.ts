@@ -60,7 +60,7 @@ const responseErrorHandler: ResponseErrorHandler = async (error) => {
       originalRequest._retry = true
       originalRequest.headers = originalRequest.headers ?? {}
       originalRequest.headers.Authorization = `Bearer ${useAuthStore.getState().token}`
-      return api(originalRequest as Parameters<typeof api>[0])
+      return api.request(originalRequest as Parameters<typeof api.request>[0])
     }
     store.logout()
   }
