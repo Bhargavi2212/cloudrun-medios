@@ -53,6 +53,14 @@ jobs:
           pip install -r requirements.txt
           pip install pytest-cov pytest-asyncio
 
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -p 5432 -U postgres; do
+            echo "Waiting for PostgreSQL to be ready..."
+            sleep 2
+          done
+          echo "PostgreSQL is ready!"
+
       - name: Run tests
         working-directory: ./backend
         env:
