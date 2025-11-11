@@ -162,12 +162,10 @@ from backend.security.password import password_hasher
 @pytest.fixture(scope="function")
 def db_session() -> Generator[Session, None, None]:
     """Create a test database session using the shared SQLite in-memory engine."""
-    from backend.database import SessionLocal as package_session_local
-    from backend.database import engine as package_engine
-    from backend.database import session as session_module
-
     # Import models module to ensure all models are registered
+    from backend.database import engine as package_engine
     from backend.database import models  # noqa: F401
+    from backend.database import session as session_module
 
     engine = package_engine
 
