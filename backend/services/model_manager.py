@@ -75,7 +75,6 @@ def get_whisper_model():
     Raises:
         RuntimeError: if the model could not be initialised.
     """
-    global _WHISPER_MODEL, _WHISPER_ERROR
     if _WHISPER_MODEL is not None:
         return _WHISPER_MODEL
 

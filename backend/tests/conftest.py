@@ -390,6 +390,9 @@ def test_queue_state(db_session: Session, test_consultation: Consultation) -> Qu
 @pytest.fixture
 def test_note(db_session: Session, test_consultation: Consultation, test_user: User) -> Note:
     """Create a test note."""
+    from sqlalchemy import select
+    from sqlalchemy.orm import selectinload
+
     note = Note(
         id=str(uuid4()),
         consultation_id=test_consultation.id,
@@ -398,6 +401,7 @@ def test_note(db_session: Session, test_consultation: Consultation, test_user: U
         is_deleted=False,
     )
     db_session.add(note)
+    db_session.flush()  # Flush to get note.id
 
     note_version = NoteVersion(
         id=str(uuid4()),
@@ -412,7 +416,18 @@ def test_note(db_session: Session, test_consultation: Consultation, test_user: U
     db_session.flush()  # Flush to ensure note_version is persisted before setting foreign key
     note.current_version_id = note_version.id
     db_session.commit()
-    db_session.refresh(note)
+    # Expire all to ensure fresh query
+    db_session.expire_all()
+    # Query the note with relationships loaded to ensure it's visible
+    stmt = (
+        select(Note)
+        .where(Note.id == note.id, Note.consultation_id == test_consultation.id)
+        .options(selectinload(Note.current_version), selectinload(Note.versions))
+    )
+    note = db_session.execute(stmt).scalars().first()
+    # Ensure the note is attached to the session
+    if note:
+        db_session.refresh(note)
     return note
 
 
