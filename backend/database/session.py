@@ -22,6 +22,12 @@ if TESTING:
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
+    # Create all tables for test database
+    # Import models to ensure they're registered with Base.metadata
+    from ..database import models  # noqa: F401
+    from ..database.base import Base
+
+    Base.metadata.create_all(bind=engine)
 else:
     # Use production database from settings
     settings = get_settings()
