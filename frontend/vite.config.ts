@@ -3,10 +3,19 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { existsSync } from 'fs'
 
 // Get the directory of the current file
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
+
+// Resolve the src directory - normalize the path for cross-platform compatibility
+const srcDir = path.resolve(__dirname, 'src')
+
+// Verify the src directory exists (helpful for debugging)
+if (!existsSync(srcDir)) {
+  throw new Error(`Source directory not found: ${srcDir}. Current __dirname: ${__dirname}`)
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -14,7 +23,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'),
+      '@': srcDir,
     },
   },
   server: {
