@@ -266,8 +266,7 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
         Base.metadata.create_all(bind=engine)
 
     def override_get_db_session():
-        # Ensure committed data is visible by expiring cached objects
-        # This forces the next query to fetch fresh data from the database
+        # Ensure committed data is visible to API queries
         # Commit any pending changes first to ensure they're persisted
         try:
             db_session.commit()
@@ -276,6 +275,10 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
         # Expire all objects to force fresh queries from the database
         # This ensures the session will query the database directly instead of using cached objects
         db_session.expire_all()
+        # Ensure we're in a clean transaction state to see committed data
+        # If session is not in a transaction, begin one
+        if not db_session.in_transaction():
+            db_session.begin()
         try:
             yield db_session
         finally:
