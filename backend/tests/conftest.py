@@ -253,9 +253,14 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
         Base.metadata.create_all(bind=engine)
 
     def override_get_db_session():
-        # Ensure any pending changes are committed before yielding
-        # This makes data created in fixtures visible to API endpoints
-        db_session.commit()
+        # Ensure committed data is visible by expiring cached objects
+        # This forces the next query to fetch fresh data from the database
+        # Commit any pending changes first to ensure they're persisted
+        try:
+            db_session.commit()
+        except Exception:
+            db_session.rollback()
+        db_session.expire_all()
         try:
             yield db_session
         finally:
@@ -421,9 +426,9 @@ def test_note(db_session: Session, test_consultation: Consultation, test_user: U
     note.current_version_id = note_version.id
     db_session.commit()
 
-    # For SQLite, we need to ensure the note is visible to subsequent queries
+    # Ensure the note is visible to subsequent queries
     # by querying it fresh with relationships loaded
-    # Don't expire_all() as it might cause issues - instead, refresh the note
+    # Refresh the note to ensure relationships are loaded
     db_session.refresh(note)
     # Also refresh the note_version to ensure relationships are loaded
     db_session.refresh(note_version)

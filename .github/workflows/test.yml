@@ -16,6 +16,21 @@ jobs:
     name: Backend Tests
     runs-on: ubuntu-latest
     
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: medios_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -41,7 +56,7 @@ jobs:
       - name: Run tests
         working-directory: ./backend
         env:
-          DATABASE_URL: sqlite:///./test.db
+          DATABASE_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/medios_test
           JWT_ACCESS_SECRET: test-secret-key-for-ci
           JWT_REFRESH_SECRET: test-refresh-secret-key-for-ci
           APP_ENV: test
