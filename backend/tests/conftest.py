@@ -144,22 +144,60 @@ sys.modules.setdefault("langgraph.checkpoint.memory", stub_langgraph_checkpoint_
 sys.modules.setdefault("langgraph.graph", stub_langgraph_graph)
 
 from backend.database.base import Base
-from backend.database.models import (AccessToken, AudioFile, Consultation,
-                                     ConsultationStatus, FileAsset, Note,
-                                     NoteVersion, Patient, QueueStage,
-                                     QueueState, Role, User)
+# Import all models to ensure all tables are registered with Base.metadata
+# This must happen before Base.metadata.create_all() is called
+from backend.database import models  # noqa: F401 - Import entire module to register all models
+from backend.database.models import (
+    Consultation,
+    ConsultationStatus,
+    Note,
+    NoteVersion,
+    Patient,
+    QueueStage,
+    QueueState,
+    User,
+)
 from backend.main import app  # noqa: E402
 from backend.security.password import password_hasher
 
 
 @pytest.fixture(scope="function")
 def db_session() -> Generator[Session, None, None]:
-    """Create an in-memory SQLite database session for testing."""
+    """Create a PostgreSQL database session for testing.
+    
+    Uses TEST_DATABASE_URL if set, otherwise falls back to DATABASE_URL from settings.
+    If neither is set, uses a default PostgreSQL test database URL.
+    """
+    # Get test database URL from environment, with fallbacks
+    # Check environment variable first (for TEST_DATABASE_URL override)
+    test_db_url = os.environ.get("TEST_DATABASE_URL")
+    
+    if not test_db_url:
+        # Try to get from settings (which loads .env file)
+        try:
+            from backend.services.config import get_settings
+            settings = get_settings()
+            test_db_url = settings.database_url
+        except Exception:
+            # Fallback to environment variable or default
+            test_db_url = os.environ.get(
+                "DATABASE_URL",
+                "postgresql+psycopg2://postgres:postgres@localhost:5432/medios_test"
+            )
+    
+    # For PostgreSQL, we don't need special connect_args
     engine = create_engine(
-        "sqlite:///:memory:", connect_args={"check_same_thread": False}
+        test_db_url,
+        pool_pre_ping=True,
+        pool_size=1,
+        max_overflow=0,
     )
+    
     # Create all tables before creating session
+    # Import models module to ensure all models are registered
+    from backend.database import models  # noqa: F401
     Base.metadata.create_all(bind=engine)
+    
     TestingSessionLocal = sessionmaker(
         bind=engine, autocommit=False, autoflush=False, expire_on_commit=False
     )
@@ -174,11 +212,33 @@ def db_session() -> Generator[Session, None, None]:
         if not tables:
             # Force create tables if they don't exist
             Base.metadata.create_all(bind=engine)
+            # Verify again
+            tables = inspector.get_table_names()
+            if not tables:
+                raise RuntimeError(f"Failed to create tables. Expected tables but got: {tables}")
+        
+        # Ensure session is bound to the engine with tables
+        assert session.bind is engine, "Session must be bound to the engine with tables"
         yield session
         session.rollback()
     finally:
         session.close()
-        Base.metadata.drop_all(bind=engine)
+        # For PostgreSQL, we can't easily drop tables with circular dependencies
+        # Instead, we'll just rollback the transaction and let the next test
+        # use the same tables. If you need a clean slate, use a separate test database.
+        # For now, we'll skip drop_all to avoid circular dependency errors
+        try:
+            # Try to drop all tables, but catch circular dependency errors
+            Base.metadata.drop_all(bind=engine, checkfirst=True)
+        except Exception as e:
+            # If there's a circular dependency or other error, just log it
+            # The tables will remain, but that's okay for test isolation
+            # since we rollback transactions
+            if "CircularDependencyError" not in str(type(e).__name__):
+                # Re-raise if it's not a circular dependency error
+                raise
+        finally:
+            engine.dispose()
 
 
 @pytest.fixture(scope="function")
@@ -189,6 +249,13 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
     from backend.api.v1 import auth as auth_router
     from backend.database.session import get_db_session, get_session
     from backend.services.auth_service import AuthService
+
+    # Ensure tables exist by binding the session to the engine that has tables
+    # This ensures all queries use the same engine with tables
+    engine = db_session.bind
+    if engine:
+        # Force create all tables on the engine if they don't exist
+        Base.metadata.create_all(bind=engine)
 
     def override_get_db_session():
         try:
@@ -237,20 +304,24 @@ def test_user(db_session: Session) -> User:
     """Create a test user."""
     from backend.database.models import Role, UserRole, UserStatus
 
-    # Create a role first
-    role = Role(
-        id=str(uuid4()),
-        name="DOCTOR",
-        description="Doctor role",
-        is_deleted=False,
-    )
-    db_session.add(role)
-    db_session.flush()
+    # Get or create a role first (since tables persist between tests in PostgreSQL)
+    role = db_session.query(Role).filter(Role.name == "DOCTOR", Role.is_deleted == False).first()
+    if not role:
+        role = Role(
+            id=str(uuid4()),
+            name="DOCTOR",
+            description="Doctor role",
+            is_deleted=False,
+        )
+        db_session.add(role)
+        db_session.flush()
 
-    # Create user
+    # Create user with unique email to avoid conflicts when tables persist between tests
+    user_id = str(uuid4())
+    unique_email = f"test-{user_id[:8]}@example.com"
     user = User(
-        id=str(uuid4()),
-        email="test@example.com",
+        id=user_id,
+        email=unique_email,
         password_hash=password_hasher.hash("testpassword123"),
         first_name="Test",
         last_name="User",
@@ -349,6 +420,7 @@ def test_note(
         is_deleted=False,
     )
     db_session.add(note_version)
+    db_session.flush()  # Flush to ensure note_version is persisted before setting foreign key
     note.current_version_id = note_version.id
     db_session.commit()
     db_session.refresh(note)

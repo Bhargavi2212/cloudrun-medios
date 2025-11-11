@@ -1,4 +1,5 @@
 import asyncio
+import shutil
 from pathlib import Path
 
 import pytest
@@ -24,6 +25,8 @@ async def test_transcribe_audio_success(tmp_path, monkeypatch):
         def transcribe(self, *_args, **_kwargs):
             return {"text": "Hello world", "segments": [{"avg_logprob": -0.1}]}
 
+    # Mock ffmpeg availability check to return True
+    monkeypatch.setattr("shutil.which", lambda cmd: "/usr/bin/ffmpeg" if cmd == "ffmpeg" else None)
     monkeypatch.setattr(ai_models, "get_whisper_model", lambda: FakeWhisper())
 
     service = ai_models.AIModelsService()
