@@ -181,7 +181,11 @@ def db_session() -> Generator[Session, None, None]:
 
     Base.metadata.create_all(bind=engine)
 
-    TestingSessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False, expire_on_commit=False)
+    # Use autocommit=False but with explicit transaction management
+    # This ensures we can control when transactions start/end
+    TestingSessionLocal = sessionmaker(
+        bind=engine, autocommit=False, autoflush=False, expire_on_commit=False
+    )
 
     session = TestingSessionLocal()
     try:
@@ -201,6 +205,7 @@ def db_session() -> Generator[Session, None, None]:
         # Ensure session is bound to the engine with tables
         assert session.bind is engine, "Session must be bound to the engine with tables"
         yield session
+        # Rollback any uncommitted changes at the end of the test
         session.rollback()
     finally:
         session.close()
@@ -235,9 +240,9 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
         # Ensure committed data is visible to API queries
         # For SQLite in-memory with StaticPool, all sessions share the same connection
         # The key is to ensure the session is in a clean, queryable state
-        # We don't rollback because that would lose committed data in SQLite in-memory
+        # SQLite requires explicit transaction management to see committed data
         try:
-            # Commit any pending changes first
+            # Commit any pending changes first to ensure they're persisted
             if db_session.in_transaction():
                 db_session.commit()
         except Exception:
@@ -246,9 +251,9 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
         # Expire all objects to force fresh queries from the database
         # This ensures queries will fetch from the database, not from session cache
         db_session.expire_all()
-        # For SQLite in-memory with StaticPool, all sessions share the same connection
-        # so committed data should be visible. We just need to ensure the session
-        # is in a clean state to query it.
+        # For SQLite with StaticPool, all sessions share the same connection
+        # Committed data should be visible. We just need to ensure the session
+        # is ready to query. SQLAlchemy will auto-begin a transaction when needed.
         try:
             yield db_session
         finally:
