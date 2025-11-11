@@ -3,19 +3,14 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { existsSync } from 'fs'
 
-// Get the directory of the current file
+// Get the directory of the current file - works in ESM modules
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-// Resolve the src directory - normalize the path for cross-platform compatibility
+// Resolve the src directory using absolute path
+// This ensures the alias works in both local development and CI environments
 const srcDir = path.resolve(__dirname, 'src')
-
-// Verify the src directory exists (helpful for debugging)
-if (!existsSync(srcDir)) {
-  throw new Error(`Source directory not found: ${srcDir}. Current __dirname: ${__dirname}`)
-}
 
 // https://vitejs.dev/config/
 export default defineConfig({
