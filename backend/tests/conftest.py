@@ -74,7 +74,6 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 # Now we can safely import the password hasher
@@ -162,100 +161,63 @@ from backend.security.password import password_hasher
 
 @pytest.fixture(scope="function")
 def db_session() -> Generator[Session, None, None]:
-    """Create a test database session using SQLite in-memory.
+    """Create a test database session using the shared SQLite in-memory engine."""
+    from backend.database import SessionLocal as package_session_local
+    from backend.database import engine as package_engine
+    from backend.database import session as session_module
 
-    Uses SQLite for fast, isolated tests that don't require a database server.
-    """
-    from sqlalchemy.pool import StaticPool
-
-    # Use SQLite in-memory database for tests
-    # This is faster and doesn't require a database server
-    engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-
-    # Create all tables before creating session
     # Import models module to ensure all models are registered
     from backend.database import models  # noqa: F401
 
+    engine = package_engine
+
+    # Reset database state for the test
+    Base.metadata.drop_all(bind=engine, checkfirst=True)
     Base.metadata.create_all(bind=engine)
 
-    # Use autocommit=False but with explicit transaction management
-    # This ensures we can control when transactions start/end
     TestingSessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False, expire_on_commit=False)
+
+    # Ensure session.py and backend.database use the test session maker
+    session_module.SessionLocal = TestingSessionLocal
+    session_module.engine = engine
+
+    import backend.database as database_pkg
+
+    database_pkg.SessionLocal = TestingSessionLocal
+    database_pkg.engine = engine
 
     session = TestingSessionLocal()
     try:
-        # Verify tables exist
-        from sqlalchemy import inspect
-
-        inspector = inspect(engine)
-        tables = inspector.get_table_names()
-        if not tables:
-            # Force create tables if they don't exist
-            Base.metadata.create_all(bind=engine)
-            # Verify again
-            tables = inspector.get_table_names()
-            if not tables:
-                raise RuntimeError(f"Failed to create tables. Expected tables but got: {tables}")
-
-        # Ensure session is bound to the engine with tables
-        assert session.bind is engine, "Session must be bound to the engine with tables"
         yield session
-        # Rollback any uncommitted changes at the end of the test
-        session.rollback()
+        session.commit()
     finally:
+        session.rollback()
         session.close()
-        # For SQLite in-memory, tables are automatically dropped when the connection closes
-        # But we'll explicitly drop them for clarity
-        try:
-            Base.metadata.drop_all(bind=engine, checkfirst=True)
-        except Exception:
-            # Ignore errors during cleanup
-            pass
-        finally:
-            engine.dispose()
+
+        # Clean up tables after each test for isolation
+        Base.metadata.drop_all(bind=engine, checkfirst=True)
 
 
 @pytest.fixture(scope="function")
-def client(db_session: Session, monkeypatch) -> Generator[TestClient, None, None]:
+def client(db_session: Session) -> Generator[TestClient, None, None]:
     """Create a FastAPI test client with database session override."""
     from contextlib import contextmanager
 
     from backend.api.v1 import auth as auth_router
-    from backend.database import session as session_module
     from backend.database.session import get_db_session, get_session
     from backend.services.auth_service import AuthService
-
-    # CRITICAL: Replace the engine in session.py with the test engine
-    # This ensures both use the same SQLite in-memory database
-    engine = db_session.bind
-    if engine:
-        # Force create all tables on the engine if they don't exist
-        Base.metadata.create_all(bind=engine)
-
-        # Replace the engine in session.py with the test engine
-        # This ensures session.py uses the same database as the test fixtures
-        monkeypatch.setattr(session_module, "engine", engine)
-        # Also update SessionLocal to use the test engine
-        from sqlalchemy.orm import sessionmaker
-
-        session_module.SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False, expire_on_commit=False)
 
     def override_get_db_session():
         # CRITICAL: Always use the test session from fixtures, not session.py
         # The test session is bound to the engine with tables and test data
         # Ensure the session is bound to the test engine
-        test_engine = db_session.bind
-        if test_engine is None or test_engine is not engine:
+        engine = db_session.bind
+        if engine is None:
             # Force rebind to test engine
-            db_session.bind = engine
-            test_engine = engine
+            from backend.database import session as session_module
 
-        # Ensure tables exist on the test engine
-        Base.metadata.create_all(bind=test_engine)
+            db_session.bind = session_module.engine
+            engine = db_session.bind
 
         # Commit any pending changes from fixtures to ensure they're persisted
         try:
