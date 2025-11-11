@@ -234,18 +234,21 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
     def override_get_db_session():
         # Ensure committed data is visible to API queries
         # For SQLite in-memory with StaticPool, all sessions share the same connection
-        # We need to ensure the session is in a clean state to see committed data
+        # The key is to ensure the session is in a clean, queryable state
+        # We don't rollback because that would lose committed data in SQLite in-memory
         try:
             # Commit any pending changes first
-            db_session.commit()
+            if db_session.in_transaction():
+                db_session.commit()
         except Exception:
-            # If commit fails, rollback to clean state
-            db_session.rollback()
+            # If commit fails, just pass - don't rollback as it would lose data
+            pass
         # Expire all objects to force fresh queries from the database
         # This ensures queries will fetch from the database, not from session cache
         db_session.expire_all()
-        # Ensure we're ready to query - SQLite in-memory should see all committed data
-        # with StaticPool, all sessions share the same connection
+        # For SQLite in-memory with StaticPool, all sessions share the same connection
+        # so committed data should be visible. We just need to ensure the session
+        # is in a clean state to query it.
         try:
             yield db_session
         finally:
