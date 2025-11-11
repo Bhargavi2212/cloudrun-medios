@@ -27,6 +27,7 @@ storage_service = StorageService()
 # Use MediOS service for job queue to ensure note persistence works
 job_queue_service = JobQueueService(make_agent_service=medi_os_service, storage_service=storage_service)
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 
 class ExtractEntitiesRequest(BaseModel):
