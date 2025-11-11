@@ -416,22 +416,29 @@ def test_note(db_session: Session, test_consultation: Consultation, test_user: U
     db_session.flush()  # Flush to ensure note_version is persisted before setting foreign key
     note.current_version_id = note_version.id
     db_session.commit()
-    
+
     # For SQLite, we need to ensure the note is visible to subsequent queries
     # by querying it fresh with relationships loaded
-    db_session.expire_all()
+    # Don't expire_all() as it might cause issues - instead, refresh the note
+    db_session.refresh(note)
+    # Also refresh the note_version to ensure relationships are loaded
+    db_session.refresh(note_version)
+
+    # Query the note again to ensure it's visible with all relationships
     stmt = (
         select(Note)
         .where(Note.consultation_id == test_consultation.id, Note.is_deleted.is_(False))
         .options(selectinload(Note.current_version), selectinload(Note.versions))
     )
-    note = db_session.execute(stmt).scalars().first()
-    
+    queried_note = db_session.execute(stmt).scalars().first()
+
     # If note is None, something went wrong - raise an error
-    if note is None:
+    if queried_note is None:
         raise RuntimeError(f"Failed to create or retrieve test note for consultation {test_consultation.id}")
-    
-    return note
+
+    # Ensure the note is attached to the session and relationships are loaded
+    db_session.refresh(queried_note)
+    return queried_note
 
 
 @pytest.fixture

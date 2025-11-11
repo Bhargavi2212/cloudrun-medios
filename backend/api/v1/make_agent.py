@@ -6,10 +6,13 @@ import json
 import logging
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, File, Form, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
 
+from ...database import crud
+from ...database.session import get_db_session
 from ...services.config import get_settings
 from ...services.error_response import StandardResponse
 from ...services.job_queue import JobQueueService
@@ -513,56 +516,49 @@ async def process_audio_stream(payload: ProcessAudioRequest) -> StreamingRespons
 
 
 @router.get("/consultations/{consultation_id}/note", response_model=StandardResponse)
-async def get_consultation_note(consultation_id: str) -> StandardResponse:
+async def get_consultation_note(
+    consultation_id: str, session: Session = Depends(get_db_session)
+) -> StandardResponse:
     """Get the current note for a consultation."""
-    from backend.database import crud
-    from backend.database.session import get_session
-
-    with get_session() as session:
-        note = crud.get_note_for_consultation(session, consultation_id)
-        if not note:
-            return StandardResponse(
-                success=True,
-                data={"note": None, "message": "No note found for this consultation"},
-                is_stub=False,
-            )
-
-        current_version = note.current_version
-        if not current_version:
-            return StandardResponse(
-                success=True,
-                data={"note": None, "message": "Note exists but has no content"},
-                is_stub=False,
-            )
-
+    note = crud.get_note_for_consultation(session, consultation_id)
+    if not note:
         return StandardResponse(
             success=True,
-            data={
-                "note_id": note.id,
-                "consultation_id": note.consultation_id,
-                "status": note.status,
-                "content": current_version.content,
-                "entities": current_version.entities,
-                "is_ai_generated": current_version.is_ai_generated,
-                "created_at": (current_version.created_at.isoformat() if current_version.created_at else None),
-                "version_id": current_version.id,
-            },
+            data={"note": None, "message": "No note found for this consultation"},
             is_stub=False,
         )
+
+    current_version = note.current_version
+    if not current_version:
+        return StandardResponse(
+            success=True,
+            data={"note": None, "message": "Note exists but has no content"},
+            is_stub=False,
+        )
+
+    return StandardResponse(
+        success=True,
+        data={
+            "note_id": note.id,
+            "consultation_id": note.consultation_id,
+            "status": note.status,
+            "content": current_version.content,
+            "entities": current_version.entities,
+            "is_ai_generated": current_version.is_ai_generated,
+            "created_at": (current_version.created_at.isoformat() if current_version.created_at else None),
+            "version_id": current_version.id,
+        },
+        is_stub=False,
+    )
 
 
 @router.put("/consultations/{consultation_id}/note", response_model=StandardResponse)
 async def update_consultation_note(
     consultation_id: str,
     payload: UpdateNoteRequest,
+    session: Session = Depends(get_db_session),
 ) -> StandardResponse:
     """Update an existing note for a consultation."""
-    from fastapi import HTTPException, status
-
-    from backend.database import crud
-    from backend.database.session import get_session
-    from backend.security.dependencies import get_current_user
-
     # Try to get current user for author_id (optional)
     author_id = None
     try:
@@ -572,29 +568,25 @@ async def update_consultation_note(
         pass  # Allow updates without authentication for now
 
     try:
-        with get_session() as session:
-            version = crud.update_note_content(
-                session,
-                consultation_id=consultation_id,
-                content=payload.content,
-                author_id=author_id,
-            )
-            return StandardResponse(
-                success=True,
-                data={
-                    "note_id": version.note_id,
-                    "version_id": version.id,
-                    "content": version.content,
-                    "updated_at": (version.created_at.isoformat() if version.created_at else None),
-                },
-                is_stub=False,
-            )
+        version = crud.update_note_content(
+            session,
+            consultation_id=consultation_id,
+            content=payload.content,
+            author_id=author_id,
+        )
+        return StandardResponse(
+            success=True,
+            data={
+                "note_id": version.note_id,
+                "version_id": version.id,
+                "content": version.content,
+                "updated_at": (version.created_at.isoformat() if version.created_at else None),
+            },
+            is_stub=False,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
     except Exception as exc:
-        import logging
-
-        logger = logging.getLogger(__name__)
         logger.exception(f"Error updating note for consultation {consultation_id}: {exc}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
 
@@ -603,32 +595,24 @@ async def update_consultation_note(
 async def submit_note_for_approval(
     consultation_id: str,
     payload: SubmitNoteRequest,
+    session: Session = Depends(get_db_session),
 ) -> StandardResponse:
     """Submit a note for approval."""
-    from fastapi import HTTPException, status
-
-    from backend.database import crud
-    from backend.database.session import get_session
-
     try:
-        with get_session() as session:
-            note = crud.submit_note_for_approval(session, consultation_id)
-            return StandardResponse(
-                success=True,
-                data={
-                    "note_id": note.id,
-                    "consultation_id": note.consultation_id,
-                    "status": note.status,
-                    "message": "Note submitted for approval",
-                },
-                is_stub=False,
-            )
+        note = crud.submit_note_for_approval(session, consultation_id)
+        return StandardResponse(
+            success=True,
+            data={
+                "note_id": note.id,
+                "consultation_id": note.consultation_id,
+                "status": note.status,
+                "message": "Note submitted for approval",
+            },
+            is_stub=False,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
     except Exception as exc:
-        import logging
-
-        logger = logging.getLogger(__name__)
         logger.exception(f"Error submitting note for approval: {exc}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
 
@@ -637,13 +621,9 @@ async def submit_note_for_approval(
 async def approve_note(
     consultation_id: str,
     payload: ApproveNoteRequest,
+    session: Session = Depends(get_db_session),
 ) -> StandardResponse:
     """Approve a note."""
-    from fastapi import HTTPException, status
-
-    from backend.database import crud
-    from backend.database.session import get_session
-
     # Try to get current user for approver_id (optional)
     approver_id = None
     try:
@@ -653,24 +633,20 @@ async def approve_note(
         pass
 
     try:
-        with get_session() as session:
-            note = crud.approve_note(session, consultation_id, approver_id=approver_id)
-            return StandardResponse(
-                success=True,
-                data={
-                    "note_id": note.id,
-                    "consultation_id": note.consultation_id,
-                    "status": note.status,
-                    "message": "Note approved",
-                },
-                is_stub=False,
-            )
+        note = crud.approve_note(session, consultation_id, approver_id=approver_id)
+        return StandardResponse(
+            success=True,
+            data={
+                "note_id": note.id,
+                "consultation_id": note.consultation_id,
+                "status": note.status,
+                "message": "Note approved",
+            },
+            is_stub=False,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
     except Exception as exc:
-        import logging
-
-        logger = logging.getLogger(__name__)
         logger.exception(f"Error approving note: {exc}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
 
@@ -679,13 +655,9 @@ async def approve_note(
 async def reject_note(
     consultation_id: str,
     payload: RejectNoteRequest,
+    session: Session = Depends(get_db_session),
 ) -> StandardResponse:
     """Reject a note."""
-    from fastapi import HTTPException, status
-
-    from backend.database import crud
-    from backend.database.session import get_session
-
     # Try to get current user for approver_id (optional)
     approver_id = None
     try:
@@ -695,28 +667,24 @@ async def reject_note(
         pass
 
     try:
-        with get_session() as session:
-            note = crud.reject_note(
-                session,
-                consultation_id,
-                rejection_reason=payload.rejection_reason,
-                approver_id=approver_id,
-            )
-            return StandardResponse(
-                success=True,
-                data={
-                    "note_id": note.id,
-                    "consultation_id": note.consultation_id,
-                    "status": note.status,
-                    "message": "Note rejected",
-                },
-                is_stub=False,
-            )
+        note = crud.reject_note(
+            session,
+            consultation_id,
+            rejection_reason=payload.rejection_reason,
+            approver_id=approver_id,
+        )
+        return StandardResponse(
+            success=True,
+            data={
+                "note_id": note.id,
+                "consultation_id": note.consultation_id,
+                "status": note.status,
+                "message": "Note rejected",
+            },
+            is_stub=False,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
     except Exception as exc:
-        import logging
-
-        logger = logging.getLogger(__name__)
         logger.exception(f"Error rejecting note: {exc}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
