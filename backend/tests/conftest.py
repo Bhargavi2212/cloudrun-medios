@@ -238,20 +238,20 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
         # Ensure committed data is visible to API queries
         # For SQLite in-memory with StaticPool, all sessions share the same connection
         # The key is to ensure the session is in a clean, queryable state
-        # SQLite requires explicit transaction management to see committed data
+
+        # Commit any pending changes from fixtures to ensure they're persisted
         try:
-            # Commit any pending changes first to ensure they're persisted
             if db_session.in_transaction():
                 db_session.commit()
         except Exception:
-            # If commit fails, just pass - don't rollback as it would lose data
             pass
+
         # Expire all objects to force fresh queries from the database
         # This ensures queries will fetch from the database, not from session cache
         db_session.expire_all()
+
         # For SQLite with StaticPool, all sessions share the same connection
-        # Committed data should be visible. We just need to ensure the session
-        # is ready to query. SQLAlchemy will auto-begin a transaction when needed.
+        # Committed data should be visible. The session is ready to query.
         try:
             yield db_session
         finally:
