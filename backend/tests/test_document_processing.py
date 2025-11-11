@@ -52,22 +52,31 @@ async def test_process_document_success(
     document_processing_service, test_consultation, test_user, db_session
 ):
     """Test successful document processing."""
-    file_content = b"Test PDF content"
-    upload_file = UploadFile(
-        filename="test.pdf",
-        file=BytesIO(file_content),
-        headers={"content-type": "application/pdf"},
+    from backend.database import crud
+    from backend.database.models import DocumentProcessingStatus
+    
+    # First create a file asset
+    file_asset = crud.create_file_asset(
+        db_session,
+        owner_type="consultation",
+        owner_id=test_consultation.id,
+        original_filename="test.pdf",
+        storage_path="test/test.pdf",
+        content_type="application/pdf",
+        size_bytes=100,
+        uploaded_by=test_user.id,
+        status=DocumentProcessingStatus.UPLOADED,
     )
+    db_session.commit()
 
     result = await document_processing_service.process_document(
-        file=upload_file,
+        file_asset.id,
         consultation_id=test_consultation.id,
-        uploaded_by=test_user.id,
     )
 
     assert result is not None
-    assert result["file_id"] is not None
-    assert result["status"] in ["completed", "needs_review"]
+    assert result.file_id is not None
+    assert result.status in ["completed", "needs_review"]
 
 
 @pytest.mark.asyncio
@@ -75,19 +84,26 @@ async def test_process_document_creates_timeline_event(
     document_processing_service, test_consultation, test_user, test_patient, db_session
 ):
     """Test that document processing creates a timeline event."""
-    from backend.database.models import TimelineEvent
+    from backend.database import crud
+    from backend.database.models import DocumentProcessingStatus, TimelineEvent
 
-    file_content = b"Test PDF content"
-    upload_file = UploadFile(
-        filename="test.pdf",
-        file=BytesIO(file_content),
-        headers={"content-type": "application/pdf"},
+    # First create a file asset
+    file_asset = crud.create_file_asset(
+        db_session,
+        owner_type="consultation",
+        owner_id=test_consultation.id,
+        original_filename="test.pdf",
+        storage_path="test/test.pdf",
+        content_type="application/pdf",
+        size_bytes=100,
+        uploaded_by=test_user.id,
+        status=DocumentProcessingStatus.UPLOADED,
     )
+    db_session.commit()
 
     result = await document_processing_service.process_document(
-        file=upload_file,
+        file_asset.id,
         consultation_id=test_consultation.id,
-        uploaded_by=test_user.id,
     )
 
     # Verify timeline event was created

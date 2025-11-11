@@ -1,6 +1,7 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
+import tsconfigPaths from 'vite-tsconfig-paths'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -16,7 +17,7 @@ const srcPath = path.resolve(rootDir, 'src')
 // https://vitejs.dev/config/
 export default defineConfig({
   // @ts-ignore - Type compatibility issue between @vitejs/plugin-react and vitest's vite types, but works at runtime
-  plugins: [react()],
+  plugins: [react(), tsconfigPaths()],
   resolve: {
     alias: [
       {

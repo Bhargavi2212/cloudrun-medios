@@ -17,18 +17,18 @@ from backend.database.models import (Consultation, ConsultationStatus, Note,
 
 def test_create_note_with_version(db_session, test_consultation, test_user):
     """Test creating a note with a version."""
-    note_id, version_id = crud.create_note_with_version(
+    version = crud.create_note_with_version(
         db_session,
         consultation_id=test_consultation.id,
-        content="Test note content",
+        note_content="Test note content",
         author_id=test_user.id,
         is_ai_generated=True,
         entities={"symptoms": ["fever", "cough"]},
-        confidence=0.95,
     )
 
-    assert note_id is not None
-    assert version_id is not None
+    assert version is not None
+    version_id = version.id
+    note_id = version.note_id
 
     # Verify note was created
     note = db_session.query(Note).filter(Note.id == note_id).first()
@@ -46,7 +46,6 @@ def test_create_note_with_version(db_session, test_consultation, test_user):
     assert note_version.content == "Test note content"
     assert note_version.is_ai_generated is True
     assert note_version.entities == {"symptoms": ["fever", "cough"]}
-    assert note_version.confidence == 0.95
 
 
 def test_get_note_for_consultation(db_session, test_note, test_consultation):
@@ -69,14 +68,15 @@ def test_get_note_for_consultation_not_found(db_session):
 def test_update_note_content(db_session, test_note, test_user):
     """Test updating note content."""
     new_content = "Updated note content"
-    version_id = crud.update_note_content(
+    version = crud.update_note_content(
         db_session,
         consultation_id=test_note.consultation_id,
         content=new_content,
         author_id=test_user.id,
     )
 
-    assert version_id is not None
+    assert version is not None
+    version_id = version.id
 
     # Verify new version was created
     note_version = (
