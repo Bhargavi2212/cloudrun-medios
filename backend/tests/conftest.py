@@ -252,7 +252,14 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
 
         # For SQLite with StaticPool, all sessions share the same connection
         # After commit and expire_all, the session should be able to see committed data
-        # SQLAlchemy will auto-begin a transaction when the first query is executed
+        # However, SQLite's transaction isolation might require explicit transaction management
+        # Ensure the session is ready to query by explicitly beginning a new transaction
+        # This makes committed data visible to subsequent queries
+        if not db_session.in_transaction():
+            # Begin a new transaction to ensure we can see committed data
+            db_session.begin()
+
+        # The session is ready to query
         try:
             yield db_session
         finally:
