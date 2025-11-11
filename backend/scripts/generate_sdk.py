@@ -68,14 +68,10 @@ def generate_sdk_with_openapi_generator(
         )
         if result.returncode != 0:
             print("❌ openapi-generator-cli not found. Trying Docker...")
-            return generate_sdk_with_docker(
-                openapi_schema_path, language, output_dir, package_name, package_version
-            )
+            return generate_sdk_with_docker(openapi_schema_path, language, output_dir, package_name, package_version)
     except FileNotFoundError:
         print("❌ openapi-generator-cli not found. Trying Docker...")
-        return generate_sdk_with_docker(
-            openapi_schema_path, language, output_dir, package_name, package_version
-        )
+        return generate_sdk_with_docker(openapi_schema_path, language, output_dir, package_name, package_version)
 
     # Generate SDK using openapi-generator-cli
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -94,21 +90,12 @@ def generate_sdk_with_openapi_generator(
         "--package-version",
         package_version,
         "--additional-properties",
-        (
-            f"npmName={package_name},npmVersion={package_version}"
-            if language in ("typescript", "javascript")
-            else ""
-        ),
+        (f"npmName={package_name},npmVersion={package_version}" if language in ("typescript", "javascript") else ""),
     ]
 
     # Remove empty additional-properties if not needed
     if language not in ("typescript", "javascript"):
-        cmd = [
-            c
-            for c in cmd
-            if c != "--additional-properties"
-            or (c == "--additional-properties" and cmd[cmd.index(c) + 1])
-        ]
+        cmd = [c for c in cmd if c != "--additional-properties" or (c == "--additional-properties" and cmd[cmd.index(c) + 1])]
         # Simplified: just remove the npm properties
         cmd_filtered = []
         skip_next = False
@@ -207,9 +194,7 @@ def generate_sdk_with_docker(
     except FileNotFoundError:
         print("❌ Docker not found. Please install Docker or openapi-generator-cli.")
         print("\n📦 Installation options:")
-        print(
-            "   1. Install openapi-generator-cli: npm install -g @openapitools/openapi-generator-cli"
-        )
+        print("   1. Install openapi-generator-cli: npm install -g @openapitools/openapi-generator-cli")
         print("   2. Install Docker: https://docs.docker.com/get-docker/")
         return False
 
@@ -259,9 +244,7 @@ def generate_typescript_sdk_simple(openapi_schema_path: Path, output_dir: Path) 
 
 def main():
     """Main entry point for SDK generation."""
-    parser = argparse.ArgumentParser(
-        description="Generate SDKs from Medi OS OpenAPI specification"
-    )
+    parser = argparse.ArgumentParser(description="Generate SDKs from Medi OS OpenAPI specification")
     parser.add_argument(
         "--language",
         type=str,
@@ -321,9 +304,7 @@ def main():
     schema = export_openapi_schema(schema_path)
 
     if args.export_schema_only:
-        print(
-            "✅ OpenAPI schema exported. Use it with openapi-generator or other tools."
-        )
+        print("✅ OpenAPI schema exported. Use it with openapi-generator or other tools.")
         print(f"   Schema: {schema_path}")
         print(f"   API Version: {schema.get('info', {}).get('version', 'unknown')}")
         return 0
@@ -354,13 +335,9 @@ def main():
         return 0
     else:
         print(f"\n❌ SDK generation failed. See errors above.")
-        print(
-            f"\n💡 Alternative: Use the exported OpenAPI schema with your preferred tool:"
-        )
+        print(f"\n💡 Alternative: Use the exported OpenAPI schema with your preferred tool:")
         print(f"   Schema: {schema_path}")
-        print(
-            f"   Tools: openapi-generator, swagger-codegen, openapi-typescript-codegen, etc."
-        )
+        print(f"   Tools: openapi-generator, swagger-codegen, openapi-typescript-codegen, etc.")
         return 1
 
 

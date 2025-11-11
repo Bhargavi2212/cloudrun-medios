@@ -77,9 +77,7 @@ def test_user_with_email(db_session, auth_service):
 
 def test_authenticate_user_success(auth_service, test_user_with_email):
     """Test successful user authentication."""
-    access_token, refresh_token, user = auth_service.authenticate_user(
-        test_user_with_email.email, "password123"
-    )
+    access_token, refresh_token, user = auth_service.authenticate_user(test_user_with_email.email, "password123")
     assert user is not None
     assert user.email == test_user_with_email.email
     assert user.id == test_user_with_email.id
@@ -117,10 +115,7 @@ def test_request_password_reset(auth_service, test_user_with_email, db_session):
     # Filter by user_id to avoid conflicts from previous tests
     token_record = (
         db_session.query(AccessToken)
-        .filter(
-            AccessToken.purpose == "password_reset",
-            AccessToken.user_id == test_user_with_email.id
-        )
+        .filter(AccessToken.purpose == "password_reset", AccessToken.user_id == test_user_with_email.id)
         .order_by(AccessToken.created_at.desc())
         .first()
     )
@@ -149,8 +144,9 @@ def test_reset_password_success(auth_service, test_user_with_email, db_session):
     # Verify password was changed - query user fresh from database
     db_session.expire_all()  # Expire all objects to force refresh
     from backend.database.models import User
+
     updated_user = db_session.query(User).filter(User.id == test_user_with_email.id).first()
-    
+
     # Verify the password hash was updated
     assert password_hasher.verify("newpassword123", updated_user.password_hash)
     # Also verify old password doesn't work
@@ -160,9 +156,7 @@ def test_reset_password_success(auth_service, test_user_with_email, db_session):
     db_session.expire_all()
     token_record = (
         db_session.query(AccessToken)
-        .filter(
-            AccessToken.purpose == "password_reset", AccessToken.consumed_at.isnot(None)
-        )
+        .filter(AccessToken.purpose == "password_reset", AccessToken.consumed_at.isnot(None))
         .first()
     )
     assert token_record is not None
@@ -186,10 +180,7 @@ def test_reset_password_expired_token(auth_service, test_user_with_email, db_ses
     # Manually expire the token - filter by user_id to get the correct token
     token_record = (
         db_session.query(AccessToken)
-        .filter(
-            AccessToken.purpose == "password_reset",
-            AccessToken.user_id == test_user_with_email.id
-        )
+        .filter(AccessToken.purpose == "password_reset", AccessToken.user_id == test_user_with_email.id)
         .order_by(AccessToken.created_at.desc())
         .first()
     )
@@ -198,14 +189,13 @@ def test_reset_password_expired_token(auth_service, test_user_with_email, db_ses
 
     # Try to reset password (should fail)
     from fastapi import HTTPException
+
     with pytest.raises(HTTPException) as exc_info:
         auth_service.reset_password(reset_token, "newpassword123")
     assert exc_info.value.status_code == 400
 
 
-def test_reset_password_already_used_token(
-    auth_service, test_user_with_email, db_session
-):
+def test_reset_password_already_used_token(auth_service, test_user_with_email, db_session):
     """Test password reset with already used token."""
     from fastapi import HTTPException
 

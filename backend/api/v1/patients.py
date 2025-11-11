@@ -28,9 +28,7 @@ def list_patients(
     return StandardResponse(
         success=True,
         data={
-            "items": [
-                PatientRead.model_validate(patient).model_dump() for patient in patients
-            ],
+            "items": [PatientRead.model_validate(patient).model_dump() for patient in patients],
             "total": total,
             "page": page,
             "size": size,
@@ -41,9 +39,7 @@ def list_patients(
 @router.get("/search", response_model=StandardResponse)
 def search_patients(
     *,
-    q: str = Query(
-        ..., min_length=2, description="Search string for patient name or MRN."
-    ),
+    q: str = Query(..., min_length=2, description="Search string for patient name or MRN."),
     limit: int = Query(default=20, ge=1, le=100),
     session: Session = Depends(get_db_session),
 ) -> StandardResponse:
@@ -57,9 +53,7 @@ def search_patients(
 @router.post(
     "",
     response_model=StandardResponse,
-    dependencies=[
-        Depends(require_roles(UserRole.RECEPTIONIST, UserRole.NURSE, UserRole.ADMIN))
-    ],
+    dependencies=[Depends(require_roles(UserRole.RECEPTIONIST, UserRole.NURSE, UserRole.ADMIN))],
     status_code=status.HTTP_201_CREATED,
 )
 def create_patient(

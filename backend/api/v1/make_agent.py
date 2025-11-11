@@ -14,8 +14,7 @@ from ...services.config import get_settings
 from ...services.error_response import StandardResponse
 from ...services.job_queue import JobQueueService
 from ...services.make_agent import MakeAgentService
-from ...services.make_agent_medi_os import \
-    MakeAgentService as MediOSMakeAgentService
+from ...services.make_agent_medi_os import MakeAgentService as MediOSMakeAgentService
 from ...services.storage import StorageError, StorageService
 
 router = APIRouter()
@@ -23,9 +22,7 @@ service = MakeAgentService()
 medi_os_service = MediOSMakeAgentService()
 storage_service = StorageService()
 # Use MediOS service for job queue to ensure note persistence works
-job_queue_service = JobQueueService(
-    make_agent_service=medi_os_service, storage_service=storage_service
-)
+job_queue_service = JobQueueService(make_agent_service=medi_os_service, storage_service=storage_service)
 settings = get_settings()
 
 
@@ -39,9 +36,7 @@ class GenerateNoteRequest(BaseModel):
         default_factory=dict,
         description="Structured entities extracted from the transcript.",
     )
-    consultation_id: Optional[str] = Field(
-        default=None, description="Consultation identifier to link note."
-    )
+    consultation_id: Optional[str] = Field(default=None, description="Consultation identifier to link note.")
 
 
 class UpdateNoteRequest(BaseModel):
@@ -49,21 +44,15 @@ class UpdateNoteRequest(BaseModel):
 
 
 class ApproveNoteRequest(BaseModel):
-    approval_comment: Optional[str] = Field(
-        default=None, description="Optional comment on approval"
-    )
+    approval_comment: Optional[str] = Field(default=None, description="Optional comment on approval")
 
 
 class RejectNoteRequest(BaseModel):
-    rejection_reason: Optional[str] = Field(
-        default=None, description="Reason for rejection"
-    )
+    rejection_reason: Optional[str] = Field(default=None, description="Reason for rejection")
 
 
 class SubmitNoteRequest(BaseModel):
-    comment: Optional[str] = Field(
-        default=None, description="Optional comment when submitting"
-    )
+    comment: Optional[str] = Field(default=None, description="Optional comment when submitting")
 
 
 class ProcessAudioRequest(BaseModel):
@@ -80,9 +69,7 @@ async def health_check() -> StandardResponse:
     )
 
 
-@router.post(
-    "/upload", response_model=StandardResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("/upload", response_model=StandardResponse, status_code=status.HTTP_201_CREATED)
 async def upload_audio(
     audio_file: UploadFile = File(...),
     consultation_id: Optional[str] = Form(None),
@@ -98,20 +85,14 @@ async def upload_audio(
     logger = logging.getLogger(__name__)
 
     try:
-        logger.info(
-            f"Uploading audio file: {audio_file.filename}, consultation_id: {consultation_id}"
-        )
+        logger.info(f"Uploading audio file: {audio_file.filename}, consultation_id: {consultation_id}")
         record, stored_file = await storage_service.save_audio_file(
             audio_file,
             consultation_id=consultation_id,
             uploaded_by=None,
         )
-        logger.info(
-            f"✅ Audio file saved successfully with ID: {record.id}, path: {record.storage_path}"
-        )
-        logger.info(
-            f"✅ Audio file consultation_id: {record.consultation_id} (from upload: {consultation_id})"
-        )
+        logger.info(f"✅ Audio file saved successfully with ID: {record.id}, path: {record.storage_path}")
+        logger.info(f"✅ Audio file consultation_id: {record.consultation_id} (from upload: {consultation_id})")
 
         # Verify the record can be retrieved immediately
         verify_record = storage_service.get_audio_file(record.id)
@@ -124,13 +105,9 @@ async def upload_audio(
                     f"❌ WARNING: Audio file {verify_record.id} was saved WITHOUT consultation_id! Notes will not be saved."
                 )
             else:
-                logger.info(
-                    f"✅ Audio file has consultation_id={verify_record.consultation_id} - notes can be saved"
-                )
+                logger.info(f"✅ Audio file has consultation_id={verify_record.consultation_id} - notes can be saved")
         else:
-            logger.warning(
-                f"⚠️ Audio file {record.id} was saved but cannot be retrieved immediately"
-            )
+            logger.warning(f"⚠️ Audio file {record.id} was saved but cannot be retrieved immediately")
 
     except StorageError as exc:
         logger.error(f"Storage error during upload: {exc}")
@@ -159,9 +136,7 @@ async def upload_audio(
         is_stub=False,
     )
     logger.info(f"Upload response prepared for audio ID: {record.id}")
-    return JSONResponse(
-        status_code=status.HTTP_201_CREATED, content=response.model_dump()
-    )
+    return JSONResponse(status_code=status.HTTP_201_CREATED, content=response.model_dump())
 
 
 @router.post("/transcribe", response_model=StandardResponse)
@@ -256,9 +231,7 @@ async def process_audio_medi_os(
 
     try:
         logger.info(f"📥 Processing audio with ID: {payload.audio_id}")
-        logger.info(
-            f"📥 Audio file record: id={record.id}, consultation_id={record.consultation_id}"
-        )
+        logger.info(f"📥 Audio file record: id={record.id}, consultation_id={record.consultation_id}")
 
         file_path = storage_service.resolve_file_path(record)
         # Ensure absolute path - resolve_path should already return absolute, but double-check
@@ -269,9 +242,7 @@ async def process_audio_medi_os(
             f"Storage base path: {storage_service.provider.base_path if hasattr(storage_service.provider, 'base_path') else 'N/A'}"
         )
         logger.info(f"Record storage_path: {record.storage_path}")
-        logger.info(
-            f"Consultation ID: {record.consultation_id}, Author ID: {author_id}"
-        )
+        logger.info(f"Consultation ID: {record.consultation_id}, Author ID: {author_id}")
 
         # Verify file exists
         if not os.path.exists(file_path):
@@ -296,9 +267,7 @@ async def process_audio_medi_os(
                             "generated_note": "",
                             "confidence_scores": {},
                             "warnings": [],
-                            "errors": [
-                                f"Audio file not found at path: {file_path} (also tried: {alt_path})"
-                            ],
+                            "errors": [f"Audio file not found at path: {file_path} (also tried: {alt_path})"],
                             "stage_completed": "failed",
                         },
                         is_stub=False,
@@ -318,44 +287,32 @@ async def process_audio_medi_os(
                     is_stub=False,
                 )
 
-        logger.info(
-            f"Audio file exists: {file_path} ({os.path.getsize(file_path)} bytes)"
-        )
+        logger.info(f"Audio file exists: {file_path} ({os.path.getsize(file_path)} bytes)")
 
         # Process audio with consultation_id to save notes (only if consultation_id is set)
         consultation_id = record.consultation_id if record.consultation_id else None
         if not consultation_id:
-            logger.warning(
-                f"Audio file {payload.audio_id} has no consultation_id - notes will not be saved"
-            )
+            logger.warning(f"Audio file {payload.audio_id} has no consultation_id - notes will not be saved")
 
         result = await medi_os_service.process_audio_pipeline(
             file_path,
             consultation_id=consultation_id,
             author_id=author_id,
         )
-        logger.info(
-            f"Processing completed successfully for audio ID: {payload.audio_id}"
-        )
+        logger.info(f"Processing completed successfully for audio ID: {payload.audio_id}")
         logger.info(
             f"Processing result: note_saved={result.get('note_saved')}, has_generated_note={bool(result.get('generated_note'))}, consultation_id={consultation_id}"
         )
 
         if result.get("note_saved") and consultation_id:
             logger.info(f"✅ SUCCESS: Note saved to consultation {consultation_id}")
-            logger.info(
-                f"Note content preview: {result.get('generated_note', '')[:100]}..."
-            )
+            logger.info(f"Note content preview: {result.get('generated_note', '')[:100]}...")
         elif result.get("note_save_error"):
             logger.warning(f"❌ Note save failed: {result.get('note_save_error')}")
         elif not consultation_id:
-            logger.warning(
-                f"⚠️ Note not saved - no consultation_id provided (audio_id: {payload.audio_id})"
-            )
+            logger.warning(f"⚠️ Note not saved - no consultation_id provided (audio_id: {payload.audio_id})")
         elif not result.get("generated_note"):
-            logger.warning(
-                f"⚠️ Note not saved - no generated_note in result (consultation_id: {consultation_id})"
-            )
+            logger.warning(f"⚠️ Note not saved - no generated_note in result (consultation_id: {consultation_id})")
         else:
             logger.warning(
                 f"⚠️ Note not saved - unknown reason (consultation_id: {consultation_id}, note_saved: {result.get('note_saved')})"
@@ -486,9 +443,7 @@ async def process_audio_stream(payload: ProcessAudioRequest) -> StreamingRespons
 
             # Stream from pipeline
             final_result = None
-            async for update in medi_os_service.pipeline.process_audio_streaming(
-                file_path
-            ):
+            async for update in medi_os_service.pipeline.process_audio_streaming(file_path):
                 # Send update as SSE event
                 event_data = {
                     **update,
@@ -508,11 +463,7 @@ async def process_audio_stream(payload: ProcessAudioRequest) -> StreamingRespons
 
                         try:
                             model_name = final_result.get("model", "template")
-                            if (
-                                model_name == "template"
-                                or not model_name
-                                or model_name == ""
-                            ):
+                            if model_name == "template" or not model_name or model_name == "":
                                 model_name = "template-note-generator"
                             has_note = bool(note_content)
                             is_success = (
@@ -525,9 +476,7 @@ async def process_audio_stream(payload: ProcessAudioRequest) -> StreamingRespons
                                 user_id=author_id,
                                 model=model_name,
                                 tokens_prompt=final_result.get("tokens_prompt", 0),
-                                tokens_completion=final_result.get(
-                                    "tokens_completion", 0
-                                ),
+                                tokens_completion=final_result.get("tokens_completion", 0),
                                 cost_cents=final_result.get("cost_cents", 0.0),
                                 status="success" if is_success else "failed",
                             )
@@ -595,11 +544,7 @@ async def get_consultation_note(consultation_id: str) -> StandardResponse:
                 "content": current_version.content,
                 "entities": current_version.entities,
                 "is_ai_generated": current_version.is_ai_generated,
-                "created_at": (
-                    current_version.created_at.isoformat()
-                    if current_version.created_at
-                    else None
-                ),
+                "created_at": (current_version.created_at.isoformat() if current_version.created_at else None),
                 "version_id": current_version.id,
             },
             is_stub=False,
@@ -640,9 +585,7 @@ async def update_consultation_note(
                     "note_id": version.note_id,
                     "version_id": version.id,
                     "content": version.content,
-                    "updated_at": (
-                        version.created_at.isoformat() if version.created_at else None
-                    ),
+                    "updated_at": (version.created_at.isoformat() if version.created_at else None),
                 },
                 is_stub=False,
             )
@@ -652,17 +595,11 @@ async def update_consultation_note(
         import logging
 
         logger = logging.getLogger(__name__)
-        logger.exception(
-            f"Error updating note for consultation {consultation_id}: {exc}"
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-        )
+        logger.exception(f"Error updating note for consultation {consultation_id}: {exc}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
 
 
-@router.post(
-    "/consultations/{consultation_id}/note/submit", response_model=StandardResponse
-)
+@router.post("/consultations/{consultation_id}/note/submit", response_model=StandardResponse)
 async def submit_note_for_approval(
     consultation_id: str,
     payload: SubmitNoteRequest,
@@ -693,14 +630,10 @@ async def submit_note_for_approval(
 
         logger = logging.getLogger(__name__)
         logger.exception(f"Error submitting note for approval: {exc}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
 
 
-@router.post(
-    "/consultations/{consultation_id}/note/approve", response_model=StandardResponse
-)
+@router.post("/consultations/{consultation_id}/note/approve", response_model=StandardResponse)
 async def approve_note(
     consultation_id: str,
     payload: ApproveNoteRequest,
@@ -739,14 +672,10 @@ async def approve_note(
 
         logger = logging.getLogger(__name__)
         logger.exception(f"Error approving note: {exc}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
 
 
-@router.post(
-    "/consultations/{consultation_id}/note/reject", response_model=StandardResponse
-)
+@router.post("/consultations/{consultation_id}/note/reject", response_model=StandardResponse)
 async def reject_note(
     consultation_id: str,
     payload: RejectNoteRequest,
@@ -790,6 +719,4 @@ async def reject_note(
 
         logger = logging.getLogger(__name__)
         logger.exception(f"Error rejecting note: {exc}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))

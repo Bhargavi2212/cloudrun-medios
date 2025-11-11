@@ -27,9 +27,7 @@ def create_access_token(sub: str, claims: Dict[str, Any] | None = None) -> str:
 
     expire = _current_time() + timedelta(minutes=settings.jwt_access_expires_minutes)
     to_encode["exp"] = int(expire.timestamp())
-    return jwt.encode(
-        to_encode, settings.jwt_access_secret, algorithm=settings.jwt_algorithm
-    )
+    return jwt.encode(to_encode, settings.jwt_access_secret, algorithm=settings.jwt_algorithm)
 
 
 def create_refresh_token(sub: str, token_id: str) -> str:
@@ -41,18 +39,12 @@ def create_refresh_token(sub: str, token_id: str) -> str:
         "jti": token_id,
         "exp": int(expire.timestamp()),
     }
-    return jwt.encode(
-        payload, settings.jwt_refresh_secret, algorithm=settings.jwt_algorithm
-    )
+    return jwt.encode(payload, settings.jwt_refresh_secret, algorithm=settings.jwt_algorithm)
 
 
 def decode_access_token(token: str) -> Dict[str, Any]:
-    return jwt.decode(
-        token, settings.jwt_access_secret, algorithms=[settings.jwt_algorithm]
-    )
+    return jwt.decode(token, settings.jwt_access_secret, algorithms=[settings.jwt_algorithm])
 
 
 def decode_refresh_token(token: str) -> Dict[str, Any]:
-    return jwt.decode(
-        token, settings.jwt_refresh_secret, algorithms=[settings.jwt_algorithm]
-    )
+    return jwt.decode(token, settings.jwt_refresh_secret, algorithms=[settings.jwt_algorithm])

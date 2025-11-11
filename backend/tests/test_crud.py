@@ -8,11 +8,19 @@ from uuid import uuid4
 import pytest
 
 from backend.database import crud
-from backend.database.models import (Consultation, ConsultationStatus, Note,
-                                     NoteVersion, Patient, QueueStage,
-                                     QueueState, TimelineEvent,
-                                     TimelineEventStatus, TimelineEventType,
-                                     User)
+from backend.database.models import (
+    Consultation,
+    ConsultationStatus,
+    Note,
+    NoteVersion,
+    Patient,
+    QueueStage,
+    QueueState,
+    TimelineEvent,
+    TimelineEventStatus,
+    TimelineEventType,
+    User,
+)
 
 
 def test_create_note_with_version(db_session, test_consultation, test_user):
@@ -39,9 +47,7 @@ def test_create_note_with_version(db_session, test_consultation, test_user):
     assert note.current_version_id == version_id
 
     # Verify note version was created
-    note_version = (
-        db_session.query(NoteVersion).filter(NoteVersion.id == version_id).first()
-    )
+    note_version = db_session.query(NoteVersion).filter(NoteVersion.id == version_id).first()
     assert note_version is not None
     assert note_version.content == "Test note content"
     assert note_version.is_ai_generated is True
@@ -79,9 +85,7 @@ def test_update_note_content(db_session, test_note, test_user):
     version_id = version.id
 
     # Verify new version was created
-    note_version = (
-        db_session.query(NoteVersion).filter(NoteVersion.id == version_id).first()
-    )
+    note_version = db_session.query(NoteVersion).filter(NoteVersion.id == version_id).first()
     assert note_version is not None
     assert note_version.content == new_content
     assert note_version.created_by == test_user.id
@@ -105,9 +109,7 @@ def test_approve_note(db_session, test_note, test_user):
     crud.submit_note_for_approval(db_session, test_note.consultation_id)
 
     # Then approve
-    note = crud.approve_note(
-        db_session, test_note.consultation_id, approver_id=test_user.id
-    )
+    note = crud.approve_note(db_session, test_note.consultation_id, approver_id=test_user.id)
 
     assert note is not None
     assert note.status == "approved"

@@ -60,10 +60,7 @@ def get_current_user(
         )
 
     user: User | None = (
-        session.query(User)
-        .options(joinedload(User.roles))
-        .filter(User.id == str(user_id), User.is_deleted.is_(False))
-        .first()
+        session.query(User).options(joinedload(User.roles)).filter(User.id == str(user_id), User.is_deleted.is_(False)).first()
     )
 
     if not user:
@@ -74,9 +71,7 @@ def get_current_user(
         )
 
     if user.status != UserStatus.ACTIVE:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="User inactive"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User inactive")
 
     return user
 
@@ -101,9 +96,7 @@ def require_roles(*allowed_roles: Any) -> Callable[[User], User]:
         role_names = {role.name for role in user.roles or []}
         normalized_roles = _normalize_roles(allowed_roles)
         if normalized_roles and role_names.isdisjoint(normalized_roles):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
-            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
         return user
 
     return dependency

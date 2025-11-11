@@ -95,11 +95,7 @@ PLAN:
 
             # Determine status - success if we have a generated note, even if it's a template
             has_note = bool(result.get("generated_note", "").strip())
-            is_success = (
-                result.get("success", True)
-                and has_note
-                and result.get("stage_completed") != "failed"
-            )
+            is_success = result.get("success", True) and has_note and result.get("stage_completed") != "failed"
 
             record_llm_usage(
                 request_id=None,  # Could get from context if available
@@ -125,27 +121,17 @@ PLAN:
         if consultation_id and result.get("generated_note"):
             # Check if there are critical errors that prevent saving
             errors = result.get("errors", [])
-            critical_errors = [
-                e
-                for e in errors
-                if "transcription failed" in e.lower() or "file not found" in e.lower()
-            ]
+            critical_errors = [e for e in errors if "transcription failed" in e.lower() or "file not found" in e.lower()]
 
-            logger.info(
-                f"🔍 Error check: total_errors={len(errors)}, critical_errors={len(critical_errors)}"
-            )
+            logger.info(f"🔍 Error check: total_errors={len(errors)}, critical_errors={len(critical_errors)}")
 
             if not critical_errors:
                 try:
                     note_content = result.get("generated_note", "").strip()
-                    logger.info(
-                        f"🔍 Note content check: length={len(note_content)}, is_stub={result.get('is_stub', False)}"
-                    )
+                    logger.info(f"🔍 Note content check: length={len(note_content)}, is_stub={result.get('is_stub', False)}")
 
                     if note_content:  # Only save if we have actual content
-                        logger.info(
-                            f"💾 Attempting to save note to consultation {consultation_id}..."
-                        )
+                        logger.info(f"💾 Attempting to save note to consultation {consultation_id}...")
                         self._persist_note(
                             consultation_id=consultation_id,
                             author_id=author_id,
@@ -158,9 +144,7 @@ PLAN:
                             f"✅ Note saved successfully to consultation {consultation_id} (is_stub={result.get('is_stub', False)}, content_length={len(note_content)})"
                         )
                     else:
-                        logger.warning(
-                            f"⚠️ Generated note is empty, not saving to consultation {consultation_id}"
-                        )
+                        logger.warning(f"⚠️ Generated note is empty, not saving to consultation {consultation_id}")
                         result["note_saved"] = False
                         result["note_save_error"] = "Generated note is empty"
                 except Exception as exc:
@@ -172,15 +156,11 @@ PLAN:
                     result["note_saved"] = False
                     result["note_save_error"] = str(exc)
             else:
-                logger.warning(
-                    f"⚠️ Not saving note due to critical errors: {critical_errors}"
-                )
+                logger.warning(f"⚠️ Not saving note due to critical errors: {critical_errors}")
                 result["note_saved"] = False
                 result["note_save_error"] = "; ".join(critical_errors)
         elif consultation_id and not result.get("generated_note"):
-            logger.warning(
-                f"⚠️ Consultation ID provided ({consultation_id}) but no generated note to save"
-            )
+            logger.warning(f"⚠️ Consultation ID provided ({consultation_id}) but no generated note to save")
             result["note_saved"] = False
             result["note_save_error"] = "No generated note available"
         elif not consultation_id:
@@ -212,9 +192,7 @@ PLAN:
             )
 
             with get_session() as session:
-                logger.info(
-                    f"📝 Creating note with version for consultation {consultation_id}"
-                )
+                logger.info(f"📝 Creating note with version for consultation {consultation_id}")
                 version = crud.create_note_with_version(
                     session,
                     consultation_id=consultation_id,

@@ -5,8 +5,7 @@ import json
 import logging
 from typing import Optional
 
-from fastapi import (APIRouter, Depends, HTTPException, Query, WebSocket,
-                     WebSocketDisconnect, status)
+from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -24,9 +23,7 @@ router = APIRouter(prefix="/queue", tags=["queue"])
 class QueueCreateRequest(BaseModel):
     patient_id: str = Field(..., description="ID of the patient to enqueue.")
     chief_complaint: Optional[str] = Field(default=None)
-    consultation_id: Optional[str] = Field(
-        default=None, description="Existing consultation identifier if applicable."
-    )
+    consultation_id: Optional[str] = Field(default=None, description="Existing consultation identifier if applicable.")
     priority_level: int = Field(default=3, ge=1, le=5)
     estimated_wait_seconds: Optional[int] = Field(default=None, ge=0)
     assigned_to: Optional[str] = Field(default=None)
@@ -114,9 +111,7 @@ async def advance_queue_state(
 @router.post(
     "/{queue_state_id}/assign",
     response_model=StandardResponse,
-    dependencies=[
-        Depends(require_roles([UserRole.NURSE, UserRole.DOCTOR, UserRole.RECEPTIONIST]))
-    ],
+    dependencies=[Depends(require_roles([UserRole.NURSE, UserRole.DOCTOR, UserRole.RECEPTIONIST]))],
 )
 async def assign_queue_state(
     queue_state_id: str,

@@ -21,22 +21,12 @@ class VitalsSubmission(BaseModel):
     """Request model for vitals submission - permissive validation for emergency/critical cases"""
 
     heart_rate: int = Field(..., ge=10, le=300, description="Heart rate in BPM")
-    blood_pressure_systolic: int = Field(
-        ..., ge=40, le=350, description="Systolic blood pressure"
-    )
-    blood_pressure_diastolic: int = Field(
-        ..., ge=20, le=200, description="Diastolic blood pressure"
-    )
+    blood_pressure_systolic: int = Field(..., ge=40, le=350, description="Systolic blood pressure")
+    blood_pressure_diastolic: int = Field(..., ge=20, le=200, description="Diastolic blood pressure")
     respiratory_rate: int = Field(..., ge=4, le=60, description="Respiratory rate")
-    temperature_celsius: float = Field(
-        ..., ge=25.0, le=50.0, description="Temperature in Celsius"
-    )
-    oxygen_saturation: float = Field(
-        ..., ge=30.0, le=100.0, description="Oxygen saturation percentage"
-    )
-    weight_kg: Optional[float] = Field(
-        None, ge=0.5, le=500.0, description="Weight in kilograms"
-    )
+    temperature_celsius: float = Field(..., ge=25.0, le=50.0, description="Temperature in Celsius")
+    oxygen_saturation: float = Field(..., ge=30.0, le=100.0, description="Oxygen saturation percentage")
+    weight_kg: Optional[float] = Field(None, ge=0.5, le=500.0, description="Weight in kilograms")
 
 
 class PatientQueueItem(BaseModel):
@@ -100,12 +90,8 @@ class QueueResponse(BaseModel):
 class TriageResult(BaseModel):
     """Response model for triage calculation"""
 
-    triage_level: int = Field(
-        ..., ge=1, le=5, description="ESI triage level (1=most urgent, 5=least urgent)"
-    )
-    confidence: float = Field(
-        ..., ge=0.0, le=1.0, description="Confidence in triage assessment"
-    )
+    triage_level: int = Field(..., ge=1, le=5, description="ESI triage level (1=most urgent, 5=least urgent)")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence in triage assessment")
     reasoning: str = Field(..., description="Explanation for triage level")
     priority_score: float = Field(..., description="Calculated priority score")
 

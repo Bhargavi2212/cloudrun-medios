@@ -58,9 +58,7 @@ async def test_extract_entities_identifies_keywords():
 @pytest.mark.asyncio
 async def test_generate_note_uses_template_without_gemini(monkeypatch):
     service = ai_models.AIModelsService()
-    result = await service.generate_note(
-        "Patient has cough.", {"symptoms": ["cough"], "vitals": {}}
-    )
+    result = await service.generate_note("Patient has cough.", {"symptoms": ["cough"], "vitals": {}})
     assert result["success"] is True
     assert result["is_stub"] is True
     assert "cough" in result["generated_note"].lower()

@@ -30,9 +30,7 @@ class WaitTimeEstimator:
             "discharge": 0.1,  # Wrapping up
         }
 
-    def estimate_wait_time(
-        self, patient: PatientQueueItem, queue_patients: List[PatientQueueItem]
-    ) -> Dict:
+    def estimate_wait_time(self, patient: PatientQueueItem, queue_patients: List[PatientQueueItem]) -> Dict:
         """
         Estimate wait time for a specific patient
 
@@ -62,9 +60,7 @@ class WaitTimeEstimator:
                 ahead_processing_time = self.avg_processing_times.get(ahead_triage, 25)
 
                 # Apply status multiplier
-                status_multiplier = self.status_multipliers.get(
-                    ahead_patient.status, 1.0
-                )
+                status_multiplier = self.status_multipliers.get(ahead_patient.status, 1.0)
                 estimated_minutes += ahead_processing_time * status_multiplier
 
             # Add this patient's processing time
@@ -99,9 +95,7 @@ class WaitTimeEstimator:
                 "confidence_level": "low",
             }
 
-    def _get_patients_ahead(
-        self, patient: PatientQueueItem, queue_patients: List[PatientQueueItem]
-    ) -> List[PatientQueueItem]:
+    def _get_patients_ahead(self, patient: PatientQueueItem, queue_patients: List[PatientQueueItem]) -> List[PatientQueueItem]:
         """Get list of patients ahead of this patient in priority order"""
         patient_triage = patient.triage_level or 5
         patient_wait_time = patient.wait_time_minutes
@@ -121,19 +115,14 @@ class WaitTimeEstimator:
             # 3. Already in consultation/assigned
             if (
                 other_triage < patient_triage
-                or (
-                    other_triage == patient_triage
-                    and other_wait_time > patient_wait_time
-                )
+                or (other_triage == patient_triage and other_wait_time > patient_wait_time)
                 or other_patient.status in ["scribe", "discharge"]
             ):
                 patients_ahead.append(other_patient)
 
         return patients_ahead
 
-    def _calculate_confidence(
-        self, patient: PatientQueueItem, queue_patients: List[PatientQueueItem]
-    ) -> str:
+    def _calculate_confidence(self, patient: PatientQueueItem, queue_patients: List[PatientQueueItem]) -> str:
         """Calculate confidence level for the estimate"""
         # Higher confidence for:
         # - Patients with clear triage level

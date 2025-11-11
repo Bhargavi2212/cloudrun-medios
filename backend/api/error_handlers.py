@@ -31,9 +31,7 @@ def register_exception_handlers(app):
             "Validation error",
             extra={"errors": exc.errors(), "path": request.url.path},
         )
-        payload = StandardResponse(
-            success=False, error="Validation failed.", data=exc.errors()
-        )
+        payload = StandardResponse(success=False, error="Validation failed.", data=exc.errors())
         return JSONResponse(status_code=422, content=payload.model_dump())
 
     @app.exception_handler(Exception)
@@ -44,9 +42,7 @@ def register_exception_handlers(app):
             error="Internal server error.",
             is_stub=True,
         )
-        return JSONResponse(
-            status_code=HTTP_500_INTERNAL_SERVER_ERROR, content=payload.model_dump()
-        )
+        return JSONResponse(status_code=HTTP_500_INTERNAL_SERVER_ERROR, content=payload.model_dump())
 
 
 __all__ = ["register_exception_handlers"]

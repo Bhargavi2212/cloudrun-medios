@@ -6,32 +6,43 @@ import os
 from datetime import date, datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from fastapi import (APIRouter, BackgroundTasks, Depends, File, Form,
-                     HTTPException, UploadFile, status)
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from backend.database import crud
-from backend.database.models import (Consultation, ConsultationStatus,
-                                     DocumentProcessingStatus, FileAsset,
-                                     Patient, QueueStage, QueueState,
-                                     TimelineEventStatus, User, Vital)
+from backend.database.models import (
+    Consultation,
+    ConsultationStatus,
+    DocumentProcessingStatus,
+    FileAsset,
+    Patient,
+    QueueStage,
+    QueueState,
+    TimelineEventStatus,
+    User,
+    Vital,
+)
 from backend.database.session import get_db_session, get_session
-from backend.dto.manage_agent_dto import (CheckInRequest, ConsultationRecord,
-                                          DocumentReviewRequest,
-                                          DocumentReviewResolution,
-                                          DocumentStatusResponse,
-                                          PatientQueueItem, QueueResponse,
-                                          TimelineSummaryResponse,
-                                          TriageResult, VitalsSubmission)
+from backend.dto.manage_agent_dto import (
+    CheckInRequest,
+    ConsultationRecord,
+    DocumentReviewRequest,
+    DocumentReviewResolution,
+    DocumentStatusResponse,
+    PatientQueueItem,
+    QueueResponse,
+    TimelineSummaryResponse,
+    TriageResult,
+    VitalsSubmission,
+)
 from backend.security.dependencies import require_roles
 from backend.security.permissions import UserRole
 from backend.services.document_processing import DocumentProcessingService
 from backend.services.error_response import StandardResponse
 from backend.services.manage_agent_state_machine import ManageAgentStateMachine
-from backend.services.manage_agent_wait_time import \
-    ManageAgentWaitTimePredictor
+from backend.services.manage_agent_wait_time import ManageAgentWaitTimePredictor
 from backend.services.notifier import notification_service
 from backend.services.queue_service import queue_service
 from backend.services.storage import StorageService
@@ -53,9 +64,7 @@ document_processing_service = DocumentProcessingService(storage_service=storage_
     response_model=StandardResponse,
     status_code=status.HTTP_201_CREATED,
 )
-def check_in_patient(
-    request: CheckInRequest, session: Session = Depends(get_db_session)
-) -> StandardResponse:
+def check_in_patient(request: CheckInRequest, session: Session = Depends(get_db_session)) -> StandardResponse:
     """Check a patient into the queue and compute an initial triage estimate."""
     patient = (
         session.query(Patient)
@@ -105,19 +114,11 @@ def check_in_patient(
     session.expire_all()
     queue_items = _build_queue_items(session)
     queue_snapshot = next(
-        (
-            item
-            for item in queue_items
-            if item.consultation_id == (queue_state.consultation_id or queue_state.id)
-        ),
+        (item for item in queue_items if item.consultation_id == (queue_state.consultation_id or queue_state.id)),
         None,
     )
 
-    triage_payload = (
-        preliminary_state.triage_result.model_dump()
-        if preliminary_state.triage_result
-        else None
-    )
+    triage_payload = preliminary_state.triage_result.model_dump() if preliminary_state.triage_result else None
 
     patient_name = _format_patient_name(patient)
     message = f"Patient {patient_name} checked in successfully"
@@ -182,11 +183,7 @@ def submit_vitals(
         diastolic_bp=dto_vitals.blood_pressure_diastolic,
         temperature=float(dto_vitals.temperature_celsius),
         oxygen_saturation=int(dto_vitals.oxygen_saturation),
-        extra=(
-            {"weight_kg": dto_vitals.weight_kg}
-            if dto_vitals.weight_kg is not None
-            else None
-        ),
+        extra=({"weight_kg": dto_vitals.weight_kg} if dto_vitals.weight_kg is not None else None),
     )
     session.add(vital_record)
 
@@ -253,9 +250,7 @@ async def upload_consultation_records(
     current_user: User = Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR)),
 ) -> StandardResponse:
     if not files:
-        raise HTTPException(
-            status_code=400, detail="At least one file must be provided."
-        )
+        raise HTTPException(status_code=400, detail="At least one file must be provided.")
 
     consultation = crud.get_consultation(session, consultation_id)
     if consultation is None:
@@ -289,9 +284,7 @@ async def upload_consultation_records(
             "records": [record.model_dump() for record in uploaded_records],
             "processing_results": processing_results,
         },
-        message=(
-            f"Uploaded {len(uploaded_records)} record(s); document processing completed."
-        ),
+        message=(f"Uploaded {len(uploaded_records)} record(s); document processing completed."),
     )
 
 
@@ -308,13 +301,8 @@ def list_consultation_records(
     if consultation is None:
         raise HTTPException(status_code=404, detail="Consultation not found")
 
-    records = crud.list_file_assets(
-        session, owner_type="consultation", owner_id=consultation_id
-    )
-    payload = [
-        _serialize_consultation_record(session, record).model_dump()
-        for record in records
-    ]
+    records = crud.list_file_assets(session, owner_type="consultation", owner_id=consultation_id)
+    payload = [_serialize_consultation_record(session, record).model_dump() for record in records]
     return StandardResponse(success=True, data={"records": payload})
 
 
@@ -350,9 +338,7 @@ def download_consultation_record(
 def get_consultation_record_status(
     file_id: str,
     session: Session = Depends(get_db_session),
-    _: User = Depends(
-        require_roles(UserRole.NURSE, UserRole.DOCTOR, UserRole.RECEPTIONIST)
-    ),
+    _: User = Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR, UserRole.RECEPTIONIST)),
 ) -> StandardResponse:
     record = crud.get_file_asset(session, file_id)
     if record is None or record.owner_type != "consultation":
@@ -463,11 +449,7 @@ def review_consultation_record(
         "status": new_status.value,
         "processed_at": (updated_record.processed_at or processed_at).isoformat(),
         "timeline_event_ids": timeline_event_ids,
-        "confidence": (
-            float(updated_record.confidence)
-            if updated_record.confidence is not None
-            else None
-        ),
+        "confidence": (float(updated_record.confidence) if updated_record.confidence is not None else None),
         "needs_review": new_status
         in {
             DocumentProcessingStatus.NEEDS_REVIEW,
@@ -503,10 +485,7 @@ async def stream_consultation_document_updates(
         try:
             while True:
                 event = await queue.get()
-                if (
-                    event.get("consultation_id")
-                    and event["consultation_id"] != consultation_id
-                ):
+                if event.get("consultation_id") and event["consultation_id"] != consultation_id:
                     continue
                 payload = json.dumps(event, ensure_ascii=False)
                 yield f"data: {payload}\n\n"
@@ -618,14 +597,10 @@ def _build_queue_items(session: Session) -> List[PatientQueueItem]:
     return items
 
 
-def _convert_state_to_queue_item(
-    session: Session, state: QueueState
-) -> PatientQueueItem:
+def _convert_state_to_queue_item(session: Session, state: QueueState) -> PatientQueueItem:
     patient = state.patient
     consultation = state.consultation
-    assigned_doctor: Optional[User] = (
-        consultation.assigned_doctor if consultation else None
-    )
+    assigned_doctor: Optional[User] = consultation.assigned_doctor if consultation else None
 
     wait_minutes = _minutes_since(state.created_at)
     triage_level = state.priority_level or 3
@@ -641,9 +616,7 @@ def _convert_state_to_queue_item(
         triage_level=triage_level,
         status=state.current_stage.value,
         wait_time_minutes=wait_minutes,
-        priority_score=triage_engine.calculate_priority_score(
-            triage_level, wait_minutes
-        ),
+        priority_score=triage_engine.calculate_priority_score(triage_level, wait_minutes),
         assigned_doctor=_format_doctor(assigned_doctor),
         assigned_doctor_id=consultation.assigned_doctor_id if consultation else None,
         check_in_time=state.created_at,
@@ -689,9 +662,7 @@ def _record_download_url(record_id: str) -> str:
     return f"/api/v1/manage/records/{record_id}/download"
 
 
-def _serialize_consultation_record(
-    session: Session, record: FileAsset
-) -> ConsultationRecord:
+def _serialize_consultation_record(session: Session, record: FileAsset) -> ConsultationRecord:
     uploader = session.get(User, record.uploaded_by) if record.uploaded_by else None
     signed_url = storage_service.generate_file_asset_signed_url(record)
     timeline_events = crud.list_timeline_events_for_file(session, record.id)
@@ -770,9 +741,7 @@ def _latest_vitals(session: Session, consultation_id: str) -> Optional[Dict[str,
         "heart_rate": vital.heart_rate,
         "blood_pressure_systolic": vital.systolic_bp,
         "blood_pressure_diastolic": vital.diastolic_bp,
-        "temperature": (
-            float(vital.temperature) if vital.temperature is not None else None
-        ),
+        "temperature": (float(vital.temperature) if vital.temperature is not None else None),
         "oxygen_saturation": vital.oxygen_saturation,
         "respiratory_rate": vital.respiratory_rate,
     }

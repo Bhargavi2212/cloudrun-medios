@@ -12,9 +12,7 @@ from backend.services.storage import StorageService
 
 
 class FakeMakeAgentService(MakeAgentService):
-    async def process_audio_pipeline(
-        self, audio_file_path: str, *, consultation_id=None, author_id=None
-    ) -> StandardResponse:
+    async def process_audio_pipeline(self, audio_file_path: str, *, consultation_id=None, author_id=None) -> StandardResponse:
         return StandardResponse(
             success=True,
             data={
@@ -57,9 +55,7 @@ async def test_enqueue_and_process_job(tmp_path, monkeypatch):
 
     storage_service = StorageService()
     upload = UploadFileMock("sample.wav", b"fake audio data", "audio/wav")
-    record, _ = await storage_service.save_audio_file(
-        upload, consultation_id="consult-123"
-    )
+    record, _ = await storage_service.save_audio_file(upload, consultation_id="consult-123")
 
     job_service = JobQueueService(
         make_agent_service=FakeMakeAgentService(),

@@ -83,27 +83,19 @@ class TriageService:
     def __init__(self, *, default_model: str = "lightgbm") -> None:
         self.settings = get_settings()
         # Initialize model_dir first without using _resolve_path to avoid circular dependency
-        model_dir_path = (
-            Path(self.settings.triage_model_dir)
-            if self.settings.triage_model_dir
-            else Path.cwd()
-        )
+        model_dir_path = Path(self.settings.triage_model_dir) if self.settings.triage_model_dir else Path.cwd()
         if not model_dir_path.is_absolute():
             model_dir_path = Path.cwd() / model_dir_path
         self.model_dir = model_dir_path
         # Now we can use _resolve_path for other paths
         self.metadata = self._load_pickle(self.settings.triage_metadata_file)
-        self.baseline_metadata = self._load_pickle(
-            self.settings.triage_baseline_metadata_file
-        )
+        self.baseline_metadata = self._load_pickle(self.settings.triage_baseline_metadata_file)
 
         self.xgb_model = self._load_joblib(self.settings.triage_xgb_model)
         self.lgbm_model = self._load_joblib(self.settings.triage_lgbm_model)
         self.stacking_model = self._load_joblib(self.settings.triage_stacking_model)
 
-        booster_features = list(
-            getattr(self.xgb_model.get_booster(), "feature_names", []) or []
-        )
+        booster_features = list(getattr(self.xgb_model.get_booster(), "feature_names", []) or [])
         baseline_features = self.baseline_metadata.get("feature_names", [])
         self.feature_names: List[str] = booster_features or baseline_features
         if not self.feature_names:
@@ -134,9 +126,7 @@ class TriageService:
     ) -> TriagePrediction:
         model_name = (model or self.default_model).lower()
         if model_name not in self._SUPPORTED_MODELS:
-            raise ValueError(
-                f"Unsupported model '{model_name}'. Supported: {sorted(self._SUPPORTED_MODELS)}"
-            )
+            raise ValueError(f"Unsupported model '{model_name}'. Supported: {sorted(self._SUPPORTED_MODELS)}")
 
         start_ts = perf_counter()
         df = self._vectorise(features)
@@ -151,10 +141,7 @@ class TriageService:
         severity_index = int(np.argmax(probs))
         severity_label = self.severity_labels.get(severity_index, str(severity_index))
 
-        probabilities = {
-            self.severity_labels.get(i, str(i)): float(prob)
-            for i, prob in enumerate(probs)
-        }
+        probabilities = {self.severity_labels.get(i, str(i)): float(prob) for i, prob in enumerate(probs)}
 
         # Use SHAP if requested and available, otherwise fall back to built-in importance
         if use_shap and SHAP_AVAILABLE:
@@ -213,9 +200,7 @@ class TriageService:
             row.append(value)
         return pd.DataFrame([row], columns=self.feature_names, dtype=np.float32)
 
-    def _feature_importance_lightgbm(
-        self, df: pd.DataFrame, top_k: int = 5
-    ) -> List[Dict[str, Any]]:
+    def _feature_importance_lightgbm(self, df: pd.DataFrame, top_k: int = 5) -> List[Dict[str, Any]]:
         booster = getattr(self.lgbm_model, "booster_", None)
         if booster is None and isinstance(self.lgbm_model, lgb.Booster):
             booster = self.lgbm_model
@@ -225,18 +210,14 @@ class TriageService:
         feature_contribs = contribs[0, :-1]
         return self._format_top_contributors(feature_contribs, top_k)
 
-    def _feature_importance_xgboost(
-        self, df: pd.DataFrame, top_k: int = 5
-    ) -> List[Dict[str, Any]]:
+    def _feature_importance_xgboost(self, df: pd.DataFrame, top_k: int = 5) -> List[Dict[str, Any]]:
         booster = self.xgb_model.get_booster()
         dmatrix = xgb.DMatrix(df.values, feature_names=self.feature_names)
         contribs = booster.predict(dmatrix, pred_contribs=True)
         feature_contribs = contribs[0, :-1]
         return self._format_top_contributors(feature_contribs, top_k)
 
-    def _feature_importance_stacking(
-        self, df: pd.DataFrame, top_k: int = 5
-    ) -> List[Dict[str, Any]]:
+    def _feature_importance_stacking(self, df: pd.DataFrame, top_k: int = 5) -> List[Dict[str, Any]]:
         # Approximate explanation by averaging LightGBM and XGBoost contributions.
         lgb_expl = self._feature_importance_lightgbm(df, top_k=len(self.feature_names))
         xgb_expl = self._feature_importance_xgboost(df, top_k=len(self.feature_names))
@@ -245,13 +226,9 @@ class TriageService:
 
         contrib_map: Dict[str, float] = {}
         for entry in lgb_expl:
-            contrib_map[entry["feature"]] = (
-                contrib_map.get(entry["feature"], 0.0) + entry["contribution"]
-            )
+            contrib_map[entry["feature"]] = contrib_map.get(entry["feature"], 0.0) + entry["contribution"]
         for entry in xgb_expl:
-            contrib_map[entry["feature"]] = (
-                contrib_map.get(entry["feature"], 0.0) + entry["contribution"]
-            )
+            contrib_map[entry["feature"]] = contrib_map.get(entry["feature"], 0.0) + entry["contribution"]
 
         combined = [
             {
@@ -264,9 +241,7 @@ class TriageService:
         combined.sort(key=lambda entry: entry["magnitude"], reverse=True)
         return combined[:top_k]
 
-    def _format_top_contributors(
-        self, contributions: np.ndarray, top_k: int
-    ) -> List[Dict[str, Any]]:
+    def _format_top_contributors(self, contributions: np.ndarray, top_k: int) -> List[Dict[str, Any]]:
         abs_contribs = np.abs(contributions)
         indices = np.argsort(abs_contribs)[::-1][:top_k]
         return [
@@ -299,9 +274,7 @@ class TriageService:
         """
         model_name = (model or self.default_model).lower()
         if model_name not in self._SUPPORTED_MODELS:
-            raise ValueError(
-                f"Unsupported model '{model_name}'. Supported: {sorted(self._SUPPORTED_MODELS)}"
-            )
+            raise ValueError(f"Unsupported model '{model_name}'. Supported: {sorted(self._SUPPORTED_MODELS)}")
 
         df = self._vectorise(features)
 
@@ -343,9 +316,7 @@ class TriageService:
             "shap_available": SHAP_AVAILABLE,
         }
 
-    def _explain_shap_lightgbm(
-        self, df: pd.DataFrame, top_k: int = 10
-    ) -> List[Dict[str, Any]]:
+    def _explain_shap_lightgbm(self, df: pd.DataFrame, top_k: int = 10) -> List[Dict[str, Any]]:
         """Explain using SHAP for LightGBM model."""
         if not SHAP_AVAILABLE:
             return self._feature_importance_lightgbm(df, top_k=top_k)
@@ -369,9 +340,7 @@ class TriageService:
             # Fallback to feature importance if SHAP fails
             return self._feature_importance_lightgbm(df, top_k=top_k)
 
-    def _explain_shap_xgboost(
-        self, df: pd.DataFrame, top_k: int = 10
-    ) -> List[Dict[str, Any]]:
+    def _explain_shap_xgboost(self, df: pd.DataFrame, top_k: int = 10) -> List[Dict[str, Any]]:
         """Explain using SHAP for XGBoost model."""
         if not SHAP_AVAILABLE:
             return self._feature_importance_xgboost(df, top_k=top_k)
@@ -394,9 +363,7 @@ class TriageService:
             # Fallback to feature importance if SHAP fails
             return self._feature_importance_xgboost(df, top_k=top_k)
 
-    def _explain_shap_stacking(
-        self, df: pd.DataFrame, top_k: int = 10
-    ) -> List[Dict[str, Any]]:
+    def _explain_shap_stacking(self, df: pd.DataFrame, top_k: int = 10) -> List[Dict[str, Any]]:
         """Explain using SHAP for stacking ensemble (average of LightGBM and XGBoost)."""
         if not SHAP_AVAILABLE:
             return self._feature_importance_stacking(df, top_k=top_k)
@@ -412,13 +379,9 @@ class TriageService:
             # Combine explanations
             contrib_map: Dict[str, float] = {}
             for entry in lgb_expl:
-                contrib_map[entry["feature"]] = (
-                    contrib_map.get(entry["feature"], 0.0) + entry["contribution"]
-                )
+                contrib_map[entry["feature"]] = contrib_map.get(entry["feature"], 0.0) + entry["contribution"]
             for entry in xgb_expl:
-                contrib_map[entry["feature"]] = (
-                    contrib_map.get(entry["feature"], 0.0) + entry["contribution"]
-                )
+                contrib_map[entry["feature"]] = contrib_map.get(entry["feature"], 0.0) + entry["contribution"]
 
             combined = [
                 {
@@ -443,9 +406,7 @@ class TriageService:
                     class MockBooster:
                         # feature_names should be an attribute, not a method
                         # The code uses getattr(booster, "feature_names", [])
-                        feature_names = (
-                            []
-                        )  # Empty list, will fall back to baseline_features
+                        feature_names = []  # Empty list, will fall back to baseline_features
 
                     return MockBooster()
 

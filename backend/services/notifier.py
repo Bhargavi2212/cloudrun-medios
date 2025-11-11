@@ -14,9 +14,7 @@ class NotificationService:
         self._subscribers: Dict[str, Set[asyncio.Queue]] = defaultdict(set)
         self._lock = asyncio.Lock()
 
-    async def subscribe(
-        self, channel: str, *, max_queue_size: int = 32
-    ) -> asyncio.Queue:
+    async def subscribe(self, channel: str, *, max_queue_size: int = 32) -> asyncio.Queue:
         queue: asyncio.Queue = asyncio.Queue(maxsize=max_queue_size)
         async with self._lock:
             self._subscribers[channel].add(queue)

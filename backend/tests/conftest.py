@@ -42,9 +42,7 @@ try:
                 if isinstance(secret, bytes):
                     secret = secret[:72]
                 else:
-                    secret = secret.encode("utf-8")[:72].decode(
-                        "utf-8", errors="ignore"
-                    )
+                    secret = secret.encode("utf-8")[:72].decode("utf-8", errors="ignore")
                 return _original_bcrypt_hashpw(secret, salt)
             raise
 
@@ -144,6 +142,7 @@ sys.modules.setdefault("langgraph.checkpoint.memory", stub_langgraph_checkpoint_
 sys.modules.setdefault("langgraph.graph", stub_langgraph_graph)
 
 from backend.database.base import Base
+
 # Import all models to ensure all tables are registered with Base.metadata
 # This must happen before Base.metadata.create_all() is called
 from backend.database import models  # noqa: F401 - Import entire module to register all models
@@ -164,27 +163,25 @@ from backend.security.password import password_hasher
 @pytest.fixture(scope="function")
 def db_session() -> Generator[Session, None, None]:
     """Create a PostgreSQL database session for testing.
-    
+
     Uses TEST_DATABASE_URL if set, otherwise falls back to DATABASE_URL from settings.
     If neither is set, uses a default PostgreSQL test database URL.
     """
     # Get test database URL from environment, with fallbacks
     # Check environment variable first (for TEST_DATABASE_URL override)
     test_db_url = os.environ.get("TEST_DATABASE_URL")
-    
+
     if not test_db_url:
         # Try to get from settings (which loads .env file)
         try:
             from backend.services.config import get_settings
+
             settings = get_settings()
             test_db_url = settings.database_url
         except Exception:
             # Fallback to environment variable or default
-            test_db_url = os.environ.get(
-                "DATABASE_URL",
-                "postgresql+psycopg2://postgres:postgres@localhost:5432/medios_test"
-            )
-    
+            test_db_url = os.environ.get("DATABASE_URL", "postgresql+psycopg2://postgres:postgres@localhost:5432/medios_test")
+
     # For PostgreSQL, we don't need special connect_args
     engine = create_engine(
         test_db_url,
@@ -192,15 +189,14 @@ def db_session() -> Generator[Session, None, None]:
         pool_size=1,
         max_overflow=0,
     )
-    
+
     # Create all tables before creating session
     # Import models module to ensure all models are registered
     from backend.database import models  # noqa: F401
+
     Base.metadata.create_all(bind=engine)
-    
-    TestingSessionLocal = sessionmaker(
-        bind=engine, autocommit=False, autoflush=False, expire_on_commit=False
-    )
+
+    TestingSessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False, expire_on_commit=False)
 
     session = TestingSessionLocal()
     try:
@@ -216,7 +212,7 @@ def db_session() -> Generator[Session, None, None]:
             tables = inspector.get_table_names()
             if not tables:
                 raise RuntimeError(f"Failed to create tables. Expected tables but got: {tables}")
-        
+
         # Ensure session is bound to the engine with tables
         assert session.bind is engine, "Session must be bound to the engine with tables"
         yield session
@@ -362,9 +358,7 @@ def test_patient(db_session: Session) -> Patient:
 
 
 @pytest.fixture
-def test_consultation(
-    db_session: Session, test_patient: Patient, test_user: User
-) -> Consultation:
+def test_consultation(db_session: Session, test_patient: Patient, test_user: User) -> Consultation:
     """Create a test consultation."""
     consultation = Consultation(
         id=str(uuid4()),
@@ -380,9 +374,7 @@ def test_consultation(
 
 
 @pytest.fixture
-def test_queue_state(
-    db_session: Session, test_consultation: Consultation
-) -> QueueState:
+def test_queue_state(db_session: Session, test_consultation: Consultation) -> QueueState:
     """Create a test queue state."""
     queue_state = QueueState(
         id=str(uuid4()),
@@ -397,9 +389,7 @@ def test_queue_state(
 
 
 @pytest.fixture
-def test_note(
-    db_session: Session, test_consultation: Consultation, test_user: User
-) -> Note:
+def test_note(db_session: Session, test_consultation: Consultation, test_user: User) -> Note:
     """Create a test note."""
     note = Note(
         id=str(uuid4()),

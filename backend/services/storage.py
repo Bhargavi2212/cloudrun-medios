@@ -52,9 +52,7 @@ class StorageProvider(Protocol):
 
     def delete_file(self, storage_path: str) -> None: ...
 
-    def generate_signed_url(
-        self, storage_path: str, *, expires_in: int
-    ) -> Optional[str]: ...
+    def generate_signed_url(self, storage_path: str, *, expires_in: int) -> Optional[str]: ...
 
 
 class LocalStorageProvider(StorageProvider):
@@ -108,24 +106,18 @@ class LocalStorageProvider(StorageProvider):
         except OSError as exc:  # pragma: no cover - best effort cleanup
             raise StorageError(str(exc)) from exc
 
-    def generate_signed_url(
-        self, storage_path: str, *, expires_in: int
-    ) -> Optional[str]:
+    def generate_signed_url(self, storage_path: str, *, expires_in: int) -> Optional[str]:
         # Local backend does not issue signed URLs; clients can proxy via API.
         return None
 
 
 class GCSStorageProvider(StorageProvider):
-    def __init__(
-        self, bucket_name: str, credentials_path: Optional[Path], signed_url_expiry: int
-    ) -> None:
+    def __init__(self, bucket_name: str, credentials_path: Optional[Path], signed_url_expiry: int) -> None:
         if gcs_storage is None:  # pragma: no cover - optional dependency
             raise StorageError("google-cloud-storage is not installed")
 
         if credentials_path:
-            self.client = gcs_storage.Client.from_service_account_json(
-                str(credentials_path)
-            )
+            self.client = gcs_storage.Client.from_service_account_json(str(credentials_path))
         else:
             self.client = gcs_storage.Client()
 
@@ -160,9 +152,7 @@ class GCSStorageProvider(StorageProvider):
             rewind=True,
         )
 
-        signed_url = self.generate_signed_url(
-            blob_name, expires_in=self._default_signed_url_expiry
-        )
+        signed_url = self.generate_signed_url(blob_name, expires_in=self._default_signed_url_expiry)
         return StoredFile(
             file_id=file_id,
             storage_path=blob_name,
@@ -188,9 +178,7 @@ class GCSStorageProvider(StorageProvider):
         if blob.exists():
             blob.delete()
 
-    def generate_signed_url(
-        self, storage_path: str, *, expires_in: int
-    ) -> Optional[str]:
+    def generate_signed_url(self, storage_path: str, *, expires_in: int) -> Optional[str]:
         blob = self.bucket.blob(storage_path)
         if not blob.exists():
             return None
@@ -209,9 +197,7 @@ class StorageService:
             return LocalStorageProvider(self.settings.storage_local_path)
         if backend == "gcs":
             if not self.settings.storage_gcs_bucket:
-                raise StorageError(
-                    "STORAGE_GCS_BUCKET is required when using GCS backend"
-                )
+                raise StorageError("STORAGE_GCS_BUCKET is required when using GCS backend")
             return GCSStorageProvider(
                 self.settings.storage_gcs_bucket,
                 self.settings.storage_gcs_credentials,
@@ -454,16 +440,12 @@ class StorageService:
                     crud.soft_delete(session, file_asset)
 
                 deleted_count += 1
-                logger.debug(
-                    f"Deleted expired file: {file_asset.id} ({file_asset.original_filename})"
-                )
+                logger.debug(f"Deleted expired file: {file_asset.id} ({file_asset.original_filename})")
             except Exception as exc:
                 error_count += 1
                 logger.error(f"Failed to delete expired file {file_asset.id}: {exc}")
 
-        logger.info(
-            f"Retention cleanup completed: {deleted_count} deleted, {error_count} errors"
-        )
+        logger.info(f"Retention cleanup completed: {deleted_count} deleted, {error_count} errors")
         return {"deleted": deleted_count, "errors": error_count}
 
     @property

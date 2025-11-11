@@ -159,9 +159,7 @@ class QueueService:
             state = crud.get_queue_state(session, state.id)  # reload with relationships
 
         queue_state_read = QueueStateRead.model_validate(state)
-        self._schedule_broadcast(
-            {"type": "queue.created", "data": queue_state_read.model_dump()}
-        )
+        self._schedule_broadcast({"type": "queue.created", "data": queue_state_read.model_dump()})
         return queue_state_read
 
     def transition_stage(
@@ -176,9 +174,7 @@ class QueueService:
         with get_session() as session:
             state = self._get_state_or_raise(session, queue_state_id)
             if next_stage not in ALLOWED_TRANSITIONS[state.current_stage]:
-                raise ValueError(
-                    f"Transition {state.current_stage} -> {next_stage} not allowed."
-                )
+                raise ValueError(f"Transition {state.current_stage} -> {next_stage} not allowed.")
 
             previous_stage = state.current_stage
             updates: Dict[str, Any] = {"current_stage": next_stage}
@@ -190,23 +186,16 @@ class QueueService:
             crud.update_queue_state(session, state, **updates)
 
             if state.consultation_id:
-                consultation = state.consultation or crud.get_consultation(
-                    session, state.consultation_id
-                )
+                consultation = state.consultation or crud.get_consultation(session, state.consultation_id)
                 if consultation:
                     consultation_updates: Dict[str, Any] = {}
                     new_status = self._derive_consultation_status(next_stage)
                     if new_status and consultation.status != new_status:
                         consultation_updates["status"] = new_status
-                    if (
-                        priority_level is not None
-                        and consultation.triage_level != priority_level
-                    ):
+                    if priority_level is not None and consultation.triage_level != priority_level:
                         consultation_updates["triage_level"] = priority_level
                     if consultation_updates:
-                        crud.update_consultation(
-                            session, consultation, **consultation_updates
-                        )
+                        crud.update_consultation(session, consultation, **consultation_updates)
 
             crud.log_queue_event(
                 session,
@@ -221,9 +210,7 @@ class QueueService:
             state = crud.get_queue_state(session, state.id)
 
         payload = QueueStateRead.model_validate(state)
-        self._schedule_broadcast(
-            {"type": "queue.transition", "data": payload.model_dump()}
-        )
+        self._schedule_broadcast({"type": "queue.transition", "data": payload.model_dump()})
         return payload
 
     def assign_member(
@@ -238,13 +225,9 @@ class QueueService:
             crud.update_queue_state(session, state, assigned_to=assigned_to)
 
             if state.consultation_id:
-                consultation = state.consultation or crud.get_consultation(
-                    session, state.consultation_id
-                )
+                consultation = state.consultation or crud.get_consultation(session, state.consultation_id)
                 if consultation and consultation.assigned_doctor_id != assigned_to:
-                    crud.update_consultation(
-                        session, consultation, assigned_doctor_id=assigned_to
-                    )
+                    crud.update_consultation(session, consultation, assigned_doctor_id=assigned_to)
 
             crud.log_queue_event(
                 session,
@@ -259,9 +242,7 @@ class QueueService:
             state = crud.get_queue_state(session, state.id)
 
         payload = QueueStateRead.model_validate(state)
-        self._schedule_broadcast(
-            {"type": "queue.assigned", "data": payload.model_dump()}
-        )
+        self._schedule_broadcast({"type": "queue.assigned", "data": payload.model_dump()})
         return payload
 
     def update_wait_time(
@@ -273,9 +254,7 @@ class QueueService:
     ) -> QueueStateRead:
         with get_session() as session:
             state = self._get_state_or_raise(session, queue_state_id)
-            crud.update_queue_state(
-                session, state, estimated_wait_seconds=estimated_wait_seconds
-            )
+            crud.update_queue_state(session, state, estimated_wait_seconds=estimated_wait_seconds)
             crud.log_queue_event(
                 session,
                 queue_state_id=state.id,
@@ -289,9 +268,7 @@ class QueueService:
             state = crud.get_queue_state(session, state.id)
 
         payload = QueueStateRead.model_validate(state)
-        self._schedule_broadcast(
-            {"type": "queue.wait_update", "data": payload.model_dump()}
-        )
+        self._schedule_broadcast({"type": "queue.wait_update", "data": payload.model_dump()})
         return payload
 
     # ------------------------------------------------------------------ #
@@ -308,9 +285,7 @@ class QueueService:
         wait_count = 0
 
         for state in state_models:
-            totals[state.current_stage.value] = (
-                totals.get(state.current_stage.value, 0) + 1
-            )
+            totals[state.current_stage.value] = totals.get(state.current_stage.value, 0) + 1
             if state.estimated_wait_seconds:
                 wait_accumulator += state.estimated_wait_seconds
                 wait_count += 1

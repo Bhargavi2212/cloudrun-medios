@@ -9,8 +9,7 @@ from sqlalchemy.orm import sessionmaker
 
 from backend.database import crud
 from backend.database.base import Base
-from backend.database.models import (Consultation, Patient, QueueStage,
-                                     QueueState)
+from backend.database.models import Consultation, Patient, QueueStage, QueueState
 from backend.services import queue_service as queue_module
 from backend.services.queue_service import QueueNotifier, QueueService
 
@@ -28,9 +27,7 @@ class DummyNotifier(QueueNotifier):
 def sqlite_session(monkeypatch):
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(engine)
-    TestingSessionLocal = sessionmaker(
-        bind=engine, autocommit=False, autoflush=False, expire_on_commit=False
-    )
+    TestingSessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False, expire_on_commit=False)
 
     @contextlib.contextmanager
     def get_session_override():

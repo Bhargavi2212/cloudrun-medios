@@ -62,24 +62,13 @@ def _ensure_user(
     last_name: str,
     role_name: str,
 ) -> None:
-    existing = (
-        session.query(User)
-        .filter(User.email == email)
-        .filter(User.is_deleted.is_(False))
-        .first()
-    )
+    existing = session.query(User).filter(User.email == email).filter(User.is_deleted.is_(False)).first()
     if existing:
         return
 
-    role = (
-        session.query(Role)
-        .filter(Role.name == role_name, Role.is_deleted.is_(False))
-        .first()
-    )
+    role = session.query(Role).filter(Role.name == role_name, Role.is_deleted.is_(False)).first()
     if role is None:
-        raise ValueError(
-            f"Required role '{role_name}' not found. Seed roles before users."
-        )
+        raise ValueError(f"Required role '{role_name}' not found. Seed roles before users.")
 
     user = create_instance(
         session,

@@ -16,8 +16,7 @@ except Exception:  # pragma: no cover - optional dependency
     PdfReader = None
 
 from ..database import crud
-from ..database.models import (DocumentProcessingStatus, FileAsset,
-                               TimelineEventStatus, TimelineEventType)
+from ..database.models import DocumentProcessingStatus, FileAsset, TimelineEventStatus, TimelineEventType
 from ..database.session import get_session
 from .ai_models import AIModelsService
 from .notifier import NotificationService
@@ -133,13 +132,11 @@ class DocumentProcessingService:
                 if asset is None:
                     raise DocumentProcessingError(f"File asset {file_id} not found.")
 
-                resolved_patient_id, resolved_consultation_id = (
-                    self._resolve_patient_consultation(
-                        session,
-                        asset,
-                        patient_id,
-                        consultation_id,
-                    )
+                resolved_patient_id, resolved_consultation_id = self._resolve_patient_consultation(
+                    session,
+                    asset,
+                    patient_id,
+                    consultation_id,
                 )
 
                 crud.update_file_asset(
@@ -153,13 +150,9 @@ class DocumentProcessingService:
 
                 file_path = self.storage_service.resolve_file_asset_path(asset)
                 content_type = asset.content_type or self._guess_content_type(asset)
-                original_filename = asset.original_filename or os.path.basename(
-                    file_path
-                )
+                original_filename = asset.original_filename or os.path.basename(file_path)
 
-            extraction = await self._extract_document(
-                file_path, content_type, original_filename
-            )
+            extraction = await self._extract_document(file_path, content_type, original_filename)
             warnings.extend(extraction.warnings)
 
             summarizer_metadata = {
@@ -167,18 +160,14 @@ class DocumentProcessingService:
                 "document_type": extraction.document_type,
                 "page_count": extraction.page_count,
             }
-            summary_result = await self.ai_models.summarize_document(
-                extraction.text, summarizer_metadata
-            )
+            summary_result = await self.ai_models.summarize_document(extraction.text, summarizer_metadata)
             summary_text = summary_result.get("summary", "").strip()
             highlights = summary_result.get("highlights", [])
             summary_confidence = float(summary_result.get("confidence") or 0.0)
             if summary_result.get("warning"):
                 warnings.append(str(summary_result["warning"]))
             if not summary_result.get("success"):
-                warnings.append(
-                    "Document summarizer reported failure; marking for review."
-                )
+                warnings.append("Document summarizer reported failure; marking for review.")
 
             overall_confidence = min(summary_confidence, extraction.confidence)
             needs_review = (
@@ -188,16 +177,8 @@ class DocumentProcessingService:
                 or not summary_result.get("success", True)
             )
 
-            file_status = (
-                DocumentProcessingStatus.NEEDS_REVIEW
-                if needs_review
-                else DocumentProcessingStatus.COMPLETED
-            )
-            event_status = (
-                TimelineEventStatus.NEEDS_REVIEW
-                if needs_review
-                else TimelineEventStatus.COMPLETED
-            )
+            file_status = DocumentProcessingStatus.NEEDS_REVIEW if needs_review else DocumentProcessingStatus.COMPLETED
+            event_status = TimelineEventStatus.NEEDS_REVIEW if needs_review else TimelineEventStatus.COMPLETED
 
             timeline_entries = self._build_timeline_entries(
                 file_id,
@@ -229,9 +210,7 @@ class DocumentProcessingService:
             with self._session_factory() as session:
                 asset = crud.get_file_asset(session, file_id)
                 if asset is None:
-                    raise DocumentProcessingError(
-                        "File asset disappeared before completion."
-                    )
+                    raise DocumentProcessingError("File asset disappeared before completion.")
                 updated_asset = crud.update_file_asset(
                     session,
                     asset,
@@ -356,13 +335,11 @@ class DocumentProcessingService:
                 return
 
             # Resolve patient and consultation context
-            resolved_patient_id, resolved_consultation_id = (
-                self._resolve_patient_consultation(
-                    session,
-                    asset,
-                    None,
-                    None,
-                )
+            resolved_patient_id, resolved_consultation_id = self._resolve_patient_consultation(
+                session,
+                asset,
+                None,
+                None,
             )
 
             crud.update_file_asset(
@@ -479,11 +456,7 @@ class DocumentProcessingService:
 
         if asset.owner_type == "consultation":
             resolved_consultation_id = resolved_consultation_id or asset.owner_id
-            consultation = (
-                crud.get_consultation(session, resolved_consultation_id)
-                if resolved_consultation_id
-                else None
-            )
+            consultation = crud.get_consultation(session, resolved_consultation_id) if resolved_consultation_id else None
             if consultation:
                 resolved_patient_id = consultation.patient_id
         elif asset.owner_type == "patient":
@@ -510,14 +483,10 @@ class DocumentProcessingService:
             return await asyncio.to_thread(self._extract_pdf_text, file_path, filename)
 
         if self._is_text(content_type, filename):
-            return await asyncio.to_thread(
-                self._extract_text_file, file_path, content_type or ""
-            )
+            return await asyncio.to_thread(self._extract_text_file, file_path, content_type or "")
 
         # Fallback for images or unknown formats
-        warnings = [
-            "Document appears to be an image or unsupported format. OCR required; flagging for manual review."
-        ]
+        warnings = ["Document appears to be an image or unsupported format. OCR required; flagging for manual review."]
         return DocumentExtraction(
             text="",
             pages=[""],
@@ -563,9 +532,7 @@ class DocumentProcessingService:
             warnings=warnings,
         )
 
-    def _extract_text_file(
-        self, file_path: str, content_type: str
-    ) -> DocumentExtraction:
+    def _extract_text_file(self, file_path: str, content_type: str) -> DocumentExtraction:
         with open(file_path, "r", encoding="utf-8", errors="ignore") as handle:
             text = handle.read()
         confidence = 0.7 if text.strip() else 0.1
@@ -613,10 +580,7 @@ class DocumentProcessingService:
                     )
                 )
         else:
-            fallback_summary = (
-                summary_text
-                or "Document requires manual review; no automated summary available."
-            )
+            fallback_summary = summary_text or "Document requires manual review; no automated summary available."
             entries.append(
                 TimelineEntryPayload(
                     title=self._title_from_text(fallback_summary),
@@ -681,10 +645,7 @@ class DocumentProcessingService:
 
     @staticmethod
     def _is_pdf(file_path: str, content_type: Optional[str]) -> bool:
-        return (
-            file_path.lower().endswith(".pdf")
-            or (content_type or "").lower() == "application/pdf"
-        )
+        return file_path.lower().endswith(".pdf") or (content_type or "").lower() == "application/pdf"
 
     @staticmethod
     def _is_text(content_type: Optional[str], filename: str) -> bool:

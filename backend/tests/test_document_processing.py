@@ -8,8 +8,7 @@ from uuid import uuid4
 import pytest
 from fastapi import UploadFile
 
-from backend.database.models import (Consultation, ConsultationStatus,
-                                     FileAsset, Patient)
+from backend.database.models import Consultation, ConsultationStatus, DocumentProcessingStatus, FileAsset, Patient
 from backend.database.session import get_session
 from backend.services.document_processing import DocumentProcessingService
 
@@ -17,15 +16,15 @@ from backend.services.document_processing import DocumentProcessingService
 @pytest.fixture
 def document_processing_service(db_session):
     """Create a document processing service with test database session."""
+    from contextlib import contextmanager
 
+    @contextmanager
     def get_session_override():
         yield db_session
 
     # Mock storage service
     class MockStorageService:
-        async def save_file_asset(
-            self, file: UploadFile, consultation_id: str, uploaded_by: str, **kwargs
-        ):
+        async def save_file_asset(self, file: UploadFile, consultation_id: str, uploaded_by: str, **kwargs):
             file_asset = FileAsset(
                 id=str(uuid4()),
                 consultation_id=consultation_id,
@@ -48,13 +47,11 @@ def document_processing_service(db_session):
 
 
 @pytest.mark.asyncio
-async def test_process_document_success(
-    document_processing_service, test_consultation, test_user, db_session
-):
+async def test_process_document_success(document_processing_service, test_consultation, test_user, db_session):
     """Test successful document processing."""
     from backend.database import crud
     from backend.database.models import DocumentProcessingStatus
-    
+
     # First create a file asset
     file_asset = crud.create_file_asset(
         db_session,
@@ -75,8 +72,8 @@ async def test_process_document_success(
     )
 
     assert result is not None
-    assert result.file_id is not None
-    assert result.status in ["completed", "needs_review"]
+    assert result.success is True
+    assert result.status in [DocumentProcessingStatus.COMPLETED, DocumentProcessingStatus.UPLOADED]
 
 
 @pytest.mark.asyncio
@@ -107,10 +104,6 @@ async def test_process_document_creates_timeline_event(
     )
 
     # Verify timeline event was created
-    events = (
-        db_session.query(TimelineEvent)
-        .filter(TimelineEvent.consultation_id == test_consultation.id)
-        .all()
-    )
+    events = db_session.query(TimelineEvent).filter(TimelineEvent.consultation_id == test_consultation.id).all()
     assert len(events) > 0
     assert any(e.event_type.value == "document" for e in events)

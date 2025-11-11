@@ -25,18 +25,12 @@ except ImportError:
 class TriageEngine:
     """Enhanced triage engine using trained XGBoost model with rule-based fallback"""
 
-    def __init__(
-        self, model_path: Optional[str] = None, artifacts_path: Optional[str] = None
-    ):
+    def __init__(self, model_path: Optional[str] = None, artifacts_path: Optional[str] = None):
         """Initialize the triage engine with trained model"""
         # Set default paths relative to backend directory
         backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        self.model_path = model_path or os.path.join(
-            backend_dir, "triage_model_synthetic.xgb"
-        )
-        self.artifacts_path = artifacts_path or os.path.join(
-            backend_dir, "triage_model_artifacts.pkl"
-        )
+        self.model_path = model_path or os.path.join(backend_dir, "triage_model_synthetic.xgb")
+        self.artifacts_path = artifacts_path or os.path.join(backend_dir, "triage_model_artifacts.pkl")
         self.model = None
         self.scaler = None
         self.label_encoders = {}
@@ -69,14 +63,10 @@ class TriageEngine:
             print("AI Triage Model loaded successfully")
 
         except Exception as e:
-            print(
-                f"Warning: Could not load AI model ({e}). Falling back to rule-based triage."
-            )
+            print(f"Warning: Could not load AI model ({e}). Falling back to rule-based triage.")
             self.model = None
 
-    def _prepare_features(
-        self, vitals: VitalsSubmission, chief_complaint: str
-    ) -> np.ndarray:
+    def _prepare_features(self, vitals: VitalsSubmission, chief_complaint: str) -> np.ndarray:
         """Prepare features for the AI model"""
         # Create feature dictionary
         features = {
@@ -90,8 +80,7 @@ class TriageEngine:
             "oxygen_saturation": vitals.oxygen_saturation,
             "weight_kg": vitals.weight_kg,
             "bmi": vitals.weight_kg / ((45 / 100) ** 2),  # Simplified BMI calculation
-            "pulse_pressure": vitals.blood_pressure_systolic
-            - vitals.blood_pressure_diastolic,
+            "pulse_pressure": vitals.blood_pressure_systolic - vitals.blood_pressure_diastolic,
             "mean_arterial_pressure": vitals.blood_pressure_diastolic
             + ((vitals.blood_pressure_systolic - vitals.blood_pressure_diastolic) / 3),
             "wait_time_minutes": 0,  # Default - could be enhanced with actual wait time
@@ -112,9 +101,7 @@ class TriageEngine:
 
         return df_scaled
 
-    def calculate_triage_level(
-        self, vitals: VitalsSubmission, chief_complaint: str
-    ) -> TriageResult:
+    def calculate_triage_level(self, vitals: VitalsSubmission, chief_complaint: str) -> TriageResult:
         """
         Calculate triage level using AI model with rule-based fallback
 
@@ -170,9 +157,7 @@ class TriageEngine:
 
                 # Also check if AI gives Level 5 for Level 2 cases
                 if ai_triage_level == 5 and rule_based_level == 2:
-                    print(
-                        f"AI model gave Level 5 for Level 2 case '{chief_complaint}', using rule-based Level 2"
-                    )
+                    print(f"AI model gave Level 5 for Level 2 case '{chief_complaint}', using rule-based Level 2")
 
                     # Use rule-based result for Level 2 cases
                     priority_score = self._calculate_priority_score(rule_based_level, 0)
@@ -185,9 +170,7 @@ class TriageEngine:
 
                 # Also check if AI gives Level 5 for Level 4 cases (simple cases)
                 if ai_triage_level == 5 and rule_based_level == 4:
-                    print(
-                        f"AI model gave Level 5 for Level 4 case '{chief_complaint}', using rule-based Level 4"
-                    )
+                    print(f"AI model gave Level 5 for Level 4 case '{chief_complaint}', using rule-based Level 4")
 
                     # Use rule-based result for Level 4 cases
                     priority_score = self._calculate_priority_score(rule_based_level, 0)
@@ -199,9 +182,7 @@ class TriageEngine:
                     )
 
                 # Calculate priority score
-                priority_score = self._calculate_priority_score(
-                    ai_triage_level, 0
-                )  # 0 wait time for now
+                priority_score = self._calculate_priority_score(ai_triage_level, 0)  # 0 wait time for now
 
                 reasoning = f"AI Model Prediction: Level {ai_triage_level} based on vital signs analysis"
 
@@ -218,9 +199,7 @@ class TriageEngine:
         # Fallback to rule-based triage
         return self._rule_based_triage(vitals, chief_complaint)
 
-    def _rule_based_triage(
-        self, vitals: VitalsSubmission, chief_complaint: str
-    ) -> TriageResult:
+    def _rule_based_triage(self, vitals: VitalsSubmission, chief_complaint: str) -> TriageResult:
         """Rule-based triage using ESI guidelines as fallback"""
 
         # Check for immediate life-threatening conditions (Level 1)
@@ -254,9 +233,7 @@ class TriageEngine:
             reasoning = "Level 5: No resources needed, routine care"
 
         # Calculate priority score
-        priority_score = self._calculate_priority_score(
-            triage_level, 0
-        )  # 0 wait time for now
+        priority_score = self._calculate_priority_score(triage_level, 0)  # 0 wait time for now
 
         return TriageResult(
             triage_level=triage_level,
@@ -265,22 +242,16 @@ class TriageEngine:
             reasoning=reasoning,
         )
 
-    def _calculate_priority_score(
-        self, triage_level: int, wait_time_minutes: int
-    ) -> float:
+    def _calculate_priority_score(self, triage_level: int, wait_time_minutes: int) -> float:
         """Calculate priority score combining urgency and fairness"""
         # Weight factors
         weight_triage = 0.6
         weight_wait = 0.01
 
-        priority_score = (triage_level * weight_triage) + (
-            wait_time_minutes * weight_wait
-        )
+        priority_score = (triage_level * weight_triage) + (wait_time_minutes * weight_wait)
         return round(priority_score, 2)
 
-    def calculate_priority_score(
-        self, triage_level: int, wait_time_minutes: int
-    ) -> float:
+    def calculate_priority_score(self, triage_level: int, wait_time_minutes: int) -> float:
         """
         Calculate priority score based on triage level and wait time
 
@@ -321,9 +292,7 @@ class TriageEngine:
 
         return round(priority_score, 2)
 
-    def _check_level_1_criteria(
-        self, vitals: VitalsSubmission, chief_complaint: str
-    ) -> bool:
+    def _check_level_1_criteria(self, vitals: VitalsSubmission, chief_complaint: str) -> bool:
         """Check for Level 1 (immediate life-saving intervention) criteria"""
         # Check vital signs
         if (
@@ -370,16 +339,12 @@ class TriageEngine:
 
         complaint_lower = chief_complaint.lower()
         if any(keyword in complaint_lower for keyword in critical_keywords):
-            print(
-                f"CRITICAL: Level 1 triage triggered by keyword in '{chief_complaint}'"
-            )
+            print(f"CRITICAL: Level 1 triage triggered by keyword in '{chief_complaint}'")
             return True
 
         return False
 
-    def _check_level_2_criteria(
-        self, vitals: VitalsSubmission, chief_complaint: str
-    ) -> bool:
+    def _check_level_2_criteria(self, vitals: VitalsSubmission, chief_complaint: str) -> bool:
         """Check for Level 2 (high risk situation) criteria"""
         # Check vital signs
         if (
@@ -460,9 +425,7 @@ class TriageEngine:
             return False
 
         if any(keyword in complaint_lower for keyword in high_risk_keywords):
-            print(
-                f"HIGH RISK: Level 2 triage triggered by keyword in '{chief_complaint}'"
-            )
+            print(f"HIGH RISK: Level 2 triage triggered by keyword in '{chief_complaint}'")
             return True
 
         return False

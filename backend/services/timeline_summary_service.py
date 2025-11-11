@@ -56,12 +56,7 @@ class TimelineSummaryService:
             timeline_hash = self._timeline_hash(timeline_payload)
 
             cache = crud.get_summary_cache(session, patient_id)
-            if (
-                cache
-                and not force_refresh
-                and cache.timeline_hash == timeline_hash
-                and cache.summary_id
-            ):
+            if cache and not force_refresh and cache.timeline_hash == timeline_hash and cache.summary_id:
                 summary = crud.get_patient_summary(session, cache.summary_id)
                 if summary:
                     return {
@@ -72,11 +67,7 @@ class TimelineSummaryService:
                         "generated_at": summary.created_at,
                         "model": summary.llm_model,
                         "token_usage": summary.token_usage or {},
-                        "confidence": (
-                            summary.timeline.get("confidence")
-                            if summary.timeline
-                            else None
-                        ),
+                        "confidence": (summary.timeline.get("confidence") if summary.timeline else None),
                     }
 
         # Rebuild within a fresh session for summarisation
@@ -86,9 +77,7 @@ class TimelineSummaryService:
             "patient_id": patient_id,
             "event_count": len(events_data),
         }
-        result = await self.ai_models.summarize_document(
-            timeline_text, summariser_metadata
-        )
+        result = await self.ai_models.summarize_document(timeline_text, summariser_metadata)
 
         summary_text = result.get("summary") or "No significant events available."
         highlights = result.get("highlights", [])
@@ -106,9 +95,7 @@ class TimelineSummaryService:
             summary_row = crud.create_patient_summary(
                 session,
                 patient_id=patient_id,
-                summary_type=(
-                    SummaryType.LLM if not result.get("is_stub") else SummaryType.MANUAL
-                ),
+                summary_type=(SummaryType.LLM if not result.get("is_stub") else SummaryType.MANUAL),
                 content=summary_text,
                 timeline=timeline_payload,
                 llm_model=model_name,
@@ -118,9 +105,7 @@ class TimelineSummaryService:
 
             expires_at = None
             if self.cache_ttl_minutes:
-                expires_at = datetime.now(timezone.utc) + timedelta(
-                    minutes=self.cache_ttl_minutes
-                )
+                expires_at = datetime.now(timezone.utc) + timedelta(minutes=self.cache_ttl_minutes)
 
             crud.upsert_summary_cache(
                 session,
@@ -149,44 +134,26 @@ class TimelineSummaryService:
             "patient_id": event.patient_id,
             "consultation_id": event.consultation_id,
             "source_file_id": event.source_file_id,
-            "event_type": (
-                event.event_type.value
-                if hasattr(event.event_type, "value")
-                else str(event.event_type)
-            ),
-            "status": (
-                event.status.value
-                if hasattr(event.status, "value")
-                else str(event.status)
-            ),
+            "event_type": (event.event_type.value if hasattr(event.event_type, "value") else str(event.event_type)),
+            "status": (event.status.value if hasattr(event.status, "value") else str(event.status)),
             "title": event.title or "Timeline Update",
             "summary": event.summary or "",
             "data": event.data or {},
-            "confidence": (
-                float(event.confidence) if event.confidence is not None else None
-            ),
+            "confidence": (float(event.confidence) if event.confidence is not None else None),
             "event_date": event.event_date.isoformat() if event.event_date else None,
             "notes": event.notes,
         }
 
     @staticmethod
     def _timeline_hash(timeline: Dict[str, Any]) -> str:
-        canonical = json.dumps(timeline, sort_keys=True, separators=(",", ":")).encode(
-            "utf-8"
-        )
+        canonical = json.dumps(timeline, sort_keys=True, separators=(",", ":")).encode("utf-8")
         return hashlib.sha256(canonical).hexdigest()
 
     @staticmethod
-    def _timeline_to_text(
-        events: List[Dict[str, Any]], patient: Optional[Patient]
-    ) -> str:
+    def _timeline_to_text(events: List[Dict[str, Any]], patient: Optional[Patient]) -> str:
         header = []
         if patient:
-            name = (
-                " ".join(filter(None, [patient.first_name, patient.last_name])).strip()
-                or patient.mrn
-                or patient.id
-            )
+            name = " ".join(filter(None, [patient.first_name, patient.last_name])).strip() or patient.mrn or patient.id
             header.append(f"Patient: {name}")
         header.append(f"Timeline generated at {datetime.now(timezone.utc).isoformat()}")
         lines = []

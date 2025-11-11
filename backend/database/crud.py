@@ -10,12 +10,30 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from . import Base  # noqa: F401
-from .models import (AudioFile, Consultation, ConsultationStatus,
-                     DocumentProcessingStatus, FileAsset, JobQueue, LLMUsage,
-                     Note, NoteVersion, Patient, PatientSummary, QueueEvent,
-                     QueueStage, QueueState, Role, ServiceMetric, SummaryCache,
-                     SummaryType, TimelineEvent, TimelineEventStatus,
-                     TimelineEventType, User)
+from .models import (
+    AudioFile,
+    Consultation,
+    ConsultationStatus,
+    DocumentProcessingStatus,
+    FileAsset,
+    JobQueue,
+    LLMUsage,
+    Note,
+    NoteVersion,
+    Patient,
+    PatientSummary,
+    QueueEvent,
+    QueueStage,
+    QueueState,
+    Role,
+    ServiceMetric,
+    SummaryCache,
+    SummaryType,
+    TimelineEvent,
+    TimelineEventStatus,
+    TimelineEventType,
+    User,
+)
 
 ModelT = TypeVar("ModelT", bound=Base)
 
@@ -30,9 +48,7 @@ def get_user_by_id(session: Session, user_id: UUID) -> Optional[User]:
     return session.execute(stmt).scalars().first()
 
 
-def list_patients(
-    session: Session, skip: int = 0, limit: int = 50
-) -> Sequence[Patient]:
+def list_patients(session: Session, skip: int = 0, limit: int = 50) -> Sequence[Patient]:
     stmt = (
         select(Patient)
         .where(Patient.is_deleted.is_(False))
@@ -53,11 +69,7 @@ def search_patients(session: Session, query: str, limit: int = 25) -> Sequence[P
         select(Patient)
         .where(
             Patient.is_deleted.is_(False),
-            (
-                Patient.first_name.ilike(pattern)
-                | Patient.last_name.ilike(pattern)
-                | Patient.mrn.ilike(pattern)
-            ),
+            (Patient.first_name.ilike(pattern) | Patient.last_name.ilike(pattern) | Patient.mrn.ilike(pattern)),
         )
         .order_by(Patient.last_name.asc(), Patient.first_name.asc())
         .limit(limit)
@@ -73,9 +85,7 @@ def create_consultation(session: Session, **kwargs) -> Consultation:
     return create_instance(session, Consultation, **kwargs)
 
 
-def update_consultation(
-    session: Session, consultation: Consultation, **kwargs
-) -> Consultation:
+def update_consultation(session: Session, consultation: Consultation, **kwargs) -> Consultation:
     for key, value in kwargs.items():
         setattr(consultation, key, value)
     session.add(consultation)
@@ -84,9 +94,7 @@ def update_consultation(
     return consultation
 
 
-def get_active_consultation_for_patient(
-    session: Session, patient_id: str
-) -> Optional[Consultation]:
+def get_active_consultation_for_patient(session: Session, patient_id: str) -> Optional[Consultation]:
     active_statuses = (
         ConsultationStatus.INTAKE,
         ConsultationStatus.TRIAGE,
@@ -144,9 +152,7 @@ def create_audio_file(session: Session, **kwargs) -> AudioFile:
 
 
 def get_audio_file(session: Session, audio_id: str) -> Optional[AudioFile]:
-    stmt = select(AudioFile).where(
-        AudioFile.id == audio_id, AudioFile.is_deleted.is_(False)
-    )
+    stmt = select(AudioFile).where(AudioFile.id == audio_id, AudioFile.is_deleted.is_(False))
     return session.execute(stmt).scalars().first()
 
 
@@ -155,9 +161,7 @@ def create_file_asset(session: Session, **kwargs) -> FileAsset:
 
 
 def get_file_asset(session: Session, file_id: str) -> Optional[FileAsset]:
-    stmt = select(FileAsset).where(
-        FileAsset.id == file_id, FileAsset.is_deleted.is_(False)
-    )
+    stmt = select(FileAsset).where(FileAsset.id == file_id, FileAsset.is_deleted.is_(False))
     return session.execute(stmt).scalars().first()
 
 
@@ -216,9 +220,7 @@ def create_timeline_event(session: Session, **kwargs) -> TimelineEvent:
 
 
 def get_timeline_event(session: Session, event_id: str) -> Optional[TimelineEvent]:
-    stmt = select(TimelineEvent).where(
-        TimelineEvent.id == event_id, TimelineEvent.is_deleted.is_(False)
-    )
+    stmt = select(TimelineEvent).where(TimelineEvent.id == event_id, TimelineEvent.is_deleted.is_(False))
     return session.execute(stmt).scalars().first()
 
 
@@ -414,11 +416,7 @@ def create_note_with_version(
     )
 
     # Check if note already exists
-    note = (
-        session.query(Note)
-        .filter(Note.consultation_id == consultation_id, Note.is_deleted.is_(False))
-        .first()
-    )
+    note = session.query(Note).filter(Note.consultation_id == consultation_id, Note.is_deleted.is_(False)).first()
 
     if note is None:
         logger.info(f"📝 Creating new note for consultation {consultation_id}")
@@ -432,9 +430,7 @@ def create_note_with_version(
         session.flush()  # Ensure note.id is available
         logger.info(f"✅ Created new note: note_id={note.id}")
     else:
-        logger.info(
-            f"📝 Using existing note: note_id={note.id}, current_version_id={note.current_version_id}"
-        )
+        logger.info(f"📝 Using existing note: note_id={note.id}, current_version_id={note.current_version_id}")
 
     # Create new version
     logger.info(f"📝 Creating new note version for note_id={note.id}")
@@ -668,15 +664,11 @@ def list_queue_states(
     )
     if stage is not None:
         stmt = stmt.where(QueueState.current_stage == stage)
-    stmt = stmt.order_by(
-        QueueState.priority_level.asc(), QueueState.created_at.asc()
-    ).limit(limit)
+    stmt = stmt.order_by(QueueState.priority_level.asc(), QueueState.created_at.asc()).limit(limit)
     return session.execute(stmt).scalars().all()
 
 
-def update_queue_state(
-    session: Session, queue_state: QueueState, **updates
-) -> QueueState:
+def update_queue_state(session: Session, queue_state: QueueState, **updates) -> QueueState:
     for key, value in updates.items():
         setattr(queue_state, key, value)
     session.add(queue_state)

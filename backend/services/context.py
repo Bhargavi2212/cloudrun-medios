@@ -3,9 +3,7 @@ from __future__ import annotations
 import contextvars
 from typing import Optional
 
-_request_id: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar(
-    "request_id", default=None
-)
+_request_id: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar("request_id", default=None)
 
 
 def set_request_id(request_id: Optional[str]) -> None:

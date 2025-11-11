@@ -13,8 +13,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 from sqlalchemy.orm import Session
 
-from backend.database.models import (Consultation, Patient, Role, User,
-                                     UserRole, UserStatus)
+from backend.database.models import Consultation, Patient, Role, User, UserRole, UserStatus
 from backend.database.session import get_session
 from backend.dto.manage_agent_dto import TriageResult, VitalsSubmission
 from backend.services.triage_engine import TriageEngine
@@ -113,16 +112,12 @@ class ManageAgentStateMachine:
                 )
 
                 # Get preliminary triage based on chief complaint
-                preliminary_triage = self.triage_engine.calculate_triage_level(
-                    dummy_vitals, state.chief_complaint
-                )
+                preliminary_triage = self.triage_engine.calculate_triage_level(dummy_vitals, state.chief_complaint)
                 state.triage_level = preliminary_triage.triage_level
                 state.triage_result = preliminary_triage
                 state.priority_score = preliminary_triage.priority_score
 
-                print(
-                    f"Preliminary triage calculated: Level {state.triage_level} for '{state.chief_complaint}'"
-                )
+                print(f"Preliminary triage calculated: Level {state.triage_level} for '{state.chief_complaint}'")
 
             print(f"Patient {state.patient_id} checked in at {state.check_in_time}")
             return state
@@ -157,18 +152,14 @@ class ManageAgentStateMachine:
                 return state
 
             # Calculate triage using the engine
-            triage_result = self.triage_engine.calculate_triage_level(
-                state.vitals, state.chief_complaint
-            )
+            triage_result = self.triage_engine.calculate_triage_level(state.vitals, state.chief_complaint)
 
             # Update state
             state.triage_result = triage_result
             state.triage_level = triage_result.triage_level
             state.priority_score = triage_result.priority_score
 
-            print(
-                f"Triage calculated for patient {state.patient_id}: Level {state.triage_level}"
-            )
+            print(f"Triage calculated for patient {state.patient_id}: Level {state.triage_level}")
             return state
 
         except Exception as e:
@@ -184,15 +175,11 @@ class ManageAgentStateMachine:
 
             if available_doctors:
                 # Assign to doctor with lowest patient load
-                assigned_doctor = min(
-                    available_doctors, key=lambda d: d["current_patient_load"]
-                )
+                assigned_doctor = min(available_doctors, key=lambda d: d["current_patient_load"])
                 state.assigned_doctor_id = assigned_doctor["user_id"]
                 state.status = PatientStatus.ASSIGNED_TO_DOCTOR
 
-                print(
-                    f"Patient {state.patient_id} assigned to doctor {state.assigned_doctor_id}"
-                )
+                print(f"Patient {state.patient_id} assigned to doctor {state.assigned_doctor_id}")
             else:
                 state.error_message = "No available doctors"
 
@@ -233,9 +220,7 @@ class ManageAgentStateMachine:
             print(f"DEBUG: Error querying doctors from database: {str(exc)}")
             return []
 
-    def process_patient_check_in(
-        self, consultation_id: str, patient_id: str, chief_complaint: str
-    ) -> PatientFlowState:
+    def process_patient_check_in(self, consultation_id: str, patient_id: str, chief_complaint: str) -> PatientFlowState:
         """Process a new patient check-in"""
         initial_state = PatientFlowState(
             consultation_id=consultation_id,
@@ -277,9 +262,7 @@ class ManageAgentStateMachine:
 
         return result
 
-    def process_vitals_submission(
-        self, consultation_id: str, vitals: VitalsSubmission
-    ) -> PatientFlowState:
+    def process_vitals_submission(self, consultation_id: str, vitals: VitalsSubmission) -> PatientFlowState:
         """Process vitals submission for an existing patient"""
         try:
             with get_session() as db:
@@ -303,9 +286,7 @@ class ManageAgentStateMachine:
                     .first()
                 )
                 if not patient:
-                    raise ValueError(
-                        f"No patient found with ID {consultation.patient_id}"
-                    )
+                    raise ValueError(f"No patient found with ID {consultation.patient_id}")
 
                 current_state = PatientFlowState(
                     consultation_id=consultation_id,
@@ -323,16 +304,13 @@ class ManageAgentStateMachine:
                 f"{current_state.patient_id}, Status: {current_state.status}"
             )
 
-            triage_result = self.triage_engine.calculate_triage_level(
-                vitals, current_state.chief_complaint
-            )
+            triage_result = self.triage_engine.calculate_triage_level(vitals, current_state.chief_complaint)
             current_state.triage_result = triage_result
             current_state.triage_level = triage_result.triage_level
             current_state.priority_score = triage_result.priority_score
 
             print(
-                f"DEBUG: Calculated triage - Level: {current_state.triage_level}, "
-                f"Priority: {current_state.priority_score}"
+                f"DEBUG: Calculated triage - Level: {current_state.triage_level}, " f"Priority: {current_state.priority_score}"
             )
 
             current_state = self._assign_doctor(current_state)
@@ -341,23 +319,14 @@ class ManageAgentStateMachine:
 
         except Exception as exc:
             print(f"ERROR in process_vitals_submission: {str(exc)}")
-            raise ValueError(
-                f"Failed to process vitals submission: {str(exc)}"
-            ) from exc
+            raise ValueError(f"Failed to process vitals submission: {str(exc)}") from exc
 
     def _query_available_doctors(self, db: Session) -> List[Dict[str, Any]]:
-        role = (
-            db.query(Role)
-            .filter(Role.name == "DOCTOR", Role.is_deleted.is_(False))
-            .first()
-        )
+        role = db.query(Role).filter(Role.name == "DOCTOR", Role.is_deleted.is_(False)).first()
         if not role:
             return []
 
-        doctor_user_ids = [
-            user_role.user_id
-            for user_role in db.query(UserRole).filter(UserRole.role_id == str(role.id))
-        ]
+        doctor_user_ids = [user_role.user_id for user_role in db.query(UserRole).filter(UserRole.role_id == str(role.id))]
         if not doctor_user_ids:
             return []
 
@@ -373,9 +342,7 @@ class ManageAgentStateMachine:
 
         available_doctors: List[Dict[str, Any]] = []
         for doctor in doctors:
-            full_name = " ".join(
-                part for part in [doctor.first_name, doctor.last_name] if part
-            ).strip()
+            full_name = " ".join(part for part in [doctor.first_name, doctor.last_name] if part).strip()
             if not full_name:
                 full_name = doctor.email
 
@@ -390,10 +357,7 @@ class ManageAgentStateMachine:
 
         print(f"DEBUG: Found {len(available_doctors)} available doctors")
         for doc in available_doctors:
-            print(
-                f"  - Dr. {doc['full_name']} "
-                f"(ID: {doc['user_id']}, Load: {doc['current_patient_load']})"
-            )
+            print(f"  - Dr. {doc['full_name']} " f"(ID: {doc['user_id']}, Load: {doc['current_patient_load']})")
 
         return available_doctors
 

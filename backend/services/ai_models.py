@@ -69,16 +69,10 @@ DIAGNOSIS_KEYWORDS = {
 }
 
 VITAL_PATTERNS = {
-    "blood_pressure": re.compile(
-        r"(?:bp|blood pressure)[^\d]*(\d{2,3}\/\d{2,3})", re.IGNORECASE
-    ),
+    "blood_pressure": re.compile(r"(?:bp|blood pressure)[^\d]*(\d{2,3}\/\d{2,3})", re.IGNORECASE),
     "heart_rate": re.compile(r"(?:hr|heart rate)[^\d]*(\d{2,3})", re.IGNORECASE),
-    "temperature": re.compile(
-        r"(?:temp|temperature)[^\d]*(\d{2}\.\d|\d{2})", re.IGNORECASE
-    ),
-    "respiratory_rate": re.compile(
-        r"(?:rr|respiratory rate)[^\d]*(\d{2})", re.IGNORECASE
-    ),
+    "temperature": re.compile(r"(?:temp|temperature)[^\d]*(\d{2}\.\d|\d{2})", re.IGNORECASE),
+    "respiratory_rate": re.compile(r"(?:rr|respiratory rate)[^\d]*(\d{2})", re.IGNORECASE),
     "oxygen_saturation": re.compile(r"(?:sat|oxygen|spo2)[^\d]*(\d{2})", re.IGNORECASE),
 }
 
@@ -99,11 +93,7 @@ class AIModelsService:
             return []
         try:
             models = genai.list_models()
-            available = [
-                m.name.replace("models/", "")
-                for m in models
-                if "generateContent" in m.supported_generation_methods
-            ]
+            available = [m.name.replace("models/", "") for m in models if "generateContent" in m.supported_generation_methods]
             return available
         except Exception as exc:
             logger.warning(f"Failed to list available models: {exc}")
@@ -111,18 +101,12 @@ class AIModelsService:
 
     def _initialise_gemini(self) -> None:
         if not self.settings.gemini_api_key:
-            logger.warning(
-                "GEMINI_API_KEY missing. Falling back to template note generation."
-            )
+            logger.warning("GEMINI_API_KEY missing. Falling back to template note generation.")
             logger.warning("To enable Gemini, set GEMINI_API_KEY in your .env file.")
-            logger.warning(
-                "Get your API key from: https://makersuite.google.com/app/apikey"
-            )
+            logger.warning("Get your API key from: https://makersuite.google.com/app/apikey")
             return
         if genai is None:
-            logger.warning(
-                "google-generativeai not installed. Run `pip install google-generativeai`."
-            )
+            logger.warning("google-generativeai not installed. Run `pip install google-generativeai`.")
             return
         try:
             genai.configure(api_key=self.settings.gemini_api_key)
@@ -134,9 +118,7 @@ class AIModelsService:
                     f"Available Gemini models: {', '.join(available_models[:5])}{'...' if len(available_models) > 5 else ''}"
                 )
             else:
-                logger.warning(
-                    "Could not list available models. This might indicate an API key issue."
-                )
+                logger.warning("Could not list available models. This might indicate an API key issue.")
 
             # Try different model name formats
             model_name = self.settings.gemini_model.strip()
@@ -144,9 +126,7 @@ class AIModelsService:
             # Remove "models/" prefix if present (SDK adds it internally)
             if model_name.startswith("models/"):
                 model_name = model_name.replace("models/", "", 1)
-                logger.info(
-                    f"Removed 'models/' prefix from GEMINI_MODEL. Using: {model_name}"
-                )
+                logger.info(f"Removed 'models/' prefix from GEMINI_MODEL. Using: {model_name}")
 
             # Try the configured model first
             logger.info(f"Initializing Gemini model: {model_name}")
@@ -156,9 +136,7 @@ class AIModelsService:
                 logger.info(f"Gemini model '{model_name}' initialized successfully")
                 return
             except Exception as model_exc:
-                logger.warning(
-                    f"Failed to initialize model '{model_name}': {model_exc}"
-                )
+                logger.warning(f"Failed to initialize model '{model_name}': {model_exc}")
 
                 # Try alternative models (newer versions)
                 alternative_models = [
@@ -172,11 +150,7 @@ class AIModelsService:
                 # Also try models from available list
                 if available_models:
                     # Prefer models with "flash" or "pro" in the name
-                    preferred = [
-                        m
-                        for m in available_models
-                        if any(keyword in m.lower() for keyword in ["flash", "pro"])
-                    ]
+                    preferred = [m for m in available_models if any(keyword in m.lower() for keyword in ["flash", "pro"])]
                     if preferred:
                         alternative_models = preferred[:3] + alternative_models
 
@@ -185,9 +159,7 @@ class AIModelsService:
                         logger.info(f"Trying alternative model: {alt_model}")
                         self._gemini_model = genai.GenerativeModel(alt_model)
                         self._gemini_enabled = True
-                        logger.info(
-                            f"Successfully initialized alternative Gemini model: {alt_model}"
-                        )
+                        logger.info(f"Successfully initialized alternative Gemini model: {alt_model}")
                         # Update settings to use the working model
                         self.settings.gemini_model = alt_model
                         return
@@ -202,37 +174,20 @@ class AIModelsService:
             logger.error(f"Failed to initialise Gemini: {exc}")
 
             # Provide helpful error messages
-            if (
-                "API key" in error_msg.lower()
-                or "invalid" in error_msg.lower()
-                or "401" in error_msg
-                or "403" in error_msg
-            ):
+            if "API key" in error_msg.lower() or "invalid" in error_msg.lower() or "401" in error_msg or "403" in error_msg:
                 logger.error("Gemini API key appears to be invalid or unauthorized.")
                 logger.error("Please verify your GEMINI_API_KEY in the .env file.")
-                logger.error(
-                    "Get your API key from: https://makersuite.google.com/app/apikey"
-                )
+                logger.error("Get your API key from: https://makersuite.google.com/app/apikey")
             elif "404" in error_msg or "not found" in error_msg.lower():
-                logger.error(
-                    "Gemini model not found. The model may have been deprecated."
-                )
+                logger.error("Gemini model not found. The model may have been deprecated.")
                 logger.error(f"Configured model: {self.settings.gemini_model}")
-                logger.error(
-                    "Try updating GEMINI_MODEL in .env to a newer model like 'gemini-2.0-flash-exp'"
-                )
+                logger.error("Try updating GEMINI_MODEL in .env to a newer model like 'gemini-2.0-flash-exp'")
                 if available_models:
-                    logger.error(
-                        f"Available models: {', '.join(available_models[:10])}"
-                    )
+                    logger.error(f"Available models: {', '.join(available_models[:10])}")
             else:
-                logger.error(
-                    "Unknown error initializing Gemini. Check your API key and internet connection."
-                )
+                logger.error("Unknown error initializing Gemini. Check your API key and internet connection.")
 
-            logger.warning(
-                "Falling back to template-based note generation. Gemini will be disabled."
-            )
+            logger.warning("Falling back to template-based note generation. Gemini will be disabled.")
             self._gemini_model = None
             self._gemini_enabled = False
 
@@ -273,9 +228,7 @@ class AIModelsService:
                     "WindowsApps",
                     "ffmpeg.exe",
                 ),
-                os.path.join(
-                    os.environ.get("ProgramFiles", ""), "ffmpeg", "bin", "ffmpeg.exe"
-                ),
+                os.path.join(os.environ.get("ProgramFiles", ""), "ffmpeg", "bin", "ffmpeg.exe"),
             ]
             for path in common_paths:
                 if path and os.path.exists(path):
@@ -346,16 +299,10 @@ class AIModelsService:
                         logger.info(f"ffmpeg is now available at: {ffmpeg_path}")
                         installation_successful = True
                     else:
-                        logger.warning(
-                            "ffmpeg installed but not yet in PATH. May need to restart the server."
-                        )
-                        installation_successful = (
-                            True  # Consider it successful even if not in PATH yet
-                        )
+                        logger.warning("ffmpeg installed but not yet in PATH. May need to restart the server.")
+                        installation_successful = True  # Consider it successful even if not in PATH yet
                 else:
-                    logger.warning(
-                        f"winget installation returned non-zero exit code: {result.returncode}"
-                    )
+                    logger.warning(f"winget installation returned non-zero exit code: {result.returncode}")
             except FileNotFoundError:
                 logger.info("winget not found on system - skipping")
             except subprocess.TimeoutExpired:
@@ -387,16 +334,12 @@ class AIModelsService:
                             logger.info(f"ffmpeg is now available at: {ffmpeg_path}")
                             installation_successful = True
                         else:
-                            logger.warning(
-                                "ffmpeg installed but not yet in PATH. May need to restart the server."
-                            )
+                            logger.warning("ffmpeg installed but not yet in PATH. May need to restart the server.")
                             installation_successful = True
                 except FileNotFoundError:
                     logger.info("chocolatey not found on system - skipping")
                 except subprocess.TimeoutExpired:
-                    logger.warning(
-                        "chocolatey installation timed out after 120 seconds"
-                    )
+                    logger.warning("chocolatey installation timed out after 120 seconds")
                 except Exception as e:
                     logger.warning(f"chocolatey installation failed: {e}")
 
@@ -494,9 +437,7 @@ class AIModelsService:
                 zip_path = os.path.join(tmpdir, "ffmpeg.zip")
 
                 # Download with progress and retry logic
-                logger.info(
-                    f"Downloading ffmpeg from {download_url} (this may take a few minutes, ~70MB)..."
-                )
+                logger.info(f"Downloading ffmpeg from {download_url} (this may take a few minutes, ~70MB)...")
                 download_successful = False
                 last_error = None
 
@@ -513,9 +454,7 @@ class AIModelsService:
                         with urllib.request.urlopen(req, timeout=300) as response:
                             total_size = int(response.headers.get("Content-Length", 0))
                             if total_size > 0:
-                                logger.info(
-                                    f"Download size: {total_size / (1024*1024):.1f} MB"
-                                )
+                                logger.info(f"Download size: {total_size / (1024*1024):.1f} MB")
 
                             with open(zip_path, "wb") as out_file:
                                 downloaded = 0
@@ -525,10 +464,7 @@ class AIModelsService:
                                         break
                                     out_file.write(chunk)
                                     downloaded += len(chunk)
-                                    if (
-                                        total_size > 0
-                                        and downloaded % (10 * 1024 * 1024) == 0
-                                    ):  # Log every 10MB
+                                    if total_size > 0 and downloaded % (10 * 1024 * 1024) == 0:  # Log every 10MB
                                         logger.info(
                                             f"Downloaded: {downloaded / (1024*1024):.1f} MB / {total_size / (1024*1024):.1f} MB"
                                         )
@@ -542,15 +478,11 @@ class AIModelsService:
                         continue
 
                 if not download_successful:
-                    raise Exception(
-                        f"Failed to download ffmpeg from all sources. Last error: {last_error}"
-                    ) from last_error
+                    raise Exception(f"Failed to download ffmpeg from all sources. Last error: {last_error}") from last_error
 
                 # Verify zip file
                 if not os.path.exists(zip_path) or os.path.getsize(zip_path) < 1000:
-                    raise Exception(
-                        f"Downloaded file is too small or doesn't exist: {zip_path}"
-                    )
+                    raise Exception(f"Downloaded file is too small or doesn't exist: {zip_path}")
 
                 # Extract
                 logger.info("Extracting ffmpeg...")
@@ -568,11 +500,7 @@ class AIModelsService:
                             normalized = member.replace("\\", "/")
                             parts = normalized.split("/")
                             # Look for pattern like "ffmpeg-X.X.X-essentials/bin/ffmpeg.exe"
-                            if (
-                                len(parts) >= 3
-                                and "bin" in parts
-                                and "ffmpeg.exe" in parts
-                            ):
+                            if len(parts) >= 3 and "bin" in parts and "ffmpeg.exe" in parts:
                                 root_dir = parts[0]
                                 break
 
@@ -585,9 +513,7 @@ class AIModelsService:
                                     break
 
                         if not root_dir:
-                            raise Exception(
-                                f"Could not determine root directory. Zip contents: {members[:10]}"
-                            )
+                            raise Exception(f"Could not determine root directory. Zip contents: {members[:10]}")
 
                         logger.info(f"Found root directory in zip: {root_dir}")
 
@@ -604,9 +530,7 @@ class AIModelsService:
 
                         src_bin = None
                         for possible_path in possible_bin_paths:
-                            if os.path.exists(possible_path) and os.path.exists(
-                                os.path.join(possible_path, "ffmpeg.exe")
-                            ):
+                            if os.path.exists(possible_path) and os.path.exists(os.path.join(possible_path, "ffmpeg.exe")):
                                 src_bin = possible_path
                                 break
 
@@ -617,12 +541,8 @@ class AIModelsService:
                                     src_bin = root
                                     break
 
-                        if not src_bin or not os.path.exists(
-                            os.path.join(src_bin, "ffmpeg.exe")
-                        ):
-                            raise Exception(
-                                f"bin directory with ffmpeg.exe not found. Searched: {possible_bin_paths}"
-                            )
+                        if not src_bin or not os.path.exists(os.path.join(src_bin, "ffmpeg.exe")):
+                            raise Exception(f"bin directory with ffmpeg.exe not found. Searched: {possible_bin_paths}")
 
                         logger.info(f"Found ffmpeg.exe in: {src_bin}")
 
@@ -640,26 +560,20 @@ class AIModelsService:
 
                 # Verify installation
                 if not ffmpeg_exe.exists():
-                    raise Exception(
-                        f"ffmpeg.exe not found at expected location: {ffmpeg_exe}"
-                    )
+                    raise Exception(f"ffmpeg.exe not found at expected location: {ffmpeg_exe}")
 
                 # Add to PATH
                 logger.info(f"Successfully downloaded ffmpeg to: {ffmpeg_exe}")
                 ffmpeg_bin_dir_str = str(ffmpeg_bin_dir)
                 current_path = os.environ.get("PATH", "")
                 if ffmpeg_bin_dir_str not in current_path:
-                    os.environ["PATH"] = (
-                        f"{ffmpeg_bin_dir_str}{os.pathsep}{current_path}"
-                    )
+                    os.environ["PATH"] = f"{ffmpeg_bin_dir_str}{os.pathsep}{current_path}"
                 logger.info("ffmpeg has been added to PATH for this session")
 
         except Exception as e:
             error_msg = f"Failed to download ffmpeg: {e}"
             logger.error(error_msg, exc_info=True)
-            logger.info(
-                "You can manually install ffmpeg by running: winget install Gyan.FFmpeg"
-            )
+            logger.info("You can manually install ffmpeg by running: winget install Gyan.FFmpeg")
             raise Exception(error_msg) from e
 
     async def transcribe_audio(self, audio_file_path: str) -> Dict[str, Any]:
@@ -738,9 +652,7 @@ class AIModelsService:
                         ffmpeg_dir = os.path.dirname(path)
                         current_path = os.environ.get("PATH", "")
                         if ffmpeg_dir not in current_path:
-                            os.environ["PATH"] = (
-                                f"{ffmpeg_dir}{os.pathsep}{current_path}"
-                            )
+                            os.environ["PATH"] = f"{ffmpeg_dir}{os.pathsep}{current_path}"
                         logger.info(f"Found ffmpeg at: {ffmpeg_path}, added to PATH")
                         break
 
@@ -815,9 +727,7 @@ class AIModelsService:
                 text = result.get("text", "").strip()
                 segments = result.get("segments", [])
                 if segments:
-                    avg_logprob = sum(
-                        seg.get("avg_logprob", -5.0) for seg in segments
-                    ) / len(segments)
+                    avg_logprob = sum(seg.get("avg_logprob", -5.0) for seg in segments) / len(segments)
                     confidence = max(min(1.0 + avg_logprob / 5.0, 0.99), 0.0)
                 else:
                     confidence = 0.8
@@ -939,10 +849,7 @@ class AIModelsService:
                     if symptom.lower() in match_lower:
                         symptoms.add(symptom)
                     # Also check if match contains words that suggest symptoms
-                    elif any(
-                        word in match_lower
-                        for word in ["chest", "breath", "pain", "discomfort"]
-                    ):
+                    elif any(word in match_lower for word in ["chest", "breath", "pain", "discomfort"]):
                         # Try to map to known symptoms
                         if "chest" in match_lower and "pain" in match_lower:
                             symptoms.add("chest pain")
@@ -950,9 +857,7 @@ class AIModelsService:
                             symptoms.add("shortness of breath")
 
         # Extract medications
-        medications = sorted(
-            {kw for kw in MEDICATION_KEYWORDS if kw.lower() in lowered}
-        )
+        medications = sorted({kw for kw in MEDICATION_KEYWORDS if kw.lower() in lowered})
 
         # Extract diagnoses
         diagnoses = sorted({kw for kw in DIAGNOSIS_KEYWORDS if kw.lower() in lowered})
@@ -1032,9 +937,7 @@ class AIModelsService:
             "warning": None,
         }
 
-    async def generate_note(
-        self, transcription: str, entities: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def generate_note(self, transcription: str, entities: Dict[str, Any]) -> Dict[str, Any]:
         """Generate SOAP note via Gemini (if available) with rule-based fallback."""
         transcription = transcription.strip()
         if not transcription:
@@ -1064,9 +967,7 @@ class AIModelsService:
                 text = (response.text or "").strip()
                 usage = getattr(response, "usage_metadata", None)
                 tokens_prompt = getattr(usage, "prompt_token_count", 0) if usage else 0
-                tokens_completion = (
-                    getattr(usage, "candidates_token_count", 0) if usage else 0
-                )
+                tokens_completion = getattr(usage, "candidates_token_count", 0) if usage else 0
                 return {
                     "success": True,
                     "generated_note": text,
@@ -1086,35 +987,23 @@ class AIModelsService:
                 logger.warning(f"Gemini generation failed: {error_msg}")
 
                 # If it's a 404 or model not found error, try to find and use an available model
-                if (
-                    "404" in error_msg
-                    or "not found" in error_msg.lower()
-                    or "not supported" in error_msg.lower()
-                ):
-                    logger.error(
-                        f"Gemini model '{self.settings.gemini_model}' is not available (deprecated or invalid)."
-                    )
+                if "404" in error_msg or "not found" in error_msg.lower() or "not supported" in error_msg.lower():
+                    logger.error(f"Gemini model '{self.settings.gemini_model}' is not available (deprecated or invalid).")
 
                     # Try to find and use an available model
                     available_models = self._list_available_models()
                     if available_models:
-                        logger.info(
-                            f"Attempting to use an available model from: {available_models[:3]}"
-                        )
+                        logger.info(f"Attempting to use an available model from: {available_models[:3]}")
                         for alt_model in available_models[:3]:
                             try:
                                 logger.info(f"Trying model: {alt_model}")
                                 self._gemini_model = genai.GenerativeModel(alt_model)
                                 self.settings.gemini_model = alt_model
-                                logger.info(
-                                    f"Successfully switched to model: {alt_model}"
-                                )
+                                logger.info(f"Successfully switched to model: {alt_model}")
                                 # Retry the generation with the new model
                                 try:
                                     # Rebuild prompt with new model context
-                                    prompt = self._build_gemini_prompt(
-                                        transcription, entities
-                                    )
+                                    prompt = self._build_gemini_prompt(transcription, entities)
 
                                     def _run_gemini_retry() -> Dict[str, Any]:
                                         response = self._gemini_model.generate_content(
@@ -1125,19 +1014,9 @@ class AIModelsService:
                                             },
                                         )
                                         text = (response.text or "").strip()
-                                        usage = getattr(
-                                            response, "usage_metadata", None
-                                        )
-                                        tokens_prompt = (
-                                            getattr(usage, "prompt_token_count", 0)
-                                            if usage
-                                            else 0
-                                        )
-                                        tokens_completion = (
-                                            getattr(usage, "candidates_token_count", 0)
-                                            if usage
-                                            else 0
-                                        )
+                                        usage = getattr(response, "usage_metadata", None)
+                                        tokens_prompt = getattr(usage, "prompt_token_count", 0) if usage else 0
+                                        tokens_completion = getattr(usage, "candidates_token_count", 0) if usage else 0
                                         return {
                                             "success": True,
                                             "generated_note": text,
@@ -1152,31 +1031,19 @@ class AIModelsService:
 
                                     return await asyncio.to_thread(_run_gemini_retry)
                                 except Exception as retry_exc:
-                                    logger.warning(
-                                        f"Retry with {alt_model} also failed: {retry_exc}"
-                                    )
+                                    logger.warning(f"Retry with {alt_model} also failed: {retry_exc}")
                                     continue
                             except Exception:
                                 continue
 
                     # If we couldn't find a working model, disable Gemini
-                    logger.error(
-                        "Could not find a working Gemini model. Disabling Gemini and using template notes."
-                    )
+                    logger.error("Could not find a working Gemini model. Disabling Gemini and using template notes.")
                     self._gemini_enabled = False
                     self._gemini_model = None
                     warning = "AI model unavailable (model deprecated) - using template-based extraction"
-                elif (
-                    "429" in error_msg
-                    or "quota" in error_msg.lower()
-                    or "exceeded" in error_msg.lower()
-                ):
-                    logger.warning(
-                        "Gemini API quota exceeded. Using template-based note generation."
-                    )
-                    warning = (
-                        "AI model quota exceeded - using template-based extraction"
-                    )
+                elif "429" in error_msg or "quota" in error_msg.lower() or "exceeded" in error_msg.lower():
+                    logger.warning("Gemini API quota exceeded. Using template-based note generation.")
+                    warning = "AI model quota exceeded - using template-based extraction"
                     # Don't disable Gemini for quota errors - it might work later
                     # Just fall back to template for this request
                 elif (
@@ -1185,9 +1052,7 @@ class AIModelsService:
                     or "401" in error_msg
                     or "403" in error_msg
                 ):
-                    logger.error(
-                        "Gemini API key appears to be invalid or unauthorized."
-                    )
+                    logger.error("Gemini API key appears to be invalid or unauthorized.")
                     logger.error("Please verify your GEMINI_API_KEY in the .env file.")
                     warning = "AI model unavailable (API key invalid) - using template-based extraction"
                 else:
@@ -1201,9 +1066,7 @@ class AIModelsService:
             warning="Gemini disabled. Returning template-based note.",
         )
 
-    async def summarize_document(
-        self, text: str, metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def summarize_document(self, text: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """Summarize an uploaded document with Gemini (if available) and provide key highlights."""
         text = text.strip()
         if not text:
@@ -1237,9 +1100,7 @@ class AIModelsService:
                 highlights = self._extract_highlights(summary_text)
                 usage = getattr(response, "usage_metadata", None)
                 tokens_prompt = getattr(usage, "prompt_token_count", 0) if usage else 0
-                tokens_completion = (
-                    getattr(usage, "candidates_token_count", 0) if usage else 0
-                )
+                tokens_completion = getattr(usage, "candidates_token_count", 0) if usage else 0
                 return {
                     "success": True,
                     "summary": summary_text,
@@ -1320,10 +1181,7 @@ class AIModelsService:
                     if len(match_clean) > 3 and len(match_clean) < 50:
                         # Check if it's a known symptom or contains symptom keywords
                         for known_symptom in SYMPTOM_KEYWORDS:
-                            if (
-                                known_symptom.lower() in match_clean.lower()
-                                or match_clean.lower() in known_symptom.lower()
-                            ):
+                            if known_symptom.lower() in match_clean.lower() or match_clean.lower() in known_symptom.lower():
                                 extracted_symptoms.append(known_symptom)
                                 break
                         else:
@@ -1351,10 +1209,7 @@ class AIModelsService:
                         lowered_transcription,
                     )
                     or re.search(r"chest\s+(?:pain|discomfort)", lowered_transcription)
-                    or (
-                        "chest" in lowered_transcription
-                        and "pain" in lowered_transcription
-                    )
+                    or ("chest" in lowered_transcription and "pain" in lowered_transcription)
                 ):
                     symptoms_list.append("chest pain")
 
@@ -1365,10 +1220,7 @@ class AIModelsService:
                     or "trouble breathing" in lowered_transcription
                     or (
                         "breath" in lowered_transcription
-                        and (
-                            "short" in lowered_transcription
-                            or "difficulty" in lowered_transcription
-                        )
+                        and ("short" in lowered_transcription or "difficulty" in lowered_transcription)
                     )
                 ):
                     symptoms_list.append("shortness of breath")
@@ -1376,9 +1228,7 @@ class AIModelsService:
         # If still no symptoms from entities, extract directly from transcription with more aggressive parsing
         if not symptoms_list:
             # Try to extract from transcription using the helper method
-            extracted_subjective = self._extract_subjective_from_transcription(
-                transcription
-            )
+            extracted_subjective = self._extract_subjective_from_transcription(transcription)
             if (
                 extracted_subjective
                 and extracted_subjective
@@ -1417,9 +1267,7 @@ class AIModelsService:
                                 re.IGNORECASE,
                             )
                             if pain_match:
-                                symptom_phrases.append(
-                                    f"pain in {pain_match.group(1).strip()}"
-                                )
+                                symptom_phrases.append(f"pain in {pain_match.group(1).strip()}")
 
                 if symptom_phrases:
                     symptoms = ", ".join(list(set(symptom_phrases)))
@@ -1444,12 +1292,7 @@ class AIModelsService:
                 if duration_match:
                     duration = duration_match.group(0)
                     break
-        if (
-            duration
-            and symptoms
-            and "Patient concerns" not in symptoms
-            and "Not documented" not in symptoms
-        ):
+        if duration and symptoms and "Patient concerns" not in symptoms and "Not documented" not in symptoms:
             symptoms = f"{symptoms} ({duration})"
 
         # Add activity trigger if available (check both entities and transcription directly)
@@ -1466,19 +1309,12 @@ class AIModelsService:
                 if activity_match:
                     activity_trigger = activity_match.group(0)
                     break
-        if (
-            activity_trigger
-            and symptoms
-            and "Patient concerns" not in symptoms
-            and "Not documented" not in symptoms
-        ):
+        if activity_trigger and symptoms and "Patient concerns" not in symptoms and "Not documented" not in symptoms:
             # Clean up activity trigger
             activity_trigger_clean = activity_trigger.strip().lower()
             symptoms = f"{symptoms}, particularly {activity_trigger_clean}"
 
-        logger.debug(
-            f"Template note: final symptoms='{symptoms}', duration={duration}, activity_trigger={activity_trigger}"
-        )
+        logger.debug(f"Template note: final symptoms='{symptoms}', duration={duration}, activity_trigger={activity_trigger}")
 
         # Extract medications
         meds_list = entities.get("medications", [])
@@ -1515,19 +1351,14 @@ class AIModelsService:
         sentences = re.split(r"[.!?]+", transcription)
         for sentence in sentences:
             sentence_lower = sentence.lower().strip()
-            if (
-                any(keyword in sentence_lower for keyword in exam_keywords)
-                and len(sentence.strip()) > 15
-            ):
+            if any(keyword in sentence_lower for keyword in exam_keywords) and len(sentence.strip()) > 15:
                 # Clean up the sentence
                 sentence_clean = sentence.strip()
                 if len(sentence_clean) < 200:  # Not too long
                     exam_sentences.append(sentence_clean)
 
         if exam_sentences:
-            objective_findings.append(
-                "Clinical findings: " + "; ".join(exam_sentences[:2])
-            )
+            objective_findings.append("Clinical findings: " + "; ".join(exam_sentences[:2]))
 
         # Extract tests/procedures mentioned (check both entities and transcription directly)
         tests_mentioned = entities.get("tests_mentioned", [])
@@ -1558,9 +1389,7 @@ class AIModelsService:
                     test_names.append("ECG (electrocardiogram)")
                 else:
                     test_names.append(t.replace("xray", "X-ray").title())
-            objective_findings.append(
-                f"Tests/Procedures discussed: {', '.join(set(test_names))}"
-            )
+            objective_findings.append(f"Tests/Procedures discussed: {', '.join(set(test_names))}")
 
         # Extract from doctor's statements about recommendations
         if not objective_findings or len(objective_findings) == 0:
@@ -1578,9 +1407,7 @@ class AIModelsService:
                     doctor_recommendations.extend([m.strip() for m in matches[:2]])
 
             if doctor_recommendations:
-                objective_findings.append(
-                    f"Clinical recommendations discussed: {', '.join(doctor_recommendations)}"
-                )
+                objective_findings.append(f"Clinical recommendations discussed: {', '.join(doctor_recommendations)}")
 
         objective = (
             "\n".join(objective_findings)
@@ -1595,9 +1422,9 @@ class AIModelsService:
 
         if diagnoses == "To be determined":
             # Create a preliminary assessment based on symptoms or transcription content
-            if any(
-                s in transcription_lower for s in ["chest pain", "chest discomfort"]
-            ) or any(s in symptoms_lower for s in ["chest pain"]):
+            if any(s in transcription_lower for s in ["chest pain", "chest discomfort"]) or any(
+                s in symptoms_lower for s in ["chest pain"]
+            ):
                 if (
                     "shortness of breath" in transcription_lower
                     or "dyspnea" in transcription_lower
@@ -1611,7 +1438,9 @@ class AIModelsService:
                 or "dyspnea" in transcription_lower
                 or any(s in symptoms_lower for s in ["shortness of breath"])
             ):
-                assessment = "Dyspnea - evaluate for cardiac, pulmonary, or other causes. Consider appropriate diagnostic studies."
+                assessment = (
+                    "Dyspnea - evaluate for cardiac, pulmonary, or other causes. Consider appropriate diagnostic studies."
+                )
             elif "fever" in transcription_lower and "cough" in transcription_lower:
                 assessment = "Respiratory symptoms with fever - rule out infection. Consider appropriate diagnostic studies."
             elif symptoms_list:
@@ -1622,27 +1451,17 @@ class AIModelsService:
         # Build plan
         plan_items = []
         if tests_mentioned:
-            test_names = [
-                t.replace("ecg", "ECG").replace("ekg", "EKG").title()
-                for t in tests_mentioned
-            ]
+            test_names = [t.replace("ecg", "ECG").replace("ekg", "EKG").title() for t in tests_mentioned]
             plan_items.append(f"Order {', '.join(test_names)}")
         else:
             # Suggest tests based on symptoms or transcription
-            if any(
-                s in transcription_lower for s in ["chest", "heart", "cardiac"]
-            ) or any(s in symptoms_lower for s in ["chest pain"]):
-                if (
-                    "ecg" in transcription_lower
-                    or "electrocardiogram" in transcription_lower
-                ):
-                    plan_items.append(
-                        "Order ECG (electrocardiogram) to assess cardiac function"
-                    )
+            if any(s in transcription_lower for s in ["chest", "heart", "cardiac"]) or any(
+                s in symptoms_lower for s in ["chest pain"]
+            ):
+                if "ecg" in transcription_lower or "electrocardiogram" in transcription_lower:
+                    plan_items.append("Order ECG (electrocardiogram) to assess cardiac function")
                 else:
-                    plan_items.append(
-                        "Consider ECG to assess cardiac function if clinically indicated"
-                    )
+                    plan_items.append("Consider ECG to assess cardiac function if clinically indicated")
             if "fever" in transcription_lower:
                 plan_items.append("Consider laboratory studies to rule out infection")
 
@@ -1652,25 +1471,14 @@ class AIModelsService:
             plan_items.append("Review medications as needed")
 
         # Extract lifestyle recommendations from transcription
-        if (
-            "lifestyle" in transcription_lower
-            or "diet" in transcription_lower
-            or "exercise" in transcription_lower
-        ):
-            plan_items.append(
-                "Provide lifestyle modification counseling (diet, exercise)"
-            )
+        if "lifestyle" in transcription_lower or "diet" in transcription_lower or "exercise" in transcription_lower:
+            plan_items.append("Provide lifestyle modification counseling (diet, exercise)")
 
         plan_items.append("Follow up as clinically indicated")
         plan = "\n".join(f"- {item}" for item in plan_items)
 
         # Build the SOAP note
-        note = (
-            f"S: {symptoms}\n\n"
-            f"O: {objective}\n\n"
-            f"A: {assessment}\n\n"
-            f"P: {plan}"
-        )
+        note = f"S: {symptoms}\n\n" f"O: {objective}\n\n" f"A: {assessment}\n\n" f"P: {plan}"
 
         # Add warning if this is a fallback template (but make it less intrusive)
         # Only add warning in the response data, not in the note itself for cleaner output
@@ -1725,9 +1533,7 @@ class AIModelsService:
 
         return "Patient concerns and symptoms discussed during visit. See transcription for details."
 
-    def _build_document_summary_prompt(
-        self, text: str, metadata: Dict[str, Any]
-    ) -> str:
+    def _build_document_summary_prompt(self, text: str, metadata: Dict[str, Any]) -> str:
         metadata_block = json.dumps(metadata, indent=2, ensure_ascii=False)
         truncated_text = textwrap.shorten(text, width=8000, placeholder=" …")
         return (

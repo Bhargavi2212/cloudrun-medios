@@ -26,16 +26,12 @@ class JobQueueService:
     ) -> None:
         self.make_agent_service = make_agent_service or MakeAgentService()
         self.storage_service = storage_service or StorageService()
-        self.document_processing_service = (
-            document_processing_service or DocumentProcessingService()
-        )
+        self.document_processing_service = document_processing_service or DocumentProcessingService()
 
     async def enqueue_audio_processing(self, audio_id: str) -> JobQueue:
         payload = {"audio_id": audio_id}
         with get_session() as session:
-            job = crud.create_job(
-                session, task_type="scribe.audio_pipeline", payload=payload
-            )
+            job = crud.create_job(session, task_type="scribe.audio_pipeline", payload=payload)
             session.refresh(job)
         asyncio.create_task(self._process_job(job.id))
         return job
@@ -53,9 +49,7 @@ class JobQueueService:
             "consultation_id": consultation_id,
         }
         with get_session() as session:
-            job = crud.create_job(
-                session, task_type="documents.process", payload=payload
-            )
+            job = crud.create_job(session, task_type="documents.process", payload=payload)
             session.refresh(job)
         asyncio.create_task(self._process_job(job.id))
         return job
@@ -71,9 +65,7 @@ class JobQueueService:
         """
         payload = {"batch_size": batch_size}
         with get_session() as session:
-            job = crud.create_job(
-                session, task_type="storage.retention_cleanup", payload=payload
-            )
+            job = crud.create_job(session, task_type="storage.retention_cleanup", payload=payload)
             session.refresh(job)
         asyncio.create_task(self._process_job(job.id))
         return job
@@ -134,19 +126,13 @@ class JobQueueService:
 
                 payload["result"] = result_dict
                 status = "completed" if success else "failed"
-                error_message = (
-                    result_dict.get("error")
-                    or "; ".join(result_dict.get("errors", []))
-                    or None
-                )
+                error_message = result_dict.get("error") or "; ".join(result_dict.get("errors", [])) or None
                 metric_service = "scribe"
             elif task_type == "documents.process":
                 file_id = payload.get("file_id")
                 patient_id = payload.get("patient_id")
                 if not file_id or not patient_id:
-                    raise ValueError(
-                        "file_id and patient_id required for document processing jobs"
-                    )
+                    raise ValueError("file_id and patient_id required for document processing jobs")
                 result = await self.document_processing_service.process_document(
                     file_id,
                     patient_id=patient_id,
@@ -160,9 +146,7 @@ class JobQueueService:
             elif task_type == "storage.retention_cleanup":
                 # Retention cleanup job
                 batch_size = payload.get("batch_size", 100)
-                cleanup_stats = self.storage_service.cleanup_expired_files(
-                    batch_size=batch_size
-                )
+                cleanup_stats = self.storage_service.cleanup_expired_files(batch_size=batch_size)
                 payload["result"] = cleanup_stats
                 success = True
                 status = "completed"

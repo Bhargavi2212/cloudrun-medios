@@ -34,9 +34,7 @@ class MakeAgentPipeline:
     def __init__(self, models_service: Optional[AIModelsService] = None) -> None:
         self.ai_models = models_service or AIModelsService()
 
-    async def process_audio_streaming(
-        self, audio_file_path: str
-    ) -> AsyncIterator[Dict[str, Any]]:
+    async def process_audio_streaming(self, audio_file_path: str) -> AsyncIterator[Dict[str, Any]]:
         """Process audio with streaming updates for each stage.
 
         Yields updates as each stage completes:
@@ -58,16 +56,12 @@ class MakeAgentPipeline:
         }
 
         transcription_result = await self.ai_models.transcribe_audio(audio_file_path)
-        state.confidence_scores["transcription"] = transcription_result.get(
-            "confidence", 0.0
-        )
+        state.confidence_scores["transcription"] = transcription_result.get("confidence", 0.0)
         state.warnings.extend(_collect_optional(transcription_result.get("warning")))
         state.is_stub = state.is_stub or transcription_result.get("is_stub", False)
 
         if not transcription_result.get("success"):
-            state.errors.append(
-                transcription_result.get("error", "Transcription failed.")
-            )
+            state.errors.append(transcription_result.get("error", "Transcription failed."))
             state.stage_completed = "transcription_failed"
             yield {
                 "stage": "transcription",
@@ -97,9 +91,7 @@ class MakeAgentPipeline:
         }
 
         entity_result = await self.ai_models.extract_entities(state.transcription)
-        state.confidence_scores["entity_extraction"] = entity_result.get(
-            "confidence", 0.0
-        )
+        state.confidence_scores["entity_extraction"] = entity_result.get("confidence", 0.0)
         state.warnings.extend(_collect_optional(entity_result.get("warning")))
         state.is_stub = state.is_stub or entity_result.get("is_stub", False)
 
@@ -133,9 +125,7 @@ class MakeAgentPipeline:
             "message": "Generating clinical note...",
         }
 
-        note_result = await self.ai_models.generate_note(
-            state.transcription, state.entities
-        )
+        note_result = await self.ai_models.generate_note(state.transcription, state.entities)
         state.confidence_scores["note_generation"] = note_result.get("confidence", 0.0)
         state.warnings.extend(_collect_optional(note_result.get("warning")))
         state.is_stub = state.is_stub or note_result.get("is_stub", False)
@@ -181,15 +171,11 @@ class MakeAgentPipeline:
 
         # Stage 1: Transcription
         transcription_result = await self.ai_models.transcribe_audio(audio_file_path)
-        state.confidence_scores["transcription"] = transcription_result.get(
-            "confidence", 0.0
-        )
+        state.confidence_scores["transcription"] = transcription_result.get("confidence", 0.0)
         state.warnings.extend(_collect_optional(transcription_result.get("warning")))
         state.is_stub = state.is_stub or transcription_result.get("is_stub", False)
         if not transcription_result.get("success"):
-            state.errors.append(
-                transcription_result.get("error", "Transcription failed.")
-            )
+            state.errors.append(transcription_result.get("error", "Transcription failed."))
             state.stage_completed = "transcription_failed"
             return state.model_dump()
 
@@ -197,9 +183,7 @@ class MakeAgentPipeline:
 
         # Stage 2: Entity extraction
         entity_result = await self.ai_models.extract_entities(state.transcription)
-        state.confidence_scores["entity_extraction"] = entity_result.get(
-            "confidence", 0.0
-        )
+        state.confidence_scores["entity_extraction"] = entity_result.get("confidence", 0.0)
         state.warnings.extend(_collect_optional(entity_result.get("warning")))
         state.is_stub = state.is_stub or entity_result.get("is_stub", False)
         if not entity_result.get("success"):
@@ -210,9 +194,7 @@ class MakeAgentPipeline:
         state.entities = entity_result.get("entities", {})
 
         # Stage 3: Note generation
-        note_result = await self.ai_models.generate_note(
-            state.transcription, state.entities
-        )
+        note_result = await self.ai_models.generate_note(state.transcription, state.entities)
         state.confidence_scores["note_generation"] = note_result.get("confidence", 0.0)
         state.warnings.extend(_collect_optional(note_result.get("warning")))
         state.is_stub = state.is_stub or note_result.get("is_stub", False)

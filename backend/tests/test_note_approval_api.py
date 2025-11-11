@@ -95,10 +95,7 @@ def test_get_consultation_note(client, test_note, test_consultation, auth_header
     # The API returns note data, check if note_id or note.id exists
     note_data = data["data"].get("note") or data["data"]
     if isinstance(note_data, dict):
-        assert (
-            note_data.get("id") == test_note.id
-            or note_data.get("note_id") == test_note.id
-        )
+        assert note_data.get("id") == test_note.id or note_data.get("note_id") == test_note.id
         assert note_data.get("consultation_id") == test_consultation.id
         # Content might be in current_version
         if "content" in note_data:
@@ -124,8 +121,7 @@ def test_update_consultation_note(client, test_note, test_consultation, auth_hea
 def test_get_consultation_note_not_found(client, test_consultation, auth_headers):
     """Test getting a note for a consultation without a note."""
     # Create a new consultation without a note
-    from backend.database.models import (Consultation, ConsultationStatus,
-                                         Patient)
+    from backend.database.models import Consultation, ConsultationStatus, Patient
     from backend.database.session import get_session
 
     # This test would need a consultation without a note

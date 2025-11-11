@@ -124,9 +124,7 @@ class MakeAgentService:
     ) -> StandardResponse:
         start = perf_counter()
         state = await self.pipeline.process_audio(audio_file_path)
-        success = state.get("stage_completed") == "completed" and not state.get(
-            "errors"
-        )
+        success = state.get("stage_completed") == "completed" and not state.get("errors")
         warnings = state.get("warnings", [])
         errors = state.get("errors", [])
 

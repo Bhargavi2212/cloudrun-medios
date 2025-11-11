@@ -79,12 +79,8 @@ class ScribeSettings(BaseSettings):
 
     # Secret Manager configuration
     secret_manager_enabled: bool = Field(default=False, alias="SECRET_MANAGER_ENABLED")
-    secret_manager_project_id: Optional[str] = Field(
-        default=None, alias="SECRET_MANAGER_PROJECT_ID"
-    )
-    secret_manager_environment: Optional[str] = Field(
-        default=None, alias="SECRET_MANAGER_ENVIRONMENT"
-    )
+    secret_manager_project_id: Optional[str] = Field(default=None, alias="SECRET_MANAGER_PROJECT_ID")
+    secret_manager_environment: Optional[str] = Field(default=None, alias="SECRET_MANAGER_ENVIRONMENT")
 
     hf_token: Optional[str] = Field(default=None, alias="HF_TOKEN")
     gemini_api_key: Optional[str] = Field(default=None, alias="GEMINI_API_KEY")
@@ -98,27 +94,15 @@ class ScribeSettings(BaseSettings):
     gemini_max_tokens: int = Field(default=1000, alias="GEMINI_MAX_TOKENS")
 
     summarizer_enabled: bool = Field(default=True, alias="SUMMARIZER_ENABLED")
-    summarizer_data_glob: Optional[str] = Field(
-        default=None, alias="SUMMARIZER_DATA_GLOB"
-    )
-    summarizer_codes_path: Optional[Path] = Field(
-        default=None, alias="SUMMARIZER_CODES_PATH"
-    )
-    summarizer_max_cache_entries: int = Field(
-        default=32, alias="SUMMARIZER_MAX_CACHE_ENTRIES"
-    )
+    summarizer_data_glob: Optional[str] = Field(default=None, alias="SUMMARIZER_DATA_GLOB")
+    summarizer_codes_path: Optional[Path] = Field(default=None, alias="SUMMARIZER_CODES_PATH")
+    summarizer_max_cache_entries: int = Field(default=32, alias="SUMMARIZER_MAX_CACHE_ENTRIES")
     summarizer_stop_gap_days: int = Field(default=90, alias="SUMMARIZER_STOP_GAP_DAYS")
-    summarizer_slow_threshold: float = Field(
-        default=5.0, alias="SUMMARIZER_SLOW_THRESHOLD"
-    )
+    summarizer_slow_threshold: float = Field(default=5.0, alias="SUMMARIZER_SLOW_THRESHOLD")
     summarizer_temperature: float = Field(default=0.2, alias="SUMMARIZER_TEMPERATURE")
     summarizer_max_tokens: int = Field(default=3000, alias="SUMMARIZER_MAX_TOKENS")
-    summarizer_use_fake_llm: bool = Field(
-        default=False, alias="SUMMARIZER_USE_FAKE_LLM"
-    )
-    summarizer_cache_ttl_minutes: int = Field(
-        default=360, alias="SUMMARIZER_CACHE_TTL_MINUTES"
-    )
+    summarizer_use_fake_llm: bool = Field(default=False, alias="SUMMARIZER_USE_FAKE_LLM")
+    summarizer_cache_ttl_minutes: int = Field(default=360, alias="SUMMARIZER_CACHE_TTL_MINUTES")
 
     database_url: str = Field(
         default="postgresql+psycopg2://postgres:postgres@localhost:5432/medios",
@@ -126,59 +110,33 @@ class ScribeSettings(BaseSettings):
     )
     database_pool_size: int = Field(default=5, alias="DATABASE_POOL_SIZE")
     database_max_overflow: int = Field(default=10, alias="DATABASE_MAX_OVERFLOW")
-    database_pool_recycle_seconds: int = Field(
-        default=1800, alias="DATABASE_POOL_RECYCLE"
-    )
+    database_pool_recycle_seconds: int = Field(default=1800, alias="DATABASE_POOL_RECYCLE")
     database_echo: bool = Field(default=False, alias="DATABASE_ECHO")
 
-    jwt_access_secret: str = Field(
-        default="change-me-access", alias="JWT_ACCESS_SECRET"
-    )
-    jwt_refresh_secret: str = Field(
-        default="change-me-refresh", alias="JWT_REFRESH_SECRET"
-    )
+    jwt_access_secret: str = Field(default="change-me-access", alias="JWT_ACCESS_SECRET")
+    jwt_refresh_secret: str = Field(default="change-me-refresh", alias="JWT_REFRESH_SECRET")
     jwt_algorithm: str = Field(default="HS256", alias="JWT_ALGORITHM")
     jwt_access_expires_minutes: int = Field(default=15, alias="JWT_ACCESS_EXPIRES_MIN")
-    jwt_refresh_expires_minutes: int = Field(
-        default=60 * 24 * 30, alias="JWT_REFRESH_EXPIRES_MIN"
-    )
+    jwt_refresh_expires_minutes: int = Field(default=60 * 24 * 30, alias="JWT_REFRESH_EXPIRES_MIN")
 
     storage_backend: str = Field(default="local", alias="STORAGE_BACKEND")
-    storage_local_path: Path = Field(
-        default=Path("./storage"), alias="STORAGE_LOCAL_PATH"
-    )
+    storage_local_path: Path = Field(default=Path("./storage"), alias="STORAGE_LOCAL_PATH")
     storage_gcs_bucket: Optional[str] = Field(default=None, alias="STORAGE_GCS_BUCKET")
-    storage_gcs_credentials: Optional[Path] = Field(
-        default=None, alias="STORAGE_GCS_CREDENTIALS"
-    )
-    storage_signed_url_expiry_seconds: int = Field(
-        default=3600, alias="STORAGE_SIGNED_URL_EXPIRY"
-    )
+    storage_gcs_credentials: Optional[Path] = Field(default=None, alias="STORAGE_GCS_CREDENTIALS")
+    storage_signed_url_expiry_seconds: int = Field(default=3600, alias="STORAGE_SIGNED_URL_EXPIRY")
 
     # Retention policy configuration (in days)
-    storage_retention_default_days: int = Field(
-        default=365, alias="STORAGE_RETENTION_DEFAULT_DAYS"
-    )
-    storage_retention_audio_days: int = Field(
-        default=365, alias="STORAGE_RETENTION_AUDIO_DAYS"
-    )
+    storage_retention_default_days: int = Field(default=365, alias="STORAGE_RETENTION_DEFAULT_DAYS")
+    storage_retention_audio_days: int = Field(default=365, alias="STORAGE_RETENTION_AUDIO_DAYS")
     storage_retention_document_days: int = Field(
         default=2555, alias="STORAGE_RETENTION_DOCUMENT_DAYS"
     )  # 7 years for medical records
-    storage_retention_enabled: bool = Field(
-        default=True, alias="STORAGE_RETENTION_ENABLED"
-    )
-    storage_retention_cleanup_interval_hours: int = Field(
-        default=24, alias="STORAGE_RETENTION_CLEANUP_INTERVAL_HOURS"
-    )
+    storage_retention_enabled: bool = Field(default=True, alias="STORAGE_RETENTION_ENABLED")
+    storage_retention_cleanup_interval_hours: int = Field(default=24, alias="STORAGE_RETENTION_CLEANUP_INTERVAL_HOURS")
 
     rate_limit_enabled: bool = Field(default=False, alias="RATE_LIMIT_ENABLED")
-    rate_limit_default_per_minute: int = Field(
-        default=120, alias="RATE_LIMIT_DEFAULT_PER_MINUTE"
-    )
-    rate_limit_burst_multiplier: float = Field(
-        default=3.0, alias="RATE_LIMIT_BURST_MULTIPLIER"
-    )
+    rate_limit_default_per_minute: int = Field(default=120, alias="RATE_LIMIT_DEFAULT_PER_MINUTE")
+    rate_limit_burst_multiplier: float = Field(default=3.0, alias="RATE_LIMIT_BURST_MULTIPLIER")
 
     feature_flags_raw: Optional[str] = Field(default=None, alias="FEATURE_FLAGS")
     feature_flags: Dict[str, bool] = Field(default_factory=dict, exclude=True)
@@ -187,21 +145,11 @@ class ScribeSettings(BaseSettings):
         default=Path("medi-os/services/manage-agent/models"),
         alias="TRIAGE_MODEL_DIR",
     )
-    triage_metadata_file: str = Field(
-        default="xgboost_lightgbm_metadata.pkl", alias="TRIAGE_METADATA_FILE"
-    )
-    triage_baseline_metadata_file: str = Field(
-        default="baseline_metadata.pkl", alias="TRIAGE_BASELINE_METADATA_FILE"
-    )
-    triage_stacking_model: str = Field(
-        default="final_stacking_ensemble.pkl", alias="TRIAGE_STACKING_MODEL"
-    )
-    triage_xgb_model: str = Field(
-        default="final_xgboost_full_features.pkl", alias="TRIAGE_XGB_MODEL"
-    )
-    triage_lgbm_model: str = Field(
-        default="final_lightgbm_full_features.pkl", alias="TRIAGE_LGBM_MODEL"
-    )
+    triage_metadata_file: str = Field(default="xgboost_lightgbm_metadata.pkl", alias="TRIAGE_METADATA_FILE")
+    triage_baseline_metadata_file: str = Field(default="baseline_metadata.pkl", alias="TRIAGE_BASELINE_METADATA_FILE")
+    triage_stacking_model: str = Field(default="final_stacking_ensemble.pkl", alias="TRIAGE_STACKING_MODEL")
+    triage_xgb_model: str = Field(default="final_xgboost_full_features.pkl", alias="TRIAGE_XGB_MODEL")
+    triage_lgbm_model: str = Field(default="final_lightgbm_full_features.pkl", alias="TRIAGE_LGBM_MODEL")
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -366,8 +314,7 @@ class SecretManager:
         """
         if secretmanager is None:
             raise ImportError(
-                "google-cloud-secret-manager is not installed. "
-                "Install it with: pip install google-cloud-secret-manager"
+                "google-cloud-secret-manager is not installed. " "Install it with: pip install google-cloud-secret-manager"
             )
         self.project_id = project_id
         self.environment = environment
@@ -401,23 +348,17 @@ class SecretManager:
             return self._cache[cache_key]
 
         # Build secret resource name
-        name = (
-            f"projects/{self.project_id}/secrets/{full_secret_name}/versions/{version}"
-        )
+        name = f"projects/{self.project_id}/secrets/{full_secret_name}/versions/{version}"
 
         try:
             response = self.client.access_secret_version(request={"name": name})
             secret_value = response.payload.data.decode("UTF-8")
             # Cache the secret
             self._cache[cache_key] = secret_value
-            logger.debug(
-                f"Retrieved secret '{full_secret_name}' from Cloud Secret Manager"
-            )
+            logger.debug(f"Retrieved secret '{full_secret_name}' from Cloud Secret Manager")
             return secret_value
         except Exception as exc:
-            logger.warning(
-                f"Failed to retrieve secret '{full_secret_name}' from Cloud Secret Manager: {exc}"
-            )
+            logger.warning(f"Failed to retrieve secret '{full_secret_name}' from Cloud Secret Manager: {exc}")
             return None
 
 
@@ -454,9 +395,7 @@ def get_secret_manager() -> Optional[SecretManager]:
     return _secret_manager_instance
 
 
-def get_secret(
-    secret_name: str, env_var: Optional[str] = None, version: str = "latest"
-) -> Optional[str]:
+def get_secret(secret_name: str, env_var: Optional[str] = None, version: str = "latest") -> Optional[str]:
     """Get secret from Cloud Secret Manager or environment variable.
 
     This is a convenience function that:

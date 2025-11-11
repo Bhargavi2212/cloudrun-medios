@@ -19,21 +19,15 @@ logger = logging.getLogger(__name__)
 # Optional import of the standalone summarizer package
 # --------------------------------------------------------------------------- #
 
-SUMMARIZER_PACKAGE_ROOT = (
-    Path(__file__).resolve().parents[2] / "medi-os" / "services" / "manage-agent"
-)
+SUMMARIZER_PACKAGE_ROOT = Path(__file__).resolve().parents[2] / "medi-os" / "services" / "manage-agent"
 if SUMMARIZER_PACKAGE_ROOT.exists():
     sys.path.insert(0, str(SUMMARIZER_PACKAGE_ROOT))
 
 try:  # pragma: no cover - import side effects exercised in integration tests
-    from summarizer.config import \
-        Settings as SummarizerSettings  # type: ignore[import-not-found]
-    from summarizer.data_loader import \
-        DataLoaderConfig  # type: ignore[import-not-found]
-    from summarizer.errors import (  # type: ignore[import-not-found]
-        ConfigurationError, PatientNotFoundError, SummarizerError)
-    from summarizer.summarizer import \
-        SummarizerService as CoreSummarizer  # type: ignore[import-not-found]
+    from summarizer.config import Settings as SummarizerSettings  # type: ignore[import-not-found]
+    from summarizer.data_loader import DataLoaderConfig  # type: ignore[import-not-found]
+    from summarizer.errors import ConfigurationError, PatientNotFoundError, SummarizerError  # type: ignore[import-not-found]
+    from summarizer.summarizer import SummarizerService as CoreSummarizer  # type: ignore[import-not-found]
     from summarizer.summarizer import SummaryResult
 except Exception:  # pragma: no cover - summarizer optional
     SummarizerSettings = None  # type: ignore[assignment]
@@ -112,9 +106,7 @@ class MedicalSummarizer:
     ) -> None:
         self.settings = get_settings()
         ttl_seconds = max(self.settings.summarizer_cache_ttl_minutes, 0) * 60
-        self.cache: CacheBackend = cache_backend or InMemoryCache(
-            ttl_seconds=ttl_seconds
-        )
+        self.cache: CacheBackend = cache_backend or InMemoryCache(ttl_seconds=ttl_seconds)
         self.core: Optional[CoreSummarizer] = core_service
         self.is_stub: bool = False
 
@@ -177,9 +169,7 @@ class MedicalSummarizer:
                     metadata={"subject_id": str(subject_id)},
                 )
             except Exception:  # pragma: no cover - telemetry failures shouldn't bubble
-                logger.debug(
-                    "Unable to record summarizer latency metric", exc_info=True
-                )
+                logger.debug("Unable to record summarizer latency metric", exc_info=True)
 
         payload = self._serialise_result(result)
         payload["cached"] = False
@@ -212,12 +202,8 @@ class MedicalSummarizer:
 
         try:
             loader_defaults = DataLoaderConfig() if DataLoaderConfig else None
-            data_glob = self.settings.summarizer_data_glob or (
-                loader_defaults.data_glob if loader_defaults else None
-            )
-            codes_path = self.settings.summarizer_codes_path or (
-                loader_defaults.codes_path if loader_defaults else None
-            )
+            data_glob = self.settings.summarizer_data_glob or (loader_defaults.data_glob if loader_defaults else None)
+            codes_path = self.settings.summarizer_codes_path or (loader_defaults.codes_path if loader_defaults else None)
             if data_glob is None or codes_path is None:
                 raise ConfigurationError("Summarizer dataset paths are not configured.")
 
@@ -231,8 +217,7 @@ class MedicalSummarizer:
                 summarizer_max_tokens=self.settings.summarizer_max_tokens,
                 stop_gap_days=self.settings.summarizer_stop_gap_days,
                 slow_request_threshold=self.settings.summarizer_slow_threshold,
-                use_fake_llm=self.settings.summarizer_use_fake_llm
-                or not bool(self.settings.gemini_api_key),
+                use_fake_llm=self.settings.summarizer_use_fake_llm or not bool(self.settings.gemini_api_key),
             )
             return CoreSummarizer(settings=summarizer_settings)
         except ConfigurationError as exc:
@@ -273,9 +258,7 @@ class MedicalSummarizer:
     @staticmethod
     def _timeline_fingerprint(timeline: Dict[str, Any]) -> str:
         try:
-            serialized = json.dumps(timeline, default=str, sort_keys=True).encode(
-                "utf-8"
-            )
+            serialized = json.dumps(timeline, default=str, sort_keys=True).encode("utf-8")
         except TypeError:
             serialized = repr(timeline).encode("utf-8")
         return hashlib.sha256(serialized).hexdigest()

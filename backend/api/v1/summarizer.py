@@ -5,9 +5,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Query, status
 
 from ...services.error_response import StandardResponse
-from ...services.summarizer_service import (MedicalSummarizer,
-                                            PatientNotFoundError,
-                                            SummarizerError)
+from ...services.summarizer_service import MedicalSummarizer, PatientNotFoundError, SummarizerError
 
 router = APIRouter(prefix="/summarizer", tags=["summarizer"])
 summarizer_service = MedicalSummarizer()

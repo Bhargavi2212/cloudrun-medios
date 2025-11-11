@@ -81,9 +81,7 @@ async def explain_triage_prediction(payload: TriagePredictRequest) -> StandardRe
             payload.features,
             model=payload.model,
             top_k=payload.top_k,
-            use_shap=(
-                payload.use_shap if payload.use_shap else True
-            ),  # Default to SHAP for explain endpoint
+            use_shap=(payload.use_shap if payload.use_shap else True),  # Default to SHAP for explain endpoint
         )
     except ValueError as exc:
         raise HTTPException(

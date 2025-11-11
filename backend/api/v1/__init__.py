@@ -1,7 +1,6 @@
 from fastapi import APIRouter
 
-from . import (auth, make_agent, manage_agent, patients, queue, summarizer,
-               triage)
+from . import auth, make_agent, manage_agent, patients, queue, summarizer, triage
 
 api_router = APIRouter()
 api_router.include_router(auth.router, tags=["auth"])
