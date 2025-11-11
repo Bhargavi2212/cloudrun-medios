@@ -412,7 +412,8 @@ def test_note(db_session: Session, test_consultation: Consultation, test_user: U
     db_session.add(note_version)
     db_session.flush()  # Flush to ensure note_version is persisted before setting foreign key
     note.current_version_id = note_version.id
-    db_session.commit()
+    db_session.flush()  # Flush again to ensure current_version_id is set
+    db_session.commit()  # Commit to make data visible to other sessions
 
     # Ensure the note is visible to subsequent queries
     # Expire all objects to clear the session cache, then re-query
