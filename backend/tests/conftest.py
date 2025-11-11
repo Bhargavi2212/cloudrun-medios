@@ -170,15 +170,15 @@ def db_session() -> Generator[Session, None, None]:
     # PRIORITY: Always use PostgreSQL for tests
     # 1. Check TEST_DATABASE_URL first
     test_db_url = os.environ.get("TEST_DATABASE_URL")
-    
+
     # 2. Check DATABASE_URL environment variable
     if not test_db_url:
         test_db_url = os.environ.get("DATABASE_URL")
-    
+
     # 3. If DATABASE_URL is SQLite, override it to PostgreSQL
     if test_db_url and "sqlite" in test_db_url.lower():
         test_db_url = None  # Force fallback to PostgreSQL
-    
+
     # 4. Fallback to PostgreSQL default
     if not test_db_url:
         test_db_url = "postgresql+psycopg2://postgres:postgres@localhost:5432/medios_test"
