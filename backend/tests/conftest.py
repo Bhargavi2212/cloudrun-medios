@@ -233,15 +233,12 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
 
     def override_get_db_session():
         # Ensure committed data is visible to API queries
-        # The key is to commit any pending changes, then rollback to start fresh
-        # This ensures the session can see data committed in fixtures
+        # For SQLite in-memory, we just need to commit any pending changes
+        # and expire cached objects - no rollback needed
         try:
             db_session.commit()
         except Exception:
             pass
-        # Rollback to end any existing transaction and start fresh
-        # This is critical for PostgreSQL to see committed data from fixtures
-        db_session.rollback()
         # Expire all objects to force fresh queries from the database
         # This ensures queries will fetch from the database, not from session cache
         db_session.expire_all()
