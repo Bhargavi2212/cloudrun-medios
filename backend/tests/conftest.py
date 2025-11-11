@@ -236,9 +236,15 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
         Base.metadata.create_all(bind=engine)
 
     def override_get_db_session():
-        # Ensure committed data is visible to API queries
-        # For SQLite in-memory with StaticPool, all sessions share the same connection
-        # The key is to ensure the session is in a clean, queryable state
+        # CRITICAL: Ensure we're using the test session, not the one from session.py
+        # The test session is bound to the engine with tables and test data
+        # Verify the session is bound to the correct engine
+        if db_session.bind is not engine:
+            # Rebind the session to the test engine if needed
+            db_session.bind = engine
+
+        # Ensure tables exist on the engine
+        Base.metadata.create_all(bind=engine)
 
         # Commit any pending changes from fixtures to ensure they're persisted
         try:
