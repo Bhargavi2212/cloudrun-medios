@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import os
 
-# Set environment variable to indicate we're in a test environment
-# This must be done BEFORE importing anything that might import the app
-# so that services can detect the test environment during initialization
+# FORCE test environment - must be done BEFORE any imports
+# This ensures that any code imported during test setup uses SQLite, not PostgreSQL
+os.environ["TESTING"] = "true"
+os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["MEDI_OS_TEST_ENV"] = "1"
 
 # CRITICAL: Patch bcrypt.hashpw to handle >72 byte passwords gracefully
