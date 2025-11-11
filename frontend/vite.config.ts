@@ -4,22 +4,26 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
-// Get the directory of the current file - works in ESM modules
+// Resolve paths - use the config file's directory as the base
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-// Resolve the src directory using absolute path
-// This ensures the alias works in both local development and CI environments
-const srcDir = path.resolve(__dirname, 'src')
+// Get the frontend directory (where vite.config.ts is located)
+// In CI, this will be the frontend directory, ensuring consistent path resolution
+const rootDir = __dirname
+const srcPath = path.resolve(rootDir, 'src')
 
 // https://vitejs.dev/config/
 export default defineConfig({
   // @ts-ignore - Type compatibility issue between @vitejs/plugin-react and vitest's vite types, but works at runtime
   plugins: [react()],
   resolve: {
-    alias: {
-      '@': srcDir,
-    },
+    alias: [
+      {
+        find: '@',
+        replacement: srcPath,
+      },
+    ],
   },
   server: {
     port: 3000,
