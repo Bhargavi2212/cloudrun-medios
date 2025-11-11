@@ -273,7 +273,10 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
             db_session.commit()
         except Exception:
             db_session.rollback()
+        # Expire all objects to force fresh queries from the database
         db_session.expire_all()
+        # Ensure the session is in a clean state for queries
+        db_session.flush()
         try:
             yield db_session
         finally:
@@ -440,13 +443,11 @@ def test_note(db_session: Session, test_consultation: Consultation, test_user: U
     db_session.commit()
 
     # Ensure the note is visible to subsequent queries
-    # by querying it fresh with relationships loaded
-    # Refresh the note to ensure relationships are loaded
-    db_session.refresh(note)
-    # Also refresh the note_version to ensure relationships are loaded
-    db_session.refresh(note_version)
-
+    # Expire all objects to clear the session cache, then re-query
+    db_session.expire_all()
+    
     # Query the note again to ensure it's visible with all relationships
+    # This ensures the note is actually in the database and can be found by API queries
     stmt = (
         select(Note)
         .where(Note.consultation_id == test_consultation.id, Note.is_deleted.is_(False))
@@ -459,7 +460,8 @@ def test_note(db_session: Session, test_consultation: Consultation, test_user: U
         raise RuntimeError(f"Failed to create or retrieve test note for consultation {test_consultation.id}")
 
     # Ensure the note is attached to the session and relationships are loaded
-    db_session.refresh(queried_note)
+    # Refresh to ensure all relationships are properly loaded
+    db_session.refresh(queried_note, ["current_version", "versions"])
     return queried_note
 
 
