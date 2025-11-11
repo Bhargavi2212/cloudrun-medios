@@ -167,19 +167,21 @@ def db_session() -> Generator[Session, None, None]:
     If neither is set, uses a default PostgreSQL test database URL.
     """
     # Get test database URL from environment, with fallbacks
-    # Check environment variable first (for TEST_DATABASE_URL override)
+    # PRIORITY: Always use PostgreSQL for tests
+    # 1. Check TEST_DATABASE_URL first
     test_db_url = os.environ.get("TEST_DATABASE_URL")
-
+    
+    # 2. Check DATABASE_URL environment variable
     if not test_db_url:
-        # Try to get from settings (which loads .env file)
-        try:
-            from backend.services.config import get_settings
-
-            settings = get_settings()
-            test_db_url = settings.database_url
-        except Exception:
-            # Fallback to environment variable or default
-            test_db_url = os.environ.get("DATABASE_URL", "postgresql+psycopg2://postgres:postgres@localhost:5432/medios_test")
+        test_db_url = os.environ.get("DATABASE_URL")
+    
+    # 3. If DATABASE_URL is SQLite, override it to PostgreSQL
+    if test_db_url and "sqlite" in test_db_url.lower():
+        test_db_url = None  # Force fallback to PostgreSQL
+    
+    # 4. Fallback to PostgreSQL default
+    if not test_db_url:
+        test_db_url = "postgresql+psycopg2://postgres:postgres@localhost:5432/medios_test"
 
     # For PostgreSQL, we don't need special connect_args
     engine = create_engine(
