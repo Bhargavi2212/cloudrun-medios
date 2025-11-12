@@ -196,7 +196,6 @@ jobs:
             --region us-central1 \
             --platform managed \
             --allow-unauthenticated \
-            --port 8080 \
             --set-env-vars "APP_ENV=production,DATABASE_URL=${{ secrets.DATABASE_URL }},JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }},JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }},SECRET_KEY=${{ secrets.SECRET_KEY }}" \
             --memory 2Gi \
             --cpu 2 \
@@ -213,7 +212,6 @@ jobs:
             --region us-central1 \
             --platform managed \
             --allow-unauthenticated \
-            --port 8080 \
             --memory 512Mi \
             --cpu 1 \
             --timeout 60 \
