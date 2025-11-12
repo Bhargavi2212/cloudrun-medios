@@ -1,10 +1,39 @@
 #!/usr/bin/env python3
 """Initialize model files if they don't exist (for Docker builds without local files)."""
 
+# Helper classes must be defined at module level to be pickleable by joblib
+
 from pathlib import Path
 
 import joblib
 import numpy as np
+
+
+class MockBooster:
+    def __init__(self, feature_names: list[str]):
+        self.feature_names = feature_names
+
+
+class MockModel:
+    def __init__(self) -> None:
+        self._feature_names = ["age", "systolic_bp", "diastolic_bp", "heart_rate", "temperature", "respiratory_rate"]
+
+    def get_booster(self) -> MockBooster:
+        return MockBooster(self._feature_names)
+
+    def predict(self, X):
+        if hasattr(X, "shape"):
+            n = X.shape[0]
+        else:
+            n = len(X)
+        return np.array([3] * n)
+
+    def predict_proba(self, X):
+        if hasattr(X, "shape"):
+            n = X.shape[0]
+        else:
+            n = len(X)
+        return np.array([[0.1, 0.1, 0.6, 0.1, 0.1]] * n)
 
 
 def create_models():
@@ -44,32 +73,6 @@ def create_models():
     }
     joblib.dump(baseline_metadata, "baseline_metadata.pkl")
     print("[OK] Created baseline_metadata.pkl")
-
-    # 3. Create mock models
-    class MockModel:
-        def __init__(self):
-            self._feature_names = ["age", "systolic_bp", "diastolic_bp", "heart_rate", "temperature", "respiratory_rate"]
-
-        def get_booster(self):
-            class Booster:
-                def __init__(self, feature_names):
-                    self.feature_names = feature_names
-
-            return Booster(self._feature_names)
-
-        def predict(self, X):
-            if hasattr(X, "shape"):
-                n = X.shape[0]
-            else:
-                n = len(X)
-            return np.array([3] * n)
-
-        def predict_proba(self, X):
-            if hasattr(X, "shape"):
-                n = X.shape[0]
-            else:
-                n = len(X)
-            return np.array([[0.1, 0.1, 0.6, 0.1, 0.1]] * n)
 
     joblib.dump(MockModel(), "final_xgboost_full_features.pkl")
     print("[OK] Created final_xgboost_full_features.pkl")
