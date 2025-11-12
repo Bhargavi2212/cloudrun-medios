@@ -20,7 +20,7 @@ COPY . /app/backend
 
 # Initialize models if they don't exist (for CI builds without local files)
 WORKDIR /app/backend
-RUN python init_models.py
+RUN python init_models.py && cp *.pkl /app/
 
 # Use PORT environment variable from Cloud Run, default to 8080 if not set
 WORKDIR /app
