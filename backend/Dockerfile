@@ -18,7 +18,12 @@ RUN python -c "import os, whisper; whisper.load_model(os.environ.get('MODEL_SIZE
 # Copy the entire backend directory structure
 COPY . /app/backend
 
+# Initialize models if they don't exist (for CI builds without local files)
+WORKDIR /app/backend
+RUN python init_models.py
+
 # Use PORT environment variable from Cloud Run, default to 8080 if not set
+WORKDIR /app
 ENV PORT=8080
 CMD uvicorn backend.main:app --host 0.0.0.0 --port $PORT
 
