@@ -9,33 +9,6 @@ import joblib
 import numpy as np
 
 
-class MockBooster:
-    def __init__(self, feature_names: list[str]):
-        self.feature_names = feature_names
-
-
-class MockModel:
-    def __init__(self) -> None:
-        self._feature_names = ["age", "systolic_bp", "diastolic_bp", "heart_rate", "temperature", "respiratory_rate"]
-
-    def get_booster(self) -> MockBooster:
-        return MockBooster(self._feature_names)
-
-    def predict(self, X):
-        if hasattr(X, "shape"):
-            n = X.shape[0]
-        else:
-            n = len(X)
-        return np.array([3] * n)
-
-    def predict_proba(self, X):
-        if hasattr(X, "shape"):
-            n = X.shape[0]
-        else:
-            n = len(X)
-        return np.array([[0.1, 0.1, 0.6, 0.1, 0.1]] * n)
-
-
 def create_models():
     """Create minimal working models if they don't exist."""
 
@@ -74,14 +47,20 @@ def create_models():
     joblib.dump(baseline_metadata, "baseline_metadata.pkl")
     print("[OK] Created baseline_metadata.pkl")
 
-    joblib.dump(MockModel(), "final_xgboost_full_features.pkl")
-    print("[OK] Created final_xgboost_full_features.pkl")
+    model_payload = {
+        "__mock_model__": True,
+        "feature_names": metadata["feature_names"],
+        "default_probs": [0.1, 0.1, 0.6, 0.1, 0.1],
+    }
 
-    joblib.dump(MockModel(), "final_lightgbm_full_features.pkl")
-    print("[OK] Created final_lightgbm_full_features.pkl")
+    joblib.dump(model_payload, "final_xgboost_full_features.pkl")
+    print("[OK] Created final_xgboost_full_features.pkl (mock payload)")
 
-    joblib.dump(MockModel(), "final_stacking_ensemble.pkl")
-    print("[OK] Created final_stacking_ensemble.pkl")
+    joblib.dump(model_payload, "final_lightgbm_full_features.pkl")
+    print("[OK] Created final_lightgbm_full_features.pkl (mock payload)")
+
+    joblib.dump(model_payload, "final_stacking_ensemble.pkl")
+    print("[OK] Created final_stacking_ensemble.pkl (mock payload)")
 
     print("\n✓ All model files created successfully!")
 

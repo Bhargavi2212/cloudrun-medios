@@ -67,6 +67,40 @@ class TriagePrediction:
     latency_ms: float
 
 
+DEFAULT_TRIAGE_FEATURES = ["age", "systolic_bp", "diastolic_bp", "heart_rate", "temperature", "respiratory_rate"]
+DEFAULT_TRIAGE_PROBS = [0.1, 0.1, 0.6, 0.1, 0.1]
+
+
+class _MockBooster:
+    def __init__(self, feature_names: List[str]):
+        self.feature_names = feature_names
+
+
+class _MockModel:
+    def __init__(self, feature_names: List[str], default_probs: List[float]):
+        self._feature_names = feature_names
+        probs = np.asarray(default_probs, dtype=float)
+        self._default_probs = probs / probs.sum() if probs.sum() else np.full_like(probs, 1.0 / len(probs))
+
+    def get_booster(self) -> _MockBooster:
+        return _MockBooster(self._feature_names)
+
+    def predict(self, X):
+        if hasattr(X, "shape"):
+            n = X.shape[0]
+        else:
+            n = len(X)
+        max_idx = int(np.argmax(self._default_probs))
+        return np.full(n, max_idx)
+
+    def predict_proba(self, X):
+        if hasattr(X, "shape"):
+            n = X.shape[0]
+        else:
+            n = len(X)
+        return np.tile(self._default_probs, (n, 1))
+
+
 class TriageService:
     """Loads triage ensemble models and exposes prediction with feature explanations."""
 
@@ -401,32 +435,22 @@ class TriageService:
         path = self._resolve_path(filename)
         if not path.exists() and _IS_TEST_ENV:
             # In test environment, return a mock model
-            class MockModel:
-                def get_booster(self):
-                    class MockBooster:
-                        # feature_names should be an attribute, not a method
-                        # The code uses getattr(booster, "feature_names", [])
-                        feature_names = []  # Empty list, will fall back to baseline_features
-
-                    return MockBooster()
-
-                def predict(self, *args, **kwargs):
-                    return [3]  # Default triage level
-
-                def predict_proba(self, *args, **kwargs):
-                    return [[0.1, 0.1, 0.6, 0.1, 0.1]]  # Mock probabilities
-
-            return MockModel()
+            return _MockModel(DEFAULT_TRIAGE_FEATURES, DEFAULT_TRIAGE_PROBS)
         if not path.exists():
             raise FileNotFoundError(f"Model file not found: {path}")
-        return joblib.load(path)
+        model = joblib.load(path)
+        if isinstance(model, dict) and model.get("__mock_model__"):
+            feature_names = model.get("feature_names", DEFAULT_TRIAGE_FEATURES)
+            probs = model.get("default_probs", DEFAULT_TRIAGE_PROBS)
+            return _MockModel(feature_names, probs)
+        return model
 
     def _load_pickle(self, filename: str):
         path = self._resolve_path(filename)
         if not path.exists() and _IS_TEST_ENV:
             # Return default metadata for tests
             return {
-                "feature_names": ["age", "systolic_bp", "heart_rate", "temperature"],
+                "feature_names": DEFAULT_TRIAGE_FEATURES,
                 "classes": [1, 2, 3, 4, 5],
                 "severity_labels_0based": {0: "1", 1: "2", 2: "3", 3: "4", 4: "5"},
             }
