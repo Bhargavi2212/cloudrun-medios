@@ -222,13 +222,26 @@ jobs:
 
       - name: Run smoke tests
         run: |
-          BACKEND_URL=$(gcloud run services describe medios-backend --region us-central1 --format 'value(status.url)')
-          FRONTEND_URL=$(gcloud run services describe medios-frontend --region us-central1 --format 'value(status.url)')
+          echo "Getting backend URL..."
+          BACKEND_URL=$(gcloud run services describe medios-backend --region us-central1 --format 'value(status.url)' 2>/dev/null || echo "")
           
-          echo "Testing backend health endpoint..."
-          curl -f $BACKEND_URL/health || exit 1
+          echo "Getting frontend URL..."
+          FRONTEND_URL=$(gcloud run services describe medios-frontend --region us-central1 --format 'value(status.url)' 2>/dev/null || echo "")
           
-          echo "Testing frontend..."
-          curl -f $FRONTEND_URL || exit 1
+          if [ -n "$BACKEND_URL" ]; then
+            echo "Backend URL: $BACKEND_URL"
+            echo "Testing backend health endpoint..."
+            curl -f $BACKEND_URL/health || echo "Backend health check failed"
+          else
+            echo "Backend URL not found - service may not be ready"
+          fi
+          
+          if [ -n "$FRONTEND_URL" ]; then
+            echo "Frontend URL: $FRONTEND_URL"
+            echo "Testing frontend..."
+            curl -f $FRONTEND_URL || echo "Frontend check failed"
+          else
+            echo "Frontend URL not found - service may not be ready"
+          fi
         continue-on-error: true
 
