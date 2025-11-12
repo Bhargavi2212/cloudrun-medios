@@ -23,10 +23,10 @@ logger = get_logger(__name__)
 async def lifespan(app: FastAPI):
     """Initialize models in background, don't block startup."""
     logger.info("Starting MediOS AI Scribe - models will initialize in background")
-    
+
     # Start model initialization in background (don't await it)
     asyncio.create_task(initialize_models_background())
-    
+
     yield
     logger.info("Shutting down MediOS AI Scribe")
 
@@ -72,6 +72,6 @@ async def health() -> StandardResponse:
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     logger.info("Starting uvicorn server on 0.0.0.0:8000")
     uvicorn.run(app, host="0.0.0.0", port=8000)
