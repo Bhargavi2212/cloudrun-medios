@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Initialize model files if they don't exist (for Docker builds without local files)."""
 
+from pathlib import Path
+
 import joblib
 import numpy as np
-from pathlib import Path
 
 
 def create_models():
