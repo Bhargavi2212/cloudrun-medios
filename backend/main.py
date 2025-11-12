@@ -21,11 +21,27 @@ logger = get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Ensure models are ready on startup."""
-    success, error = await asyncio.to_thread(initialize_models)
-    if not success:
-        logger.error("Model initialisation failed: %s", error)
+    """Initialize models in background, don't block startup."""
+    logger.info("Starting MediOS AI Scribe - models will initialize in background")
+    
+    # Start model initialization in background (don't await it)
+    asyncio.create_task(initialize_models_background())
+    
     yield
+    logger.info("Shutting down MediOS AI Scribe")
+
+
+async def initialize_models_background():
+    """Initialize models in background without blocking startup."""
+    try:
+        logger.info("Starting background model initialization...")
+        success, error = await asyncio.to_thread(initialize_models)
+        if not success:
+            logger.error("Model initialization failed: %s", error)
+        else:
+            logger.info("Model initialization completed successfully")
+    except Exception as e:
+        logger.error(f"Unexpected error during model initialization: {e}")
 
 
 app = FastAPI(title="MediOS AI Scribe", version="2.0.0", lifespan=lifespan)
@@ -56,5 +72,6 @@ async def health() -> StandardResponse:
 
 if __name__ == "__main__":
     import uvicorn
-
+    
+    logger.info("Starting uvicorn server on 0.0.0.0:8000")
     uvicorn.run(app, host="0.0.0.0", port=8000)
