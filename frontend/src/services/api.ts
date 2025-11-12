@@ -21,8 +21,40 @@ import type {
   TimelineSummary,
 } from '@/types'
 
+const deriveBackendUrlFromHost = () => {
+  if (typeof window === 'undefined') {
+    return undefined
+  }
+
+  try {
+    const currentOrigin = window.location.origin
+    const currentUrl = new URL(currentOrigin)
+
+    if (currentUrl.hostname.includes('medios-frontend')) {
+      const backendHost = currentUrl.hostname.replace('medios-frontend', 'medios-backend')
+      return `${currentUrl.protocol}//${backendHost}`
+    }
+  } catch (error) {
+    console.warn('Failed to derive backend URL from current host', error)
+  }
+
+  return undefined
+}
+
+const buildTimeBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim()
+const derivedBaseUrl = deriveBackendUrlFromHost()
+
+const rawBaseUrl = buildTimeBaseUrl || derivedBaseUrl || 'http://localhost:8000'
+const normalizedBaseUrl = rawBaseUrl.replace(/\/+$/, '')
+const apiBaseUrl = normalizedBaseUrl.endsWith('/api/v1')
+  ? normalizedBaseUrl
+  : `${normalizedBaseUrl}/api/v1`
+
+export const API_BASE_URL = apiBaseUrl
+export const API_ROOT_URL = apiBaseUrl.replace(/\/api\/v1$/, '')
+
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api/v1',
+  baseURL: API_BASE_URL,
   timeout: 120000,
   headers: {
     'Content-Type': 'application/json',

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { manageAPI } from '@/services/api'
+import { API_BASE_URL, manageAPI } from '@/services/api'
 import type { QueuePatient, ManageQueueResponse, QueueStage } from '@/types'
 
 interface QueueMetrics {
@@ -75,7 +75,9 @@ export const useQueueDataSSE = (): UseQueueDataSSEResult => {
   useEffect(() => {
     if (!initialData) return
 
-    const eventSource = new EventSource('/api/v1/queue/stream', {
+    const streamUrl = `${API_BASE_URL}/queue/stream`
+
+    const eventSource = new EventSource(streamUrl, {
       withCredentials: true,
     })
 
