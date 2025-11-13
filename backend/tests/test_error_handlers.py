@@ -20,9 +20,14 @@ sys.modules.setdefault("google.generativeai", stub_generativeai)
 from backend.main import app  # noqa: E402
 
 
-def test_validation_error_returns_standard_response():
+def test_validation_error_returns_standard_response(token_factory):
     client = TestClient(app)
-    response = client.post("/api/v1/triage/predict", json={"features": "invalid"})
+    headers = {"Authorization": f"Bearer {token_factory(role='NURSE')}"}
+    response = client.post(
+        "/api/v1/triage/predict",
+        headers=headers,
+        json={"features": "invalid"},
+    )
     data = response.json()
 
     assert response.status_code == 422
