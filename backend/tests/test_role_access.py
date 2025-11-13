@@ -226,4 +226,3 @@ def test_queue_access(client, make_headers, method, path, role, role_allowed_rol
         json=data.get(path),
     )
     assert response.status_code == expected_status
-

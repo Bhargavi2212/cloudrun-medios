@@ -381,6 +381,7 @@ def test_queue_state(db_session: Session, test_consultation: Consultation) -> Qu
 @pytest.fixture(scope="function")
 def token_factory(db_session: Session):
     """Create JWTs with specific roles for role-based access tests."""
+
     def _mint_token(*, role: str) -> str:
         # Ensure role exists
         role_obj = db_session.query(Role).filter(Role.name == role, Role.is_deleted.is_(False)).first()
