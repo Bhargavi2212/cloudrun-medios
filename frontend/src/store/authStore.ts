@@ -7,7 +7,7 @@ export const ROLE_CONFIG = {
   RECEPTIONIST: {
     displayName: 'Receptionist',
     color: 'pink',
-    route: '/receptionist',
+    route: '/receptionist/dashboard',
     permissions: ['patient.checkin', 'queue.view', 'appointments.view', 'billing.process'],
     bgGradient: 'from-pink-50 via-white to-purple-50',
     badgeColor: 'bg-pink-100 text-pink-800',
@@ -15,7 +15,7 @@ export const ROLE_CONFIG = {
   NURSE: {
     displayName: 'Nurse',
     color: 'blue',
-    route: '/nurse',
+    route: '/nurse/dashboard',
     permissions: ['patient.vitals', 'triage.perform', 'queue.view', 'patient.view'],
     bgGradient: 'from-blue-50 via-white to-indigo-50',
     badgeColor: 'bg-blue-100 text-blue-800',
@@ -23,7 +23,7 @@ export const ROLE_CONFIG = {
   DOCTOR: {
     displayName: 'Doctor',
     color: 'green',
-    route: '/doctor',
+    route: '/doctor/dashboard',
     permissions: ['consultation.perform', 'notes.create', 'notes.edit', 'patient.view', 'prescriptions.create'],
     bgGradient: 'from-green-50 via-white to-emerald-50',
     badgeColor: 'bg-green-100 text-green-800',
@@ -31,7 +31,7 @@ export const ROLE_CONFIG = {
   ADMIN: {
     displayName: 'Administrator',
     color: 'purple',
-    route: '/admin',
+    route: '/admin/dashboard',
     permissions: ['*'],
     bgGradient: 'from-purple-50 via-white to-indigo-50',
     badgeColor: 'bg-purple-100 text-purple-800',
@@ -112,6 +112,19 @@ const DEMO_USERS: Record<string, { role: UserRole; first: string; last: string }
   'doctor@medios.ai': { role: 'DOCTOR', first: 'Dan', last: 'Doctor' },
   'admin@medios.ai': { role: 'ADMIN', first: 'Ada', last: 'Admin' },
 }
+
+const allowDemoLogin = (() => {
+  if (typeof window === 'undefined') {
+    return false
+  }
+
+  const hostname = window.location.hostname
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return true
+  }
+
+  return import.meta.env.VITE_ENVIRONMENT === 'demo'
+})()
 
 let refreshPromise: Promise<boolean> | null = null
 
@@ -206,7 +219,7 @@ export const useAuthStore = create<AuthState>()(
           })
 
           const fallback = DEMO_USERS[email.trim().toLowerCase()]
-          if (fallback && password === 'password') {
+          if (allowDemoLogin && fallback && password === 'Password123!') {
             const rawUser = {
               id: `demo-${fallback.role.toLowerCase()}`,
               email: email.trim().toLowerCase(),

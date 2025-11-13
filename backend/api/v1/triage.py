@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
+
+from backend.security.dependencies import require_roles
+from backend.security.permissions import UserRole
 
 from ...services.error_response import StandardResponse
 from ...services.triage_service import TriageService
@@ -28,7 +31,11 @@ class TriagePredictRequest(BaseModel):
     )
 
 
-@router.post("/predict", response_model=StandardResponse)
+@router.post(
+    "/predict",
+    response_model=StandardResponse,
+    dependencies=[Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR, UserRole.ADMIN))],
+)
 async def predict_triage(payload: TriagePredictRequest) -> StandardResponse:
     if not payload.features:
         raise HTTPException(
@@ -63,7 +70,11 @@ async def predict_triage(payload: TriagePredictRequest) -> StandardResponse:
     )
 
 
-@router.post("/explain", response_model=StandardResponse)
+@router.post(
+    "/explain",
+    response_model=StandardResponse,
+    dependencies=[Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR, UserRole.ADMIN))],
+)
 async def explain_triage_prediction(payload: TriagePredictRequest) -> StandardResponse:
     """Explain a triage prediction using SHAP values.
 
@@ -96,7 +107,11 @@ async def explain_triage_prediction(payload: TriagePredictRequest) -> StandardRe
     )
 
 
-@router.get("/metadata", response_model=StandardResponse)
+@router.get(
+    "/metadata",
+    response_model=StandardResponse,
+    dependencies=[Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR, UserRole.ADMIN))],
+)
 async def triage_metadata() -> StandardResponse:
     return StandardResponse(
         success=True,

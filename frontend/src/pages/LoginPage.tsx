@@ -149,16 +149,16 @@ export default function LoginPage() {
                 <p className="text-sm font-medium text-gray-700 mb-3">Demo Credentials</p>
                 <div className="space-y-1 text-xs text-gray-600">
                   <p>
-                    <span className="font-medium">Receptionist:</span> receptionist@medios.ai / password
+                    <span className="font-medium">Receptionist:</span> receptionist@medios.ai / Password123!
                   </p>
                   <p>
-                    <span className="font-medium">Nurse:</span> nurse@medios.ai / password
+                    <span className="font-medium">Nurse:</span> nurse@medios.ai / Password123!
                   </p>
                   <p>
-                    <span className="font-medium">Doctor:</span> doctor@medios.ai / password
+                    <span className="font-medium">Doctor:</span> doctor@medios.ai / Password123!
                   </p>
                   <p>
-                    <span className="font-medium">Admin:</span> admin@medios.ai / password
+                    <span className="font-medium">Admin:</span> admin@medios.ai / Password123!
                   </p>
                 </div>
               </div>

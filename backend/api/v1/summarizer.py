@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+
+from backend.security.dependencies import require_roles
+from backend.security.permissions import UserRole
 
 from ...services.error_response import StandardResponse
 from ...services.summarizer_service import MedicalSummarizer, PatientNotFoundError, SummarizerError
@@ -23,7 +26,11 @@ async def summarizer_health() -> StandardResponse:
     )
 
 
-@router.get("/{subject_id}", response_model=StandardResponse)
+@router.get(
+    "/{subject_id}",
+    response_model=StandardResponse,
+    dependencies=[Depends(require_roles(UserRole.DOCTOR, UserRole.ADMIN))],
+)
 async def summarise_subject(
     subject_id: int,
     visit_limit: Optional[int] = Query(None, ge=1, le=200),

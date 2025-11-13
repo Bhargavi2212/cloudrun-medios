@@ -17,6 +17,7 @@ from ..database.models import AccessToken, RefreshToken, Role, User, UserStatus
 from ..database.session import get_session
 from ..security.jwt import create_access_token, create_refresh_token
 from ..security.password import password_hasher
+from ..security.permissions import UserRole as UserRoleEnum
 from .config import get_settings
 
 settings = get_settings()
@@ -38,9 +39,11 @@ class AuthService:
         password: str,
         first_name: Optional[str],
         last_name: Optional[str],
-        role_names: List[str],
+        role_name: str,
     ) -> User:
         email_normalized = email.lower()
+        selected_role = self._normalize_role(role_name)
+        self._validate_password_strength(password)
         with self._session_factory() as session:
             existing = session.query(User).filter(User.email == email_normalized, User.is_deleted.is_(False)).first()
             if existing:
@@ -60,7 +63,7 @@ class AuthService:
                 status=UserStatus.ACTIVE,
             )
 
-            roles = self._lookup_roles(session, role_names)
+            roles = self._lookup_roles(session, [selected_role])
             user.roles = roles
             session.flush()
             session.refresh(user)
@@ -356,6 +359,39 @@ class AuthService:
                 detail=f"Unknown roles: {', '.join(missing)}",
             )
         return roles
+
+    @staticmethod
+    def _validate_password_strength(password: str) -> None:
+        if len(password) < 8:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Password must be at least 8 characters long",
+            )
+        if not any(char.isdigit() for char in password):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Password must include at least one number",
+            )
+        if not any(not char.isalnum() for char in password):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Password must include at least one special character",
+            )
+        if not any(char.isalpha() for char in password):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Password must include at least one letter",
+            )
+
+    @staticmethod
+    def _normalize_role(role_name: str) -> str:
+        try:
+            return UserRoleEnum(role_name.upper()).value
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid role selected",
+            ) from exc
 
     @staticmethod
     def _hash_token(token: str) -> str:

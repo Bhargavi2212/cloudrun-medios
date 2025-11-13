@@ -146,3 +146,12 @@ Enable debug logging by setting `localStorage.debug = 'medios:*'` in browser con
 ## License
 
 This project is part of the MediOS healthcare system.
+
+## ✅ Demo Credentials
+| Role | Email | Password | Highlights |
+| --- | --- | --- | --- |
+| Receptionist | `receptionist@medios.ai` | `Password123!` | Patient registration, queue management |
+| Nurse | `nurse@medios.ai` | `Password123!` | Vitals capture, AI triage, document upload |
+| Doctor | `doctor@medios.ai` | `Password123!` | Consultation workspace, AI Scribe, note approval |
+| Admin | `admin@medios.ai` | `Password123!` | User management, analytics, configuration |
+## 🛠️ Local setup

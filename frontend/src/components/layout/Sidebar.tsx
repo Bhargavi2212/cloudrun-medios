@@ -17,23 +17,20 @@ export const Sidebar: React.FC = () => {
     switch (role) {
       case 'RECEPTIONIST':
         return [
-          { icon: Users, label: 'Main Queue', href: '/receptionist' },
+          { icon: Users, label: 'Dashboard', href: '/receptionist/dashboard' },
           { icon: UserCheck, label: 'Check-In', href: '/check-in' },
         ]
       case 'NURSE':
         return [
-          { icon: Activity, label: 'Triage', href: '/nurse' },
-          { icon: Users, label: 'Patient Queue', href: '/nurse/queue' },
+          { icon: Activity, label: 'Dashboard', href: '/nurse/dashboard' },
         ]
       case 'DOCTOR':
         return [
-          { icon: UserCheck, label: 'Consultations', href: '/doctor' },
-          { icon: Users, label: 'Patient List', href: '/doctor/patients' },
+          { icon: UserCheck, label: 'Workspace', href: '/doctor/dashboard' },
         ]
       case 'ADMIN':
         return [
-          { icon: Users, label: 'Dashboard', href: '/admin' },
-          { icon: Settings, label: 'System Settings', href: '/admin/settings' },
+          { icon: Users, label: 'Dashboard', href: '/admin/dashboard' },
         ]
       default:
         return []

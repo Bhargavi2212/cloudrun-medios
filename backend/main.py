@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.api import api_router
 from backend.api.error_handlers import register_exception_handlers
+from backend.database.init import initialize_demo_data
 from backend.services.config import get_settings
 from backend.services.error_response import StandardResponse
 from backend.services.logging import configure_logging, get_logger
@@ -24,7 +25,8 @@ async def lifespan(app: FastAPI):
     """Initialize models in background, don't block startup."""
     logger.info("Starting MediOS AI Scribe - models will initialize in background")
 
-    # Start model initialization in background (don't await it)
+    # Start initialization tasks in background (don't await them)
+    asyncio.create_task(initialize_database_background())
     asyncio.create_task(initialize_models_background())
 
     yield
@@ -42,6 +44,16 @@ async def initialize_models_background():
             logger.info("Model initialization completed successfully")
     except Exception as e:
         logger.error(f"Unexpected error during model initialization: {e}")
+
+
+async def initialize_database_background():
+    """Seed roles and demo users without blocking startup."""
+    try:
+        logger.info("Starting background database initialization...")
+        await asyncio.to_thread(initialize_demo_data)
+        logger.info("Database initialization complete")
+    except Exception as exc:
+        logger.error("Unexpected error during database initialization: %s", exc)
 
 
 app = FastAPI(title="MediOS AI Scribe", version="2.0.0", lifespan=lifespan)

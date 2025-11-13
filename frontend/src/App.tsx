@@ -49,8 +49,9 @@ function App() {
             }
           />
 
+          <Route path="/receptionist" element={<Navigate to="/receptionist/dashboard" replace />} />
           <Route
-            path="/receptionist"
+            path="/receptionist/dashboard"
             element={
               <ProtectedRoute allowedRoles={['RECEPTIONIST']}>
                 <AppLayout>
@@ -59,7 +60,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          
+
           <Route
             path="/check-in"
             element={
@@ -71,8 +72,9 @@ function App() {
             }
           />
           
+          <Route path="/nurse" element={<Navigate to="/nurse/dashboard" replace />} />
           <Route
-            path="/nurse"
+            path="/nurse/dashboard"
             element={
               <ProtectedRoute allowedRoles={['NURSE']}>
                 <AppLayout>
@@ -81,9 +83,10 @@ function App() {
               </ProtectedRoute>
             }
           />
-          
+
+          <Route path="/doctor" element={<Navigate to="/doctor/dashboard" replace />} />
           <Route
-            path="/doctor"
+            path="/doctor/dashboard"
             element={
               <ProtectedRoute allowedRoles={['DOCTOR']}>
                 <AppLayout>
@@ -92,9 +95,10 @@ function App() {
               </ProtectedRoute>
             }
           />
-          
+
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
           <Route
-            path="/admin"
+            path="/admin/dashboard"
             element={
               <ProtectedRoute allowedRoles={['ADMIN']}>
                 <AppLayout>

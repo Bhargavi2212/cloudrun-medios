@@ -113,9 +113,9 @@ const unwrap = <T>(response: AxiosResponse<StandardResponse<T>>): T => {
 interface RegisterPayload {
   email: string
   password: string
-  first_name?: string
-  last_name?: string
-  roles: string[]
+  first_name: string
+  last_name: string
+  role: string
 }
 
 export const authAPI = {

@@ -73,6 +73,7 @@ from typing import Generator
 from uuid import uuid4
 
 import pytest
+import jwt
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -150,13 +151,17 @@ from backend.database.models import (
     ConsultationStatus,
     Note,
     NoteVersion,
+    Role,
+    User,
     Patient,
     QueueStage,
     QueueState,
-    User,
 )
 from backend.main import app  # noqa: E402
 from backend.security.password import password_hasher
+from backend.services.config import get_settings
+
+settings = get_settings()
 
 
 @pytest.fixture(scope="function")
@@ -371,6 +376,54 @@ def test_queue_state(db_session: Session, test_consultation: Consultation) -> Qu
     db_session.commit()
     db_session.refresh(queue_state)
     return queue_state
+
+
+@pytest.fixture(scope="function")
+def token_factory(db_session: Session):
+    """Create JWTs with specific roles for role-based access tests."""
+    def _mint_token(*, role: str) -> str:
+        # Ensure role exists
+        role_obj = db_session.query(Role).filter(Role.name == role, Role.is_deleted.is_(False)).first()
+        if role_obj is None:
+            role_obj = Role(
+                id=str(uuid4()),
+                name=role,
+                description=f"{role.title()} role",
+                is_deleted=False,
+            )
+            db_session.add(role_obj)
+            db_session.flush()
+
+        # Create user bound to role
+        user = User(
+            id=str(uuid4()),
+            email=f"{role.lower()}-{uuid4().hex[:8]}@example.com",
+            password_hash=password_hasher.hash("Password123!"),
+            first_name=role.title(),
+            last_name="Tester",
+            status="ACTIVE",
+            is_deleted=False,
+        )
+        db_session.add(user)
+        db_session.flush()
+
+        user_role = models.UserRole(user_id=user.id, role_id=role_obj.id)
+        db_session.add(user_role)
+        db_session.commit()
+
+        payload = {
+            "sub": str(user.id),
+            "type": "access",
+            "roles": [role],
+        }
+        token = jwt.encode(
+            payload,
+            settings.jwt_access_secret,
+            algorithm=settings.jwt_algorithm,
+        )
+        return token
+
+    return _mint_token
 
 
 @pytest.fixture

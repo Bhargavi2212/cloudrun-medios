@@ -15,7 +15,11 @@ from backend.services.error_response import StandardResponse
 router = APIRouter(prefix="/patients", tags=["patients"])
 
 
-@router.get("", response_model=StandardResponse)
+@router.get(
+    "",
+    response_model=StandardResponse,
+    dependencies=[Depends(require_roles(UserRole.RECEPTIONIST, UserRole.NURSE, UserRole.DOCTOR, UserRole.ADMIN))],
+)
 def list_patients(
     *,
     page: int = Query(default=1, ge=1),
@@ -36,7 +40,11 @@ def list_patients(
     )
 
 
-@router.get("/search", response_model=StandardResponse)
+@router.get(
+    "/search",
+    response_model=StandardResponse,
+    dependencies=[Depends(require_roles(UserRole.RECEPTIONIST, UserRole.NURSE, UserRole.DOCTOR, UserRole.ADMIN))],
+)
 def search_patients(
     *,
     q: str = Query(..., min_length=2, description="Search string for patient name or MRN."),

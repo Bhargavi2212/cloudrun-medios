@@ -43,7 +43,11 @@ class QueueWaitUpdateRequest(BaseModel):
     estimated_wait_seconds: int = Field(..., ge=0)
 
 
-@router.get("/", response_model=StandardResponse)
+@router.get(
+    "/",
+    response_model=StandardResponse,
+    dependencies=[Depends(require_roles(UserRole.RECEPTIONIST, UserRole.NURSE, UserRole.DOCTOR, UserRole.ADMIN))],
+)
 async def list_queue(
     stage: Optional[QueueStage] = Query(default=None),
 ) -> StandardResponse:
@@ -61,7 +65,7 @@ async def list_queue(
 @router.post(
     "/",
     response_model=StandardResponse,
-    dependencies=[Depends(require_roles([UserRole.RECEPTIONIST, UserRole.NURSE]))],
+    dependencies=[Depends(require_roles(UserRole.RECEPTIONIST, UserRole.NURSE, UserRole.ADMIN))],
     status_code=status.HTTP_201_CREATED,
 )
 async def enqueue_patient(payload: QueueCreateRequest) -> StandardResponse:
@@ -86,7 +90,7 @@ async def enqueue_patient(payload: QueueCreateRequest) -> StandardResponse:
 @router.post(
     "/{queue_state_id}/advance",
     response_model=StandardResponse,
-    dependencies=[Depends(require_roles([UserRole.NURSE, UserRole.DOCTOR]))],
+    dependencies=[Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR, UserRole.ADMIN))],
 )
 async def advance_queue_state(
     queue_state_id: str,
@@ -111,7 +115,7 @@ async def advance_queue_state(
 @router.post(
     "/{queue_state_id}/assign",
     response_model=StandardResponse,
-    dependencies=[Depends(require_roles([UserRole.NURSE, UserRole.DOCTOR, UserRole.RECEPTIONIST]))],
+    dependencies=[Depends(require_roles(UserRole.NURSE, UserRole.ADMIN))],
 )
 async def assign_queue_state(
     queue_state_id: str,
@@ -128,7 +132,7 @@ async def assign_queue_state(
 @router.post(
     "/{queue_state_id}/wait",
     response_model=StandardResponse,
-    dependencies=[Depends(require_roles([UserRole.RECEPTIONIST, UserRole.NURSE]))],
+    dependencies=[Depends(require_roles(UserRole.RECEPTIONIST, UserRole.NURSE, UserRole.ADMIN))],
 )
 async def update_wait_time(
     queue_state_id: str,
@@ -167,7 +171,10 @@ async def queue_ws(websocket: WebSocket):
         await queue_service.notifier.unregister_websocket(websocket)
 
 
-@router.get("/stream")
+@router.get(
+    "/stream",
+    dependencies=[Depends(require_roles(UserRole.RECEPTIONIST, UserRole.NURSE, UserRole.DOCTOR, UserRole.ADMIN))],
+)
 async def queue_stream(
     stage: Optional[QueueStage] = Query(default=None),
 ) -> StreamingResponse:

@@ -12,6 +12,19 @@ pip install -r requirements.txt
 uvicorn backend.main:app --reload
 ```
 
+## Demo Credentials
+
+Cloud Run deployments seed four accounts automatically so reviewers can exercise every workflow without additional setup:
+
+| Role | Email | Password | Highlights |
+| --- | --- | --- | --- |
+| Receptionist | `receptionist@medios.ai` | `Password123!` | Patient registration, queue management |
+| Nurse | `nurse@medios.ai` | `Password123!` | Vitals capture, AI triage, document upload |
+| Doctor | `doctor@medios.ai` | `Password123!` | Consultation workspace, AI Scribe, note approval |
+| Admin | `admin@medios.ai` | `Password123!` | User management, analytics, system configuration |
+
+Use these for quick demos, or register a new account via the public `/auth/register` endpoint selecting the appropriate role.
+
 ## Environment Variables
 
 | Key                | Description                                           | Default              |

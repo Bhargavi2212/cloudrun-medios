@@ -64,7 +64,11 @@ document_processing_service = DocumentProcessingService(storage_service=storage_
     response_model=StandardResponse,
     status_code=status.HTTP_201_CREATED,
 )
-def check_in_patient(request: CheckInRequest, session: Session = Depends(get_db_session)) -> StandardResponse:
+def check_in_patient(
+    request: CheckInRequest,
+    session: Session = Depends(get_db_session),
+    _: User = Depends(require_roles(UserRole.RECEPTIONIST, UserRole.NURSE, UserRole.ADMIN)),
+) -> StandardResponse:
     """Check a patient into the queue and compute an initial triage estimate."""
     patient = (
         session.query(Patient)
@@ -150,6 +154,7 @@ def submit_vitals(
     consultation_id: str,
     vitals: VitalsPayload,
     session: Session = Depends(get_db_session),
+    _: User = Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR, UserRole.ADMIN)),
 ) -> TriageResult:
     """Submit vitals for a consultation and update triage/queue priority."""
     consultation = (
@@ -247,7 +252,7 @@ async def upload_consultation_records(
     files: List[UploadFile] = File(...),
     notes: Optional[str] = Form(None),
     session: Session = Depends(get_db_session),
-    current_user: User = Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR)),
+    current_user: User = Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR, UserRole.ADMIN)),
 ) -> StandardResponse:
     if not files:
         raise HTTPException(status_code=400, detail="At least one file must be provided.")
@@ -295,7 +300,7 @@ async def upload_consultation_records(
 def list_consultation_records(
     consultation_id: str,
     session: Session = Depends(get_db_session),
-    _: User = Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR)),
+    _: User = Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR, UserRole.ADMIN)),
 ) -> StandardResponse:
     consultation = crud.get_consultation(session, consultation_id)
     if consultation is None:
@@ -311,7 +316,7 @@ def download_consultation_record(
     file_id: str,
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_db_session),
-    _: User = Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR)),
+    _: User = Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR, UserRole.ADMIN)),
 ):
     record = crud.get_file_asset(session, file_id)
     if record is None or record.owner_type != "consultation":
@@ -338,7 +343,7 @@ def download_consultation_record(
 def get_consultation_record_status(
     file_id: str,
     session: Session = Depends(get_db_session),
-    _: User = Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR, UserRole.RECEPTIONIST)),
+    _: User = Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR, UserRole.RECEPTIONIST, UserRole.ADMIN)),
 ) -> StandardResponse:
     record = crud.get_file_asset(session, file_id)
     if record is None or record.owner_type != "consultation":
@@ -372,7 +377,7 @@ def review_consultation_record(
     file_id: str,
     payload: DocumentReviewRequest,
     session: Session = Depends(get_db_session),
-    current_user: User = Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR)),
+    current_user: User = Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR, UserRole.ADMIN)),
 ) -> StandardResponse:
     record = crud.get_file_asset(session, file_id)
     if record is None or record.owner_type != "consultation":
@@ -476,7 +481,7 @@ def review_consultation_record(
 @router.get("/consultations/{consultation_id}/records/stream")
 async def stream_consultation_document_updates(
     consultation_id: str,
-    _: User = Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR)),
+    _: User = Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR, UserRole.ADMIN)),
 ) -> StreamingResponse:
     channel = f"documents:consultation:{consultation_id}"
     queue = await notification_service.subscribe(channel)
@@ -502,7 +507,7 @@ async def get_patient_timeline_summary(
     patient_id: str,
     force_refresh: bool = False,
     visit_limit: Optional[int] = None,
-    _: User = Depends(require_roles(UserRole.DOCTOR, UserRole.NURSE)),
+    _: User = Depends(require_roles(UserRole.DOCTOR, UserRole.NURSE, UserRole.ADMIN)),
 ) -> StandardResponse:
     try:
         result = await timeline_summary_service.generate_patient_summary(

@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr, Field
 
+from backend.security.permissions import UserRole
 from backend.services.auth_service import AuthService
 from backend.services.error_response import StandardResponse
 
@@ -55,9 +56,9 @@ auth_service = AuthService()
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8)
-    first_name: str | None = None
-    last_name: str | None = None
-    roles: List[str]
+    first_name: str = Field(min_length=1)
+    last_name: str = Field(min_length=1)
+    role: UserRole
 
 
 class LoginRequest(BaseModel):
@@ -112,7 +113,7 @@ def register(request: RegisterRequest) -> StandardResponse:
         password=request.password,
         first_name=request.first_name,
         last_name=request.last_name,
-        role_names=request.roles,
+        role_name=request.role.value,
     )
     return StandardResponse(success=True, data=_build_user_response(user))
 
