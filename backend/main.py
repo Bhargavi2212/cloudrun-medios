@@ -18,6 +18,10 @@ from backend.services.model_manager import initialize_models
 settings = get_settings()
 configure_logging(settings.app_env)
 logger = get_logger(__name__)
+allowed_origins = settings.cors_allow_origins or [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
 
 
 @asynccontextmanager
@@ -62,7 +66,7 @@ app.add_middleware(RequestIDMiddleware)
 app.add_middleware(AccessLogMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_methods=["*"],
     allow_headers=["*"],
     allow_credentials=True,

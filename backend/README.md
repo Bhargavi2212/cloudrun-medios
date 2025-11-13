@@ -23,7 +23,9 @@ Cloud Run deployments seed four accounts automatically so reviewers can exercise
 | Doctor | `doctor@medios.ai` | `Password123!` | Consultation workspace, AI Scribe, note approval |
 | Admin | `admin@medios.ai` | `Password123!` | User management, analytics, system configuration |
 
-Use these for quick demos, or register a new account via the public `/auth/register` endpoint selecting the appropriate role.
+Use these for quick demos, or register a fresh account with a chosen role from the public sign-up flow. Admins can deactivate or change credentials at any time.
+
+> **Deploying to Cloud Run?** Set the `CORS_ALLOW_ORIGINS` environment variable (comma-separated) to include your deployed frontend URL, e.g. `https://medios-frontend-568191718113.us-central1.run.app`.
 
 ## Environment Variables
 
@@ -37,6 +39,7 @@ Use these for quick demos, or register a new account via the public `/auth/regis
 | `GEMINI_MODEL`     | Gemini model id                                       | `models/gemini-1.5-pro` |
 | `GEMINI_TEMPERATURE` | Sampling temperature                                | `0.2`                |
 | `GEMINI_MAX_TOKENS` | Maximum output tokens                                | `1000`               |
+| `CORS_ALLOW_ORIGINS` | Comma-separated list of allowed frontend origins      | `http://localhost:3000,http://127.0.0.1:3000` |
 
 ## API Overview
 

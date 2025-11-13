@@ -57,6 +57,14 @@ except ImportError:
 
 BOOL_TRUE = {"1", "true", "on", "yes"}
 
+
+def _default_cors_origins() -> list[str]:
+    return [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -141,6 +149,11 @@ class ScribeSettings(BaseSettings):
     feature_flags_raw: Optional[str] = Field(default=None, alias="FEATURE_FLAGS")
     feature_flags: Dict[str, bool] = Field(default_factory=dict, exclude=True)
 
+    cors_allow_origins: list[str] = Field(
+        default_factory=_default_cors_origins,
+        alias="CORS_ALLOW_ORIGINS",
+    )
+
     triage_model_dir: Path = Field(
         default=Path("medi-os/services/manage-agent/models"),
         alias="TRIAGE_MODEL_DIR",
@@ -179,6 +192,23 @@ class ScribeSettings(BaseSettings):
     @classmethod
     def _coerce_bool_fields(cls, value):
         return cls._coerce_bool(value)
+
+    @field_validator("cors_allow_origins", mode="before")
+    @classmethod
+    def _parse_cors_origins(cls, value):
+        if value is None:
+            return None
+        if isinstance(value, list):
+            return value
+        if isinstance(value, str):
+            try:
+                parsed = json.loads(value)
+                if isinstance(parsed, list):
+                    return parsed
+            except json.JSONDecodeError:
+                pass
+            return [origin.strip() for origin in value.split(",") if origin.strip()]
+        return value
 
     @field_validator("model_size", mode="before")
     @classmethod
