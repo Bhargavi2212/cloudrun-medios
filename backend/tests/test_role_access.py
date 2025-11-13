@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import pytest
-
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from uuid import uuid4
+
+import pytest
 
 from backend.security.permissions import UserRole
 

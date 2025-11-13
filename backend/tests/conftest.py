@@ -72,8 +72,8 @@ from datetime import datetime, timezone
 from typing import Generator
 from uuid import uuid4
 
-import pytest
 import jwt
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -151,11 +151,11 @@ from backend.database.models import (
     ConsultationStatus,
     Note,
     NoteVersion,
-    Role,
-    User,
     Patient,
     QueueStage,
     QueueState,
+    Role,
+    User,
 )
 from backend.main import app  # noqa: E402
 from backend.security.password import password_hasher
