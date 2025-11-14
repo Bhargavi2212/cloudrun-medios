@@ -3,7 +3,8 @@ FROM python:3.10-slim AS base
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app \
-    MODEL_SIZE=base
+    MODEL_SIZE=base \
+    WHISPER_CACHE_DIR=/root/.cache/whisper
 
 WORKDIR /app
 
@@ -13,7 +14,8 @@ COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Preload Whisper weights so first request on Cloud Run is fast.
-RUN python -c "import os, whisper; whisper.load_model(os.environ.get('MODEL_SIZE', 'base'))"
+RUN mkdir -p ${WHISPER_CACHE_DIR} \
+    && python -c "import os, whisper; whisper.load_model(os.environ.get('MODEL_SIZE', 'base'), download_root=os.environ.get('WHISPER_CACHE_DIR', '/root/.cache/whisper'))"
 
 # Copy the entire backend directory structure
 COPY . /app/backend
