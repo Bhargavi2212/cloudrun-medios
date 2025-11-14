@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 410 404">
+  <defs>
+    <linearGradient x1="3.863%" y1="2.25%" x2="96.138%" y2="97.75%" id="vite-a">
+      <stop stop-color="#41D1FF" offset="0%"/>
+      <stop stop-color="#BD34FE" offset="100%"/>
+    </linearGradient>
+    <linearGradient x1="35.98%" y1="16.05%" x2="63.94%" y2="84.11%" id="vite-b">
+      <stop stop-color="#FFEA83" offset="0%"/>
+      <stop stop-color="#FFDD35" offset="8.333%"/>
+      <stop stop-color="#FFA800" offset="100%"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" fill-rule="evenodd">
+    <path
+      d="M399.641 59.525 215.76 388.43c-3.782 6.722-13.517 6.749-17.342.049L10.357 59.526c-4.048-7.18 1.612-15.95 9.71-14.551l175.04 31.174a10 10 0 0 0 3.497-.006l191.29-31.176c8.082-1.318 13.698 7.419 9.68 14.601Z"
+      fill="url(#vite-a)"
+      transform="translate(3)"
+    />
+    <path
+      d="M292.698.924 156.745 27.501a6 6 0 0 0-4.89 6.82l23.895 199.528a4 4 0 0 0 7.523 1.4l28.34-52.79c1.833-3.417 6.89-2.644 7.74 1.138l15.904 70.87c.89 3.966 6.436 4.36 8.053.533L318.54 6.48c1.523-3.576-1.44-7.47-5.841-6.556Z"
+      fill="url(#vite-b)"
+      transform="translate(3)"
+    />
+  </g>
+</svg>
+

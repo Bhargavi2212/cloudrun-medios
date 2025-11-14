@@ -153,6 +153,10 @@ class ScribeSettings(BaseSettings):
         default_factory=_default_cors_origins,
         alias="CORS_ALLOW_ORIGINS",
     )
+    cors_allow_origin_regex: Optional[str] = Field(
+        default=None,
+        alias="CORS_ALLOW_ORIGIN_REGEX",
+    )
 
     triage_model_dir: Path = Field(
         default=Path("medi-os/services/manage-agent/models"),
