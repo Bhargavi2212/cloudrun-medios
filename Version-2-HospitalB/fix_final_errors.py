@@ -20,10 +20,8 @@ if len(lines) > 1259:
     )
     # Split if still too long
     if len(line.rstrip()) > 88:
-        lines[
-            1259
-        ] = (
-            '        DISTRIBUTION_PLOTS_DIR / '
+        lines[1259] = (
+            "        DISTRIBUTION_PLOTS_DIR / "
             '"continuous_features_distributions.png",\n'
         )
     else:

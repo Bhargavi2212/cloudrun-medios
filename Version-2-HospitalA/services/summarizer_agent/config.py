@@ -37,8 +37,7 @@ class SummarizerAgentSettings(DatabaseSettings):
         default="./storage",
         alias="SUMMARIZER_AGENT_STORAGE_ROOT",
         description=(
-            "Root directory for stored files "
-            "(must match manage-agent storage)."
+            "Root directory for stored files " "(must match manage-agent storage)."
         ),
     )
 

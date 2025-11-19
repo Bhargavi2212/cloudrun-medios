@@ -855,9 +855,7 @@ def main():
 
         # Save test metrics
         test_metrics_file = (
-            OUTPUT_DIR
-            / "metrics"
-            / f"test_metrics_"
+            OUTPUT_DIR / "metrics" / f"test_metrics_"
             f"{best_model_name.lower().replace(' ', '_')}_{feature_set}.csv"
         )
         pd.DataFrame([test_metrics]).to_csv(test_metrics_file, index=False)

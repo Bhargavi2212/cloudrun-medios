@@ -30,13 +30,13 @@ async def main():
     # Get from environment or prompt user
     db_user = os.getenv("DB_USER", "postgres")
     db_password = os.getenv("DB_PASSWORD", "")
-    
+
     if not db_password:
         print("[WARNING] DB_PASSWORD not set. Please set it as environment variable.")
         print("Example: $env:DB_PASSWORD='your_password' (PowerShell)")
         print("Example: export DB_PASSWORD='your_password' (Bash)")
         return
-    
+
     combinations = [
         (db_user, db_password),
         ("postgres", db_password),

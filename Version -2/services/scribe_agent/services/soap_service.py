@@ -66,8 +66,8 @@ class SoapService:
 
                 logger = logging.getLogger(__name__)
 
-    # Try to trigger summary update (non-blocking, don't fail if summarizer
-    # is unavailable)
+                # Try to trigger summary update (non-blocking, don't fail if summarizer
+                # is unavailable)
                 try:
                     # Get all encounter IDs for this patient
                     from sqlalchemy import select

@@ -117,8 +117,7 @@ async def seed_demo_data(session: AsyncSession) -> None:
                             "minimal chest pain."
                         ),
                         "objective": (
-                            "RR 19, O2 sat 97% on room air, "
-                            "mild expiratory wheeze."
+                            "RR 19, O2 sat 97% on room air, " "mild expiratory wheeze."
                         ),
                         "assessment": (
                             "Exercise-induced bronchospasm with viral "
@@ -191,8 +190,7 @@ async def seed_demo_data(session: AsyncSession) -> None:
                             "no audible wheeze."
                         ),
                         "assessment": (
-                            "Asthma control improving; continue current "
-                            "regimen."
+                            "Asthma control improving; continue current " "regimen."
                         ),
                         "plan": (
                             "Maintain preventive inhaler use, schedule "
@@ -300,8 +298,7 @@ async def seed_demo_data(session: AsyncSession) -> None:
                             {
                                 "speaker": "scribe",
                                 "content": (
-                                    "Documenting orders for labs and "
-                                    "chest X-ray."
+                                    "Documenting orders for labs and " "chest X-ray."
                                 ),
                             },
                         ],
@@ -313,12 +310,10 @@ async def seed_demo_data(session: AsyncSession) -> None:
                             "cough with rust-colored sputum."
                         ),
                         "objective": (
-                            "Crackles in right lower lobe, WBC 14.2K, "
-                            "lactate 2.4."
+                            "Crackles in right lower lobe, WBC 14.2K, " "lactate 2.4."
                         ),
                         "assessment": (
-                            "Severe community-acquired pneumonia; "
-                            "rule out sepsis."
+                            "Severe community-acquired pneumonia; " "rule out sepsis."
                         ),
                         "plan": (
                             "Initiate broad-spectrum antibiotics, admit for "
@@ -611,9 +606,7 @@ async def seed_demo_data(session: AsyncSession) -> None:
             encounter = Encounter(
                 id=uuid4(),
                 patient_id=patient.id,
-                arrival_ts=now - timedelta(
-                    hours=encounter_payload["hours_ago"]
-                ),
+                arrival_ts=now - timedelta(hours=encounter_payload["hours_ago"]),
                 disposition=encounter_payload["disposition"],
                 location=encounter_payload["location"],
                 acuity_level=encounter_payload["acuity_level"],
@@ -630,9 +623,7 @@ async def seed_demo_data(session: AsyncSession) -> None:
                     chief_complaint=triage_payload.get("chief_complaint"),
                     notes=triage_payload.get("notes"),
                     triage_score=triage_payload.get("triage_score"),
-                    triage_model_version=triage_payload.get(
-                        "triage_model_version"
-                    ),
+                    triage_model_version=triage_payload.get("triage_model_version"),
                 )
                 persisted_models.append(triage)
 
@@ -642,9 +633,7 @@ async def seed_demo_data(session: AsyncSession) -> None:
                     id=uuid4(),
                     encounter_id=encounter.id,
                     transcript=transcript_payload["transcript"],
-                    speaker_segments=transcript_payload.get(
-                        "speaker_segments"
-                    ),
+                    speaker_segments=transcript_payload.get("speaker_segments"),
                     source=transcript_payload.get("source"),
                 )
                 persisted_models.append(transcript)

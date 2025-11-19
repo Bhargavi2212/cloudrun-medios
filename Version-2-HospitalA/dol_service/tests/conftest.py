@@ -33,9 +33,9 @@ from database.session import dispose_engine, init_engine  # noqa: E402
 from dol_service.config import DOLSettings  # noqa: E402
 from dol_service.main import create_app  # noqa: E402
 
-TEST_DATABASE_URL = (
-    os.environ.get("TEST_DATABASE_URL")
-    or os.getenv("TEST_DATABASE_URL", "postgresql+asyncpg://postgres:test_password@localhost:5432/medi_os_v2_a_test")
+TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL") or os.getenv(
+    "TEST_DATABASE_URL",
+    "postgresql+asyncpg://postgres:test_password@localhost:5432/medi_os_v2_a_test",
 )
 os.environ["TEST_DATABASE_URL"] = TEST_DATABASE_URL
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL

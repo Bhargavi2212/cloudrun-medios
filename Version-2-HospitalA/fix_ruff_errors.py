@@ -22,4 +22,3 @@ with open("scripts/preprocess_nhamcs_data.py", "w", encoding="utf-8") as f:
     f.writelines(lines)
 
 print("Fixed all ruff errors!")
-

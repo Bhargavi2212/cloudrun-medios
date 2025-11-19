@@ -752,9 +752,7 @@ def main():
 
                 # Save parameters used
                 params_file = (
-                    OUTPUT_DIR
-                    / "parameters"
-                    / f"used_params_"
+                    OUTPUT_DIR / "parameters" / f"used_params_"
                     f"{model_name.lower().replace(' ', '_')}_{feature_set}.json"
                 )
                 with open(params_file, "w") as f:
@@ -787,9 +785,7 @@ def main():
                 # Save metrics
                 for dataset_name, metrics in eval_results.items():
                     metrics_file = (
-                        OUTPUT_DIR
-                        / "metrics"
-                        / f"{dataset_name}_metrics_"
+                        OUTPUT_DIR / "metrics" / f"{dataset_name}_metrics_"
                         f"{model_name.lower().replace(' ', '_')}_{feature_set}.csv"
                     )
                     pd.DataFrame([metrics]).to_csv(metrics_file, index=False)

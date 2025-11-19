@@ -137,7 +137,7 @@ class SummarizerEngine:
                 flush=True,
             )
 
-  #  Generate narrative summary text using Gemini (optional, for backward compatibility)
+            #  Generate narrative summary text using Gemini (optional, for backward compatibility)
             summary_text = ""
             if self._enabled and self._model is not None:
                 logger.info("[SUMMARIZE] Calling Gemini for narrative summary...")

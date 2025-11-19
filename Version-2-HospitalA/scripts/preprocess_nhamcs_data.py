@@ -1255,8 +1255,7 @@ def plot_feature_distributions(
 
     plt.tight_layout()
     plt.savefig(
-        DISTRIBUTION_PLOTS_DIR
-        / "continuous_features_distributions.png",
+        DISTRIBUTION_PLOTS_DIR / "continuous_features_distributions.png",
         dpi=300,
         bbox_inches="tight",
     )

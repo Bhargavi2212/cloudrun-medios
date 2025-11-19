@@ -343,7 +343,7 @@ Now generate the complete SOAP note:"""
         # Clean up sections - remove extra whitespace but preserve structure
         for key in sections:
             if sections[key]:
-  #  Remove leading/trailing whitespace from each line, but keep line breaks
+                #  Remove leading/trailing whitespace from each line, but keep line breaks
                 lines = [line.strip() for line in sections[key].split("\n")]
                 sections[key] = "\n".join(lines).strip()
 
