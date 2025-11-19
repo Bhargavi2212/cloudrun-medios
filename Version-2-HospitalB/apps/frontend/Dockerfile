@@ -36,8 +36,8 @@ RUN npm run build
 # Stage 2: Production server
 FROM nginx:alpine AS production
 
-# Copy custom nginx configuration (if exists, otherwise use default)
-COPY nginx.conf /etc/nginx/conf.d/default.conf 2>/dev/null || echo "server { listen 8080; root /usr/share/nginx/html; index index.html; location / { try_files \$uri \$uri/ /index.html; } }" > /etc/nginx/conf.d/default.conf
+# Copy custom nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
