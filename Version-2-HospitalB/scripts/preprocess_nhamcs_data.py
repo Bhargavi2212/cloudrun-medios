@@ -142,7 +142,8 @@ def drop_columns(df: pd.DataFrame) -> pd.DataFrame:
     df_cleaned = df.drop(columns=[col for col in columns_to_drop if col in df.columns])
 
     logger.info(
-        f"After dropping: {df_cleaned.shape[0]:,} rows x {df_cleaned.shape[1]} columns"
+        f"After dropping: {df_cleaned.shape[0]:,} rows x "
+        f"{df_cleaned.shape[1]} columns"
     )
     logger.info(f"Remaining columns: {list(df_cleaned.columns)}")
 
@@ -166,7 +167,9 @@ def separate_features_target(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]
 
     # Extract features
     X = df.drop(columns=["esi_level"]).copy()
-    logger.info(f"Features (X) extracted: {X.shape[0]:,} rows x {X.shape[1]} columns")
+    logger.info(
+        f"Features (X) extracted: {X.shape[0]:,} rows x {X.shape[1]} columns"
+    )
 
     # Print ESI class distribution
     logger.info("\nESI Class Distribution:")
@@ -445,7 +448,6 @@ def cap_outliers(
         logger.info(
             f"  After capping - min: {X_train[feature].min():.2f}, "
             f"max: {X_train[feature].max():.2f}"
-            f"max: {X_train[feature].max():.2f}"
         )
 
     # Save capping report
@@ -568,7 +570,9 @@ def apply_yeo_johnson(
         for feature in features_to_transform:
             before = skewness_before.get(feature, "N/A")
             after = skewness_after.get(f"{feature}_yj", "N/A")
-            if isinstance(before, int | float) and isinstance(after, int | float):
+            if isinstance(before, int | float) and isinstance(
+                after, int | float
+            ):
                 improvement = abs((before - abs(after)) / before * 100)
                 f.write(f"{feature}:\n")
                 f.write(f"  Before: {before:.3f}\n")
@@ -877,13 +881,16 @@ def assemble_final_features(
     # Verify
     logger.info("\nVerifying final datasets:")
     logger.info(
-        f"  X_train_final: {X_train_final.shape[0]:,} rows x {X_train_final.shape[1]} columns"  # noqa: E501
+        f"  X_train_final: {X_train_final.shape[0]:,} rows x "
+        f"{X_train_final.shape[1]} columns"
     )
     logger.info(
-        f"  X_val_final: {X_val_final.shape[0]:,} rows x {X_val_final.shape[1]} columns"
+        f"  X_val_final: {X_val_final.shape[0]:,} rows x "
+        f"{X_val_final.shape[1]} columns"
     )
     logger.info(
-        f"  X_test_final: {X_test_final.shape[0]:,} rows x {X_test_final.shape[1]} columns"  # noqa: E501
+        f"  X_test_final: {X_test_final.shape[0]:,} rows x "
+        f"{X_test_final.shape[1]} columns"
     )
 
     if (
@@ -1096,7 +1103,7 @@ def detect_data_leakage(
 
     # Save report
     with open(OUTPUT_DIR / "data_leakage_check.txt", "w") as f:
-        f.write("DATA LEAKAGE CHECK REPORT")
+        f.write("DATA LEAKAGE CHECK REPORT\n")
         f.write("=" * 80 + "\n\n")
         f.write(f"Total rows: {total_rows:,} (expected: {expected_rows:,})\n")
         if total_rows == expected_rows:
@@ -1250,14 +1257,16 @@ def plot_feature_distributions(
 
     plt.tight_layout()
     plt.savefig(
-        DISTRIBUTION_PLOTS_DIR / "continuous_features_distributions.png",
+        DISTRIBUTION_PLOTS_DIR
+        / "continuous_features_distributions.png",
         dpi=300,
         bbox_inches="tight",
     )
     plt.close()
 
     logger.info(
-        DISTRIBUTION_PLOTS_DIR / "continuous_features_distributions.png",
+        f"  [OK] Saved: "
+        f"{DISTRIBUTION_PLOTS_DIR / 'continuous_features_distributions.png'}"
     )
 
     # Binary features statistics
@@ -1290,7 +1299,8 @@ def plot_feature_distributions(
             }
         )
         logger.info(
-            f"  {feature}: Train={train_pct:.1f}%, Val={val_pct:.1f}%, Test={test_pct:.1f}%"  # noqa: E501
+            f"  {feature}: Train={train_pct:.1f}%, Val={val_pct:.1f}%, "
+            f"Test={test_pct:.1f}%"
         )
 
     # Save binary stats
