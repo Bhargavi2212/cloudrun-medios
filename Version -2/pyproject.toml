@@ -63,6 +63,10 @@ line-ending = "lf"
 known-first-party = ["shared"]
 combine-as-imports = true
 
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
 [build-system]
 requires = ["poetry-core>=1.7.0"]
 build-backend = "poetry.core.masonry.api"
