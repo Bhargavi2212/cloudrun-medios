@@ -219,6 +219,14 @@ jobs:
         run: |
           if [ "${{ matrix.service.name }}" = "federation-aggregator" ]; then
             echo "path=federation/Dockerfile" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.service.name }}" = "manage-agent" ]; then
+            echo "path=services/manage_agent/Dockerfile" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.service.name }}" = "scribe-agent" ]; then
+            echo "path=services/scribe_agent/Dockerfile" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.service.name }}" = "summarizer-agent" ]; then
+            echo "path=services/summarizer_agent/Dockerfile" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.service.name }}" = "dol-service" ]; then
+            echo "path=dol_service/Dockerfile" >> $GITHUB_OUTPUT
           else
             echo "path=services/${{ matrix.service.name }}/Dockerfile" >> $GITHUB_OUTPUT
           fi
