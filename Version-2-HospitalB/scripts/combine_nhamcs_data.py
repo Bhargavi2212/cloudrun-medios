@@ -246,7 +246,8 @@ def clean_and_transform(df: pd.DataFrame) -> pd.DataFrame:
     ]
     for var in numeric_vars:
         if var in df.columns:
-            #  Replace common missing value codes (0, 9, 99, 999, etc.) with NaN for numeric vars
+            # Replace common missing value codes (0, 9, 99, 999, etc.)
+            # with NaN for numeric vars
             # But keep 0 for some vars like pain, age if it's valid
             if var in ["pain", "age"]:
                 df[var] = df[var].replace([999, 9999, 99, -9, -8], None)
@@ -388,7 +389,8 @@ def main() -> None:
             data_file = DATA_DIR / "ed2012-spss.sav"
             if data_file.exists():
                 print("  Using SPSS .sav file for 2012")
-                #  For .sav, we'd need pyreadstat, skip for now or use existing combined CSV
+                # For .sav, we'd need pyreadstat, skip for now or use
+                # existing combined CSV
                 continue
 
         if not sps_file.exists():
