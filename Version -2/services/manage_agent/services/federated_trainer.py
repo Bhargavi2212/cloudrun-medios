@@ -78,16 +78,16 @@ class FederatedTrainer:
         return payload["summary"]
 
     def _train_sync(self, global_model: dict[str, Any] | None) -> dict[str, Any]:
-        X = pd.read_csv(self.features_path)
+        X = pd.read_csv(self.features_path)  # noqa: N806
         y = pd.read_csv(self.labels_path).squeeze()
         if "hospital_id" in X.columns:
             mask = X["hospital_id"] == self.settings.dol_hospital_id
             if mask.any():
-                X = X.loc[mask]
+                X = X.loc[mask]  # noqa: N806
                 y = y.loc[mask]
-            X = X.drop(columns=["hospital_id"])
+            X = X.drop(columns=["hospital_id"])  # noqa: N806
 
-        X_train, X_val, y_train, y_val = train_test_split(
+        X_train, X_val, y_train, y_val = train_test_split(  # noqa: N806
             X,
             y,
             test_size=0.2,

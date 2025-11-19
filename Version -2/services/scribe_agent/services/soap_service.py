@@ -66,7 +66,8 @@ class SoapService:
 
                 logger = logging.getLogger(__name__)
 
-                # Try to trigger summary update (non-blocking, don't fail if summarizer is unavailable)
+    # Try to trigger summary update (non-blocking, don't fail if summarizer
+    # is unavailable)
                 try:
                     # Get all encounter IDs for this patient
                     from sqlalchemy import select
@@ -92,7 +93,7 @@ class SoapService:
                             },
                         )
                     logger.info(
-                        "Triggered summary update for patient %s after SOAP note creation",
+                        "Triggered summary update for patient %s after SOAP note creation",  # noqa: E501
                         patient_id,
                     )
                 except Exception as e:

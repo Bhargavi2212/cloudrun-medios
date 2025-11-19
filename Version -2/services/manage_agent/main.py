@@ -37,7 +37,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         client_host = request.client.host if request.client else "unknown"
         query_params = str(request.query_params) if request.query_params else ""
         print(
-            f"[REQUEST] INCOMING: {request.method} {request.url.path} from {client_host} {query_params}",
+            f"[REQUEST] INCOMING: {request.method} {request.url.path} from {client_host} {query_params}",  # noqa: E501
             file=sys.stderr,
             flush=True,
         )
@@ -79,7 +79,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         try:
             response = await call_next(request)
             print(
-                f"[REQUEST] RESPONSE: {request.method} {request.url.path} - Status {response.status_code}",
+                f"[REQUEST] RESPONSE: {request.method} {request.url.path} - Status {response.status_code}",  # noqa: E501
                 file=sys.stderr,
                 flush=True,
             )
@@ -92,7 +92,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             return response
         except Exception as e:
             print(
-                f"[REQUEST] ERROR in request: {request.method} {request.url.path} - {e}",
+                f"[REQUEST] ERROR in request: {request.method} {request.url.path} - {e}",  # noqa: E501
                 file=sys.stderr,
                 flush=True,
             )

@@ -121,8 +121,7 @@ def extract_receptionist_features() -> tuple:
     # (This happens when the baseline category "Musculoskeletal" was dropped
     # by OneHotEncoder)
     logger.info(
-        "\nFixing RFV clusters "
-        "(assigning default cluster to rows with all zeros)..."
+        "\nFixing RFV clusters " "(assigning default cluster to rows with all zeros)..."
     )
     rfv_cols = [col for col in receptionist_features if col.startswith("rfv1_cluster_")]
 
@@ -1321,9 +1320,7 @@ def main() -> None:
         ) as f:
             json.dump(config, f, indent=2)
 
-        config_file = (
-            OUTPUT_DIR / "parameters" / "receptionist_training_config.json"
-        )
+        config_file = OUTPUT_DIR / "parameters" / "receptionist_training_config.json"
         logger.info(f"\nSaved training configuration to: {config_file}")
 
         logger.info("\n" + "=" * 80)

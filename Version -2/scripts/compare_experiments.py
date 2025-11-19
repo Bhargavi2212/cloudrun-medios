@@ -286,8 +286,7 @@ def generate_summary_report(
         model_name = best.get("Model", "N/A")
         feature_set = best.get("Feature_Set", "N/A")
         report.append(
-            f"- **Recommended Model**: {model_name} "
-            f"with Feature Set {feature_set}"
+            f"- **Recommended Model**: {model_name} " f"with Feature Set {feature_set}"
         )
     report.append("")
 
@@ -339,9 +338,7 @@ def main():
         best = best_models["overall"]
         model_name = best.get("Model", "N/A")
         feature_set = best.get("Feature_Set", "N/A")
-        logger.info(
-            f"Best Overall Model: {model_name} (Feature Set {feature_set})"
-        )
+        logger.info(f"Best Overall Model: {model_name} (Feature Set {feature_set})")
         logger.info(f"  ESI 1-2 Recall: {best.get('Test_ESI_1_2_Recall', 0):.4f}")
         logger.info(f"  Accuracy: {best.get('Test_Accuracy', 0):.4f}")
 

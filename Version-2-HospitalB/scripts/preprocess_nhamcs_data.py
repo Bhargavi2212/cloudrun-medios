@@ -167,9 +167,7 @@ def separate_features_target(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]
 
     # Extract features
     X = df.drop(columns=["esi_level"]).copy()
-    logger.info(
-        f"Features (X) extracted: {X.shape[0]:,} rows x {X.shape[1]} columns"
-    )
+    logger.info(f"Features (X) extracted: {X.shape[0]:,} rows x {X.shape[1]} columns")
 
     # Print ESI class distribution
     logger.info("\nESI Class Distribution:")
@@ -570,9 +568,7 @@ def apply_yeo_johnson(
         for feature in features_to_transform:
             before = skewness_before.get(feature, "N/A")
             after = skewness_after.get(f"{feature}_yj", "N/A")
-            if isinstance(before, int | float) and isinstance(
-                after, int | float
-            ):
+            if isinstance(before, int | float) and isinstance(after, int | float):
                 improvement = abs((before - abs(after)) / before * 100)
                 f.write(f"{feature}:\n")
                 f.write(f"  Before: {before:.3f}\n")
@@ -1257,8 +1253,7 @@ def plot_feature_distributions(
 
     plt.tight_layout()
     plt.savefig(
-        DISTRIBUTION_PLOTS_DIR
-        / "continuous_features_distributions.png",
+        DISTRIBUTION_PLOTS_DIR / "continuous_features_distributions.png",
         dpi=300,
         bbox_inches="tight",
     )

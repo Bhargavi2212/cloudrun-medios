@@ -190,7 +190,7 @@ async def test_login(client: httpx.AsyncClient, role: str) -> dict[str, Any] | N
                     TestResult(
                         f"Login ({role})",
                         True,
-                        f"Successfully logged in as {token_data.get('user', {}).get('full_name', role)}",
+                        f"Successfully logged in as {token_data.get('user', {}).get('full_name', role)}",  # noqa: E501
                         {"role": token_data.get("user", {}).get("role")},
                     )
                 )
@@ -251,7 +251,7 @@ async def test_receptionist_dashboard(
                 TestResult(
                     "Receptionist: Get Queue",
                     True,
-                    f"Queue retrieved: {queue_data.get('data', {}).get('total_count', 0)} patients",
+                    f"Queue retrieved: {queue_data.get('data', {}).get('total_count', 0)} patients",  # noqa: E501
                     {"total_count": queue_data.get("data", {}).get("total_count", 0)},
                 )
             )
@@ -408,7 +408,7 @@ async def test_receptionist_dashboard(
                     TestResult(
                         "Receptionist: Get Patient by ID",
                         True,
-                        f"Patient retrieved: {patient.get('first_name', '')} {patient.get('last_name', '')}",
+                        f"Patient retrieved: {patient.get('first_name', '')} {patient.get('last_name', '')}",  # noqa: E501
                         {"patient_id": patient_id},
                     )
                 )
@@ -491,7 +491,7 @@ async def test_receptionist_dashboard(
                     TestResult(
                         "Receptionist: Check-In Patient",
                         True,
-                        f"Patient checked in: encounter {encounter_id}, triage ESI {triage_level}",
+                        f"Patient checked in: encounter {encounter_id}, triage ESI {triage_level}",  # noqa: E501
                         {
                             "encounter_id": encounter_id,
                             "triage_level": triage_level,
@@ -997,7 +997,7 @@ async def test_nurse_summary_operations(
                     TestResult(
                         "Nurse: Get Summary by ID",
                         True,
-                        f"Summary retrieved: {len(summary.get('summary_text', ''))} chars",
+                        f"Summary retrieved: {len(summary.get('summary_text', ''))} chars",  # noqa: E501
                         {"summary_id": summary_id},
                     )
                 )
@@ -1153,7 +1153,7 @@ async def test_doctor_transcript_operations(
             )
         )
         return
-    transcript_text = "Patient presents with chest pain. Vital signs stable. Assessment: Possible anxiety. Plan: Monitor and provide reassurance."
+    transcript_text = "Patient presents with chest pain. Vital signs stable. Assessment: Possible anxiety. Plan: Monitor and provide reassurance."  # noqa: E501
 
     # Test 1: Create transcript
     try:
@@ -1257,7 +1257,7 @@ async def test_doctor_soap_operations(
             )
         )
         return
-    transcript_text = "Patient presents with chest pain. Vital signs stable. Assessment: Possible anxiety. Plan: Monitor and provide reassurance."
+    transcript_text = "Patient presents with chest pain. Vital signs stable. Assessment: Possible anxiety. Plan: Monitor and provide reassurance."  # noqa: E501
 
     # Test 1: Generate SOAP note
     soap_id = None
@@ -1352,7 +1352,7 @@ async def test_doctor_soap_operations(
                     TestResult(
                         "Doctor: Get SOAP Note by ID",
                         True,
-                        f"SOAP note retrieved: {len(soap_note.get('subjective', ''))} chars subjective",
+                        f"SOAP note retrieved: {len(soap_note.get('subjective', ''))} chars subjective",  # noqa: E501
                         {"soap_id": soap_id},
                     )
                 )
@@ -1379,7 +1379,7 @@ async def test_doctor_soap_operations(
                 f"{SCRIBE_API_URL}/scribe/soap/{soap_id}",
                 headers=headers,
                 json={
-                    "subjective": "Updated subjective: Patient reports improved symptoms.",
+                    "subjective": "Updated subjective: Patient reports improved symptoms.",  # noqa: E501
                     "objective": "Updated objective: Vital signs remain stable.",
                     "assessment": "Updated assessment: Anxiety-related symptoms.",
                     "plan": "Updated plan: Continue monitoring and reassurance.",
@@ -1494,7 +1494,7 @@ async def test_doctor_summary_operations(
                     TestResult(
                         "Doctor: Get Summary by ID",
                         True,
-                        f"Summary retrieved: {len(summary.get('summary_text', ''))} chars",
+                        f"Summary retrieved: {len(summary.get('summary_text', ''))} chars",  # noqa: E501
                         {"summary_id": summary_id},
                     )
                 )
@@ -1605,7 +1605,7 @@ async def run_all_tests() -> None:
         logger.info("🧪 Starting dashboard tests...")
         logger.info("")
         logger.info(
-            "⚠️  Note: Some services may be unavailable. Tests will continue for available services."
+            "⚠️  Note: Some services may be unavailable. Tests will continue for available services."  # noqa: E501
         )
         logger.info("")
 
@@ -1665,7 +1665,7 @@ async def run_all_tests() -> None:
     logger.info(f"✅ Passed: {summary['passed']}")
     logger.info(f"❌ Failed: {summary['failed']}")
     logger.info(
-        f"Success Rate: {(summary['passed'] / summary['total'] * 100) if summary['total'] > 0 else 0:.1f}%"
+        f"Success Rate: {(summary['passed'] / summary['total'] * 100) if summary['total'] > 0 else 0:.1f}%"  # noqa: E501
     )
 
     test_results["end_time"] = datetime.now().isoformat()

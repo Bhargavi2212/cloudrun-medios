@@ -102,7 +102,7 @@ class ScribeEngine:
         """
         if not self._enabled or self._model is None:
             logger.error(
-                "❌ Gemini not enabled (_enabled=%s, _model=%s), using stub. API key present: %s. "
+                "❌ Gemini not enabled (_enabled=%s, _model=%s), using stub. API key present: %s. "  # noqa: E501
                 "Please set GEMINI_API_KEY environment variable!",
                 self._enabled,
                 self._model is not None,
@@ -138,7 +138,8 @@ class ScribeEngine:
                         prompt,
                         generation_config={
                             "temperature": 0.7,
-                            "max_output_tokens": 4000,  # Increased to prevent truncation
+                            "max_output_tokens": 4000,  # Increased to prevent
+                            # truncation
                         },
                     )
                     return (response.text or "").strip()
@@ -176,7 +177,7 @@ class ScribeEngine:
         except Exception as e:
             logger.error("Gemini SOAP generation failed: %s", e, exc_info=True)
             logger.error(
-                "Falling back to stub generator. Check GEMINI_API_KEY and network connectivity."
+                "Falling back to stub generator. Check GEMINI_API_KEY and network connectivity."  # noqa: E501
             )
             return self._stub_generate(payload)
 
@@ -200,9 +201,11 @@ class ScribeEngine:
             if context.get("age"):
                 context_text += f"\nPatient Age: {context['age']}\n"
 
-        prompt = f"""Act as an expert Medical Scribe and Clinical Documentation Specialist.
+        prompt = f"""Act as an expert Medical Scribe and Clinical Documentation
+Specialist.
 
-Task: Convert the following patient-provider conversation transcript into a formal medical SOAP note.
+Task: Convert the following patient-provider conversation transcript into a
+formal medical SOAP note.
 
 {context_text if context_text else ""}
 
@@ -212,19 +215,27 @@ Consultation Transcript:
 Guidelines:
 
 **Subjective:**
-Extract the Chief Complaint (CC), History of Present Illness (HPI), relevant Medical/Family/Social History, and Review of Systems (ROS). Use medical terminology (e.g., convert "trouble breathing" to "dyspnea", "chest pain" to "chest pain" or "angina" if appropriate).
+Extract the Chief Complaint (CC), History of Present Illness (HPI), relevant
+Medical/Family/Social History, and Review of Systems (ROS). Use medical
+terminology (e.g., convert "trouble breathing" to "dyspnea", "chest pain" to
+"chest pain" or "angina" if appropriate).
 
 **Objective:**
-Only list vital signs or physical exam findings explicitly mentioned in the transcript or context. If none are provided, state "Not mentioned in transcript." Do not hallucinate or invent values.
+Only list vital signs or physical exam findings explicitly mentioned in the
+transcript or context. If none are provided, state "Not mentioned in
+transcript." Do not hallucinate or invent values.
 
 **Assessment:**
-Summarize the primary diagnosis or differential diagnoses discussed. Be specific and clinically relevant.
+Summarize the primary diagnosis or differential diagnoses discussed. Be
+specific and clinically relevant.
 
 **Plan:**
-List diagnostic tests ordered, lifestyle modifications, medications prescribed (if any), and follow-up instructions. Be specific and actionable.
+List diagnostic tests ordered, lifestyle modifications, medications prescribed
+(if any), and follow-up instructions. Be specific and actionable.
 
 **Tone:**
-Professional, concise, and clinical. Remove all pleasantries, small talk, and unrelated conversation.
+Professional, concise, and clinical. Remove all pleasantries, small talk, and
+unrelated conversation.
 
 **Format:**
 Use clear section headers. Format your response EXACTLY as follows:
@@ -235,7 +246,8 @@ SUBJECTIVE:
 
 OBJECTIVE:
 
-[Vital signs and physical exam findings - only if mentioned, otherwise state "Not mentioned in transcript"]
+[Vital signs and physical exam findings - only if mentioned, otherwise state
+"Not mentioned in transcript"]
 
 ASSESSMENT:
 
@@ -266,10 +278,10 @@ Now generate the complete SOAP note:"""
 
         # Try to extract sections using regex with more flexible patterns
         patterns = {
-            "subjective": r"(?i)^SUBJECTIVE:?\s*\n(.*?)(?=\n\s*(?:OBJECTIVE|ASSESSMENT|PLAN):|$)",
-            "objective": r"(?i)^OBJECTIVE:?\s*\n(.*?)(?=\n\s*(?:ASSESSMENT|PLAN|SUBJECTIVE):|$)",
-            "assessment": r"(?i)^ASSESSMENT:?\s*\n(.*?)(?=\n\s*(?:PLAN|SUBJECTIVE|OBJECTIVE):|$)",
-            "plan": r"(?i)^PLAN:?\s*\n(.*?)(?=\n\s*(?:SUBJECTIVE|OBJECTIVE|ASSESSMENT):|$)",
+            "subjective": r"(?i)^SUBJECTIVE:?\s*\n(.*?)(?=\n\s*(?:OBJECTIVE|ASSESSMENT|PLAN):|$)",  # noqa: E501
+            "objective": r"(?i)^OBJECTIVE:?\s*\n(.*?)(?=\n\s*(?:ASSESSMENT|PLAN|SUBJECTIVE):|$)",  # noqa: E501
+            "assessment": r"(?i)^ASSESSMENT:?\s*\n(.*?)(?=\n\s*(?:PLAN|SUBJECTIVE|OBJECTIVE):|$)",  # noqa: E501
+            "plan": r"(?i)^PLAN:?\s*\n(.*?)(?=\n\s*(?:SUBJECTIVE|OBJECTIVE|ASSESSMENT):|$)",  # noqa: E501
         }
 
         # First try: regex with DOTALL to match across newlines
@@ -323,7 +335,7 @@ Now generate the complete SOAP note:"""
                     continue
 
                 # Look for section header (case insensitive)
-                pattern = rf"(?i)(?:^|\n)\s*{section_name.upper()}:?\s*\n(.*?)(?=\n\s*(?:SUBJECTIVE|OBJECTIVE|ASSESSMENT|PLAN):|$)"
+                pattern = rf"(?i)(?:^|\n)\s*{section_name.upper()}:?\s*\n(.*?)(?=\n\s*(?:SUBJECTIVE|OBJECTIVE|ASSESSMENT|PLAN):|$)"  # noqa: E501
                 match = re.search(pattern, text, re.DOTALL)
                 if match:
                     sections[section_name] = match.group(1).strip()
@@ -331,7 +343,7 @@ Now generate the complete SOAP note:"""
         # Clean up sections - remove extra whitespace but preserve structure
         for key in sections:
             if sections[key]:
-                # Remove leading/trailing whitespace from each line, but keep line breaks
+  #  Remove leading/trailing whitespace from each line, but keep line breaks
                 lines = [line.strip() for line in sections[key].split("\n")]
                 sections[key] = "\n".join(lines).strip()
 
@@ -348,7 +360,8 @@ Now generate the complete SOAP note:"""
     def _stub_generate(self, payload: DialoguePayload) -> SoapGenerationResult:
         """
         Fallback stub SOAP generation when Gemini is unavailable.
-        Uses pattern matching and heuristics to extract meaningful information from transcript.
+        Uses pattern matching and heuristics to extract meaningful information
+        from transcript.
         """
         transcript = payload.transcript.strip()
 
@@ -367,7 +380,10 @@ Now generate the complete SOAP note:"""
 
         # Look for common complaint patterns
         complaint_patterns = [
-            r"(?:I've|I have|I'm|I am|patient states?|patient reports?|patient complains?).*?(?:pain|ache|discomfort|shortness of breath|dyspnea|chest pain|difficulty breathing|cough|fever|nausea|vomiting|dizziness|headache|fatigue|weakness)[^.]*",
+            r"(?:I've|I have|I'm|I am|patient states?|patient reports?|"
+            r"patient complains?).*?(?:pain|ache|discomfort|shortness of "
+            r"breath|dyspnea|chest pain|difficulty breathing|cough|fever|"
+            r"nausea|vomiting|dizziness|headache|fatigue|weakness)[^.]*",
             r"(?:experiencing|having|feeling|suffering from).*?[^.]*",
         ]
 
@@ -461,8 +477,8 @@ Now generate the complete SOAP note:"""
 
         # Look for diagnostic terms
         diagnosis_patterns = [
-            r"(?:diagnosis|likely|suspected|possible|rule out|differential)[:\s]+([^.!?]{10,150})",
-            r"(?:appears to be|suggests?|consistent with|indicates?)[:\s]+([^.!?]{10,150})",
+            r"(?:diagnosis|likely|suspected|possible|rule out|differential)[:\s]+([^.!?]{10,150})",  # noqa: E501
+            r"(?:appears to be|suggests?|consistent with|indicates?)[:\s]+([^.!?]{10,150})",  # noqa: E501
         ]
 
         for pattern in diagnosis_patterns:
@@ -504,7 +520,7 @@ Now generate the complete SOAP note:"""
 
         # Look for ordered tests
         test_patterns = [
-            r"(?:order|ordered|request|schedule|perform)[:\s]+(?:a |an |the )?([^.!?]{10,100})",
+            r"(?:order|ordered|request|schedule|perform)[:\s]+(?:a |an |the )?([^.!?]{10,100})",  # noqa: E501
             r"(?:test|lab|labs|imaging|x-ray|ct|mri|ekg|ecg|blood work)[^.!?]*",
         ]
 
@@ -575,15 +591,15 @@ Now generate the complete SOAP note:"""
             model_version=self.model_version,
         )
         logger.warning(
-            "⚠️ Generated STUB SOAP note for encounter=%s using model=%s. This means Gemini was NOT used!",
+            "⚠️ Generated STUB SOAP note for encounter=%s using model=%s. This means Gemini was NOT used!",  # noqa: E501
             payload.encounter_id,
             self.model_version,
         )
         logger.warning(
-            "⚠️ Check logs above for why Gemini failed (empty transcript, API error, etc.)"
+            "⚠️ Check logs above for why Gemini failed (empty transcript, API error, etc.)"  # noqa: E501
         )
         logger.info(
-            "Stub SOAP note generated with extracted information from transcript (length: %d chars)",
+            "Stub SOAP note generated with extracted information from transcript (length: %d chars)",  # noqa: E501
             len(transcript),
         )
         return result

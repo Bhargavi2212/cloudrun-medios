@@ -88,7 +88,7 @@ class DocumentService:
                     file_id,
                 )
                 raise ValueError(
-                    "No text extracted from PDF document. Please ensure pdfplumber or PyPDF2 is installed."
+                    "No text extracted from PDF document. Please ensure pdfplumber or PyPDF2 is installed."  # noqa: E501
                 )
         elif asset.raw_text:
             raw_text = asset.raw_text

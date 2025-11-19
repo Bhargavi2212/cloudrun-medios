@@ -30,9 +30,7 @@ async def check_summary(patient_id: str):
             print(f"ID: {summary.id}")
             print(f"Model Version: {summary.model_version}")
             print(f"Confidence: {summary.confidence_score}")
-            text_len = (
-                len(summary.summary_text) if summary.summary_text else 0
-            )
+            text_len = len(summary.summary_text) if summary.summary_text else 0
             print(f"Text Length: {text_len}")
             print(f"Has Structured Data: {bool(summary.structured_data)}")
             print("\nText Preview (first 500 chars):")

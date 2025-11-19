@@ -1090,8 +1090,7 @@ def generate_comparison_report(all_results: dict, output_dir: Path) -> None:
         "3->original, 4->original, 5->original"
     )
     report_lines.append(
-        "- **No Hyperparameter Tuning**: "
-        "Used best params from receptionist v2"
+        "- **No Hyperparameter Tuning**: " "Used best params from receptionist v2"
     )
     report_lines.append("")
 

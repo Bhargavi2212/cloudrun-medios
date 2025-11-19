@@ -80,7 +80,8 @@ try:
     )
     if processor._model is None:
         print(
-            "[WARN] Document processor initialized but Gemini model not available (may need google-generativeai package)"
+            "[WARN] Document processor initialized but Gemini model not available "
+            "(may need google-generativeai package)"
         )
     else:
         print("[OK] Document processor initialized with Gemini")
@@ -127,12 +128,14 @@ print("-" * 60)
 for route in manage_docs_router.routes:
     methods = getattr(route, "methods", set())
     path = getattr(route, "path", "unknown")
-    print(f"  {list(methods)[0] if methods else 'UNKNOWN':6} {path}")
+    method = next(iter(methods)) if methods else "UNKNOWN"
+    print(f"  {method:6} {path}")
 
 for route in summarizer_docs_router.routes:
     methods = getattr(route, "methods", set())
     path = getattr(route, "path", "unknown")
-    print(f"  {list(methods)[0] if methods else 'UNKNOWN':6} {path}")
+    method = next(iter(methods)) if methods else "UNKNOWN"
+    print(f"  {method:6} {path}")
 
 # Summary
 print("\n" + "=" * 60)

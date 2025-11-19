@@ -19,16 +19,17 @@ ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
+if TEST_DATABASE_URL:
+    os.environ.setdefault("DATABASE_URL", TEST_DATABASE_URL)
+
+# Imports after environment setup are intentional for test configuration
 from database import ensure_loaded
 from database.base import Base
 from database.models import Encounter, Patient
 from database.session import dispose_engine, init_engine
 from services.scribe_agent.config import ScribeAgentSettings
 from services.scribe_agent.main import create_app
-
-TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
-if TEST_DATABASE_URL:
-    os.environ.setdefault("DATABASE_URL", TEST_DATABASE_URL)
 
 
 @pytest_asyncio.fixture(scope="function")

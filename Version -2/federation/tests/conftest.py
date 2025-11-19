@@ -20,7 +20,7 @@ os.environ.setdefault("FEDERATION_SHARED_SECRET", SHARED_SECRET)
 os.environ.setdefault("FEDERATION_CORS_ORIGINS", '["http://localhost:5173"]')
 
 # Imports after environment setup are intentional for test configuration
-from sqlalchemy import (  # noqa: E402
+from sqlalchemy import (
     JSON,
     Column,
     DateTime,
@@ -30,9 +30,13 @@ from sqlalchemy import (  # noqa: E402
     Table,
 )
 
-from database.session import dispose_engine, get_engine, init_engine  # noqa: E402
-from federation.aggregator.main import create_app  # noqa: E402
-from federation.config import AggregatorSettings  # noqa: E402
+from database.session import (
+    dispose_engine,
+    get_engine,
+    init_engine,
+)
+from federation.aggregator.main import create_app
+from federation.config import AggregatorSettings
 
 
 @pytest_asyncio.fixture()

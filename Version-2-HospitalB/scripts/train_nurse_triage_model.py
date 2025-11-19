@@ -263,7 +263,7 @@ def create_batches(
     num_batches = (total_samples + batch_size - 1) // batch_size  # Ceiling division
 
     logger.info(
-        f"Splitting {total_samples:,} samples into {num_batches} batches of ~{batch_size:,} samples each..."
+        f"Splitting {total_samples:,} samples into {num_batches} batches of ~{batch_size:,} samples each..."  # noqa: E501
     )
 
     batches = []
@@ -286,7 +286,7 @@ def create_batches(
 
 
 def load_and_modify_params(model_name: str, feature_set: str = "A") -> dict:
-    """Load best hyperparameters from v2 and replace class_weight with moderate weights."""
+    """Load best hyperparameters from v2 and replace class_weight with moderate weights."""  # noqa: E501
     # Map model names to file names
     model_file_map = {
         "Logistic Regression": "logistic_regression",
@@ -332,7 +332,7 @@ def load_and_modify_params(model_name: str, feature_set: str = "A") -> dict:
 def train_logistic_regression_no_tuning(
     X_train: pd.DataFrame, y_train: pd.Series, feature_set: str = "A"
 ) -> tuple:
-    """Train Logistic Regression using best params from v2 with moderate class weights."""
+    """Train Logistic Regression using best params from v2 with moderate class weights."""  # noqa: E501
     logger.info("\n" + "=" * 80)
     logger.info("TRAINING LOGISTIC REGRESSION (NO TUNING)")
     logger.info("=" * 80)
@@ -482,7 +482,7 @@ class StackingEnsemble:
 
             stacked_probas.append(proba)
 
-        # Concatenate all probability vectors (4 models × 5 classes = 20 features)
+        # Concatenate all probability vectors (4 models x 5 classes = 20 features)
         stacked_features = np.hstack(stacked_probas)
         return stacked_features
 
@@ -508,7 +508,7 @@ def train_stacking_ensemble(
     n_classes = 5
     n_base_models = len(base_models)
 
-    # Initialize array for stacked features (n_samples × n_base_models × n_classes)
+    # Initialize array for stacked features (n_samples x n_base_models x n_classes)
     stacked_features_train = np.zeros((n_samples, n_base_models * n_classes))
 
     cv_fold = StratifiedKFold(n_splits=cv, shuffle=True, random_state=42)
@@ -518,7 +518,7 @@ def train_stacking_ensemble(
         cv_fold.split(X_train, y_train), start=1
     ):
         logger.info(
-            f"  Fold {fold_idx}/{cv}: Training base models on {len(train_idx):,} samples..."
+            f"  Fold {fold_idx}/{cv}: Training base models on {len(train_idx):,} samples..."  # noqa: E501
         )
 
         X_fold_train = X_train.iloc[train_idx]
@@ -969,7 +969,7 @@ def main():
                 metrics_file = (
                     OUTPUT_DIR
                     / "metrics"
-                    / f"{dataset_name}_metrics_{model_name.lower().replace(' ', '_')}.csv"
+                    / f"{dataset_name}_metrics_{model_name.lower().replace(' ', '_')}.csv"  # noqa: E501
                 )
                 pd.DataFrame([metrics]).to_csv(metrics_file, index=False)
                 logger.info(f"Saved {dataset_name} metrics to: {metrics_file}")
@@ -1083,7 +1083,7 @@ def generate_comparison_report(all_results: dict, output_dir: Path) -> None:
     report_lines.append("- **Features**: 23 (vitals + receptionist features)")
     report_lines.append(f"- **Class Weights**: {MODERATE_CLASS_WEIGHTS}")
     report_lines.append(
-        "- **SMOTE Strategy**: ESI 1->5000, 2->15000, 3->original, 4->original, 5->original"
+        "- **SMOTE Strategy**: ESI 1->5000, 2->15000, 3->original, 4->original, 5->original"  # noqa: E501
     )
     report_lines.append(
         "- **No Hyperparameter Tuning**: Used best params from receptionist v2"
@@ -1094,7 +1094,7 @@ def generate_comparison_report(all_results: dict, output_dir: Path) -> None:
     report_lines.append("## Model Comparison (Test Set)")
     report_lines.append("")
     report_lines.append(
-        "| Model | Accuracy | ESI 1-2 Recall | ESI 3-4 Recall | Macro F1 | Train-Val Gap |"
+        "| Model | Accuracy | ESI 1-2 Recall | ESI 3-4 Recall | Macro F1 | Train-Val Gap |"  # noqa: E501
     )
     report_lines.append(
         "|-------|----------|----------------|----------------|----------|---------------|"
@@ -1169,7 +1169,7 @@ def generate_comparison_report(all_results: dict, output_dir: Path) -> None:
             )
         else:
             report_lines.append(
-                f"- [WARN] ESI 1-2 recall ({esi_1_2_recall:.2%}) is below target (>= 40%)"
+                f"- [WARN] ESI 1-2 recall ({esi_1_2_recall:.2%}) is below target (>= 40%)"  # noqa: E501
             )
 
         if esi_3_4_recall >= 0.50:
@@ -1178,7 +1178,7 @@ def generate_comparison_report(all_results: dict, output_dir: Path) -> None:
             )
         else:
             report_lines.append(
-                f"- [WARN] ESI 3-4 recall ({esi_3_4_recall:.2%}) is below target (>= 50%)"
+                f"- [WARN] ESI 3-4 recall ({esi_3_4_recall:.2%}) is below target (>= 50%)"  # noqa: E501
             )
 
         report_lines.append(f"- **Recommended Model**: {model_name}")

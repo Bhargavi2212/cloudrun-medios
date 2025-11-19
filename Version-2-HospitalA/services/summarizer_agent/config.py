@@ -36,7 +36,10 @@ class SummarizerAgentSettings(DatabaseSettings):
     storage_root: str = Field(
         default="./storage",
         alias="SUMMARIZER_AGENT_STORAGE_ROOT",
-        description="Root directory for stored files (must match manage-agent storage).",
+        description=(
+            "Root directory for stored files "
+            "(must match manage-agent storage)."
+        ),
     )
 
     @field_validator("cors_allow_origins", mode="before")

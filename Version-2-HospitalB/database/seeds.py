@@ -71,21 +71,30 @@ async def seed_demo_data(session: AsyncSession) -> None:
                             "pain": 4,
                             "spo2": 97,
                         },
-                        "chief_complaint": "Shortness of breath after community Kiroween event.",
-                        "notes": "Triage nurse Elena Shaw reviewed vitals and flagged moderate acuity.",
+                        "chief_complaint": (
+                            "Shortness of breath after community Kiroween event."
+                        ),
+                        "notes": (
+                            "Triage nurse Elena Shaw reviewed vitals and "
+                            "flagged moderate acuity."
+                        ),
                         "triage_score": 3,
                         "triage_model_version": "triage_local_v1",
                     },
                     "transcript": {
                         "transcript": (
-                            "Nurse: Alex, we’re going to run a quick pulmonary check.\n"
+                            "Nurse: Alex, we're going to run a quick pulmonary check.\n"
                             "Patient: Breathing still feels tight.\n"
-                            "Doctor: We’ll start a nebulizer and reassess in thirty minutes."
+                            "Doctor: We'll start a nebulizer and reassess "
+                            "in thirty minutes."
                         ),
                         "speaker_segments": [
                             {
                                 "speaker": "nurse",
-                                "content": "Alex, we’re going to run a quick pulmonary check.",
+                                "content": (
+                                    "Alex, we're going to run a quick "
+                                    "pulmonary check."
+                                ),
                             },
                             {
                                 "speaker": "patient",
@@ -93,16 +102,30 @@ async def seed_demo_data(session: AsyncSession) -> None:
                             },
                             {
                                 "speaker": "doctor",
-                                "content": "We’ll start a nebulizer and reassess in thirty minutes.",
+                                "content": (
+                                    "We'll start a nebulizer and reassess "
+                                    "in thirty minutes."
+                                ),
                             },
                         ],
                         "source": "scribe",
                     },
                     "soap_note": {
-                        "subjective": "Reports dyspnea onset during outdoor event, minimal chest pain.",
-                        "objective": "RR 19, O2 sat 97% on room air, mild expiratory wheeze.",
-                        "assessment": "Exercise-induced bronchospasm with viral trigger unlikely.",
-                        "plan": "Nebulized bronchodilator, discharge with inhaler, outpatient follow-up in 72h.",
+                        "subjective": (
+                            "Reports dyspnea onset during outdoor event, "
+                            "minimal chest pain."
+                        ),
+                        "objective": (
+                            "RR 19, O2 sat 97% on room air, " "mild expiratory wheeze."
+                        ),
+                        "assessment": (
+                            "Exercise-induced bronchospasm with "
+                            "viral trigger unlikely."
+                        ),
+                        "plan": (
+                            "Nebulized bronchodilator, discharge with inhaler, "
+                            "outpatient follow-up in 72h."
+                        ),
                         "model_version": "scribe_v1",
                         "confidence_score": 0.84,
                     },
@@ -123,7 +146,10 @@ async def seed_demo_data(session: AsyncSession) -> None:
                             "spo2": 99,
                         },
                         "chief_complaint": "Follow-up on bronchodilator response.",
-                        "notes": "Remote nurse Priya Das confirmed symptom improvement during tele-check.",
+                        "notes": (
+                            "Remote nurse Priya Das confirmed symptom "
+                            "improvement during tele-check."
+                        ),
                         "triage_score": 2,
                         "triage_model_version": "triage_partner_v1",
                     },
@@ -131,7 +157,7 @@ async def seed_demo_data(session: AsyncSession) -> None:
                         "transcript": (
                             "Remote Doctor: Alex, any shortness of breath today?\n"
                             "Patient: Only with intense exercise.\n"
-                            "Remote Doctor: Continue inhaler pre-activity and schedule spirometry."
+                            "Remote Doctor: Continue inhaler pre-activity and schedule spirometry."  # noqa: E501
                         ),
                         "speaker_segments": [
                             {
@@ -144,16 +170,30 @@ async def seed_demo_data(session: AsyncSession) -> None:
                             },
                             {
                                 "speaker": "doctor_remote",
-                                "content": "Continue inhaler pre-activity and schedule spirometry.",
+                                "content": (
+                                    "Continue inhaler pre-activity and "
+                                    "schedule spirometry."
+                                ),
                             },
                         ],
                         "source": "federated_partner",
                     },
                     "soap_note": {
-                        "subjective": "Telehealth review confirms decreased symptoms post discharge.",
-                        "objective": "Peak flow self-reported at 470 L/min, no audible wheeze.",
-                        "assessment": "Asthma control improving; continue current regimen.",
-                        "plan": "Maintain preventive inhaler use, schedule pulmonary function test next week.",
+                        "subjective": (
+                            "Telehealth review confirms decreased symptoms "
+                            "post discharge."
+                        ),
+                        "objective": (
+                            "Peak flow self-reported at 470 L/min, "
+                            "no audible wheeze."
+                        ),
+                        "assessment": (
+                            "Asthma control improving; continue current regimen."
+                        ),
+                        "plan": (
+                            "Maintain preventive inhaler use, schedule "
+                            "pulmonary function test next week."
+                        ),
                         "model_version": "scribe_partner_v1",
                         "confidence_score": 0.78,
                     },
@@ -161,8 +201,9 @@ async def seed_demo_data(session: AsyncSession) -> None:
             ],
             "summary": {
                 "summary_text": (
-                    "Two encounters within 2 days for bronchospasm management. Local ED provided acute "
-                    "therapy; remote partner conducted telehealth follow-up. Patient stable with action plan."
+                    "Two encounters within 2 days for bronchospasm management. "
+                    "Local ED provided acute therapy; remote partner conducted "
+                    "telehealth follow-up. Patient stable with action plan."
                 ),
                 "model_version": "summary_v1",
                 "confidence_score": 0.81,
@@ -252,16 +293,26 @@ async def seed_demo_data(session: AsyncSession) -> None:
                             },
                             {
                                 "speaker": "scribe",
-                                "content": "Documenting orders for labs and chest X-ray.",
+                                "content": "Documenting orders for labs and chest X-ray.",  # noqa: E501
                             },
                         ],
                         "source": "scribe",
                     },
                     "soap_note": {
-                        "subjective": "Three-day history of fever, chills, productive cough with rust-colored sputum.",
-                        "objective": "Crackles in right lower lobe, WBC 14.2K, lactate 2.4.",
-                        "assessment": "Severe community-acquired pneumonia; rule out sepsis.",
-                        "plan": "Initiate broad-spectrum antibiotics, admit for telemetry, repeat labs in 6h.",
+                        "subjective": (
+                            "Three-day history of fever, chills, productive "
+                            "cough with rust-colored sputum."
+                        ),
+                        "objective": (
+                            "Crackles in right lower lobe, WBC 14.2K, " "lactate 2.4."
+                        ),
+                        "assessment": (
+                            "Severe community-acquired pneumonia; " "rule out sepsis."
+                        ),
+                        "plan": (
+                            "Initiate broad-spectrum antibiotics, admit for "
+                            "telemetry, repeat labs in 6h."
+                        ),
                         "model_version": "scribe_v1",
                         "confidence_score": 0.9,
                     },
@@ -281,38 +332,63 @@ async def seed_demo_data(session: AsyncSession) -> None:
                             "pain": 6,
                             "spo2": 95,
                         },
-                        "chief_complaint": "Initial urgent care visit prior to ED transfer.",
-                        "notes": "Lakeside RN Hannah Ortiz escalated case to Kiroween ED for higher acuity care.",
+                        "chief_complaint": (
+                            "Initial urgent care visit prior to ED transfer."
+                        ),
+                        "notes": (
+                            "Lakeside RN Hannah Ortiz escalated case to "
+                            "Kiroween ED for higher acuity care."
+                        ),
                         "triage_score": 2,
                         "triage_model_version": "triage_partner_v1",
                     },
                     "transcript": {
                         "transcript": (
-                            "Partner Physician: Symptoms concerning for pneumonia, transferring to Kiroween ED.\n"
-                            "Patient: I’ve never had breathing trouble like this.\n"
-                            "Partner Physician: Ambulance en route; records synced to your digital passport."
+                            "Partner Physician: Symptoms concerning for "
+                            "pneumonia, transferring to Kiroween ED.\n"
+                            "Patient: I've never had breathing trouble like this.\n"
+                            "Partner Physician: Ambulance en route; records "
+                            "synced to your digital passport."
                         ),
                         "speaker_segments": [
                             {
                                 "speaker": "doctor_partner",
-                                "content": "Symptoms concerning for pneumonia, transferring to Kiroween ED.",
+                                "content": (
+                                    "Symptoms concerning for pneumonia, "
+                                    "transferring to Kiroween ED."
+                                ),
                             },
                             {
                                 "speaker": "patient",
-                                "content": "I’ve never had breathing trouble like this.",
+                                "content": "I've never had breathing trouble like this.",  # noqa: E501
                             },
                             {
                                 "speaker": "doctor_partner",
-                                "content": "Ambulance en route; records synced to your digital passport.",
+                                "content": (
+                                    "Ambulance en route; records synced to "
+                                    "your digital passport."
+                                ),
                             },
                         ],
                         "source": "federated_partner",
                     },
                     "soap_note": {
-                        "subjective": "Patient presented with fever onset 36h ago and persistent cough.",
-                        "objective": "Mild tachycardia, focal crackles; initial labs pending at transfer.",
-                        "assessment": "Moderate respiratory infection, concern for lower lobe pneumonia.",
-                        "plan": "Transfer to tertiary center, upload vitals to portable profile for continuity.",
+                        "subjective": (
+                            "Patient presented with fever onset 36h ago and "
+                            "persistent cough."
+                        ),
+                        "objective": (
+                            "Mild tachycardia, focal crackles; initial labs "
+                            "pending at transfer."
+                        ),
+                        "assessment": (
+                            "Moderate respiratory infection, concern for "
+                            "lower lobe pneumonia."
+                        ),
+                        "plan": (
+                            "Transfer to tertiary center, upload vitals to "
+                            "portable profile for continuity."
+                        ),
                         "model_version": "scribe_partner_v1",
                         "confidence_score": 0.75,
                     },
@@ -320,8 +396,9 @@ async def seed_demo_data(session: AsyncSession) -> None:
             ],
             "summary": {
                 "summary_text": (
-                    "Urgent care escalation to Kiroween ED confirmed severe pneumonia. Admission triggered "
-                    "sepsis protocol with antibiotics and telemetry monitoring."
+                    "Urgent care escalation to Kiroween ED confirmed severe "
+                    "pneumonia. Admission triggered sepsis protocol with "
+                    "antibiotics and telemetry monitoring."
                 ),
                 "model_version": "summary_v1",
                 "confidence_score": 0.88,
@@ -396,21 +473,29 @@ async def seed_demo_data(session: AsyncSession) -> None:
                             "pain": 3,
                             "spo2": 99,
                         },
-                        "chief_complaint": "Laceration from seasonal Kiroween festival setup.",
-                        "notes": "Nurse Lucia Mendez cleaned wound; no tendon involvement.",
+                        "chief_complaint": (
+                            "Laceration from seasonal Kiroween festival setup."
+                        ),
+                        "notes": (
+                            "Nurse Lucia Mendez cleaned wound; "
+                            "no tendon involvement."
+                        ),
                         "triage_score": 4,
                         "triage_model_version": "triage_local_v1",
                     },
                     "transcript": {
                         "transcript": (
-                            "Nurse: We’ll irrigate and close the cut with adhesive strips.\n"
+                            "Nurse: We'll irrigate and close the cut with adhesive strips.\n"  # noqa: E501
                             "Patient: It happened while moving props.\n"
-                            "Doctor: No stitches required; keep the area dry for 48 hours."
+                            "Doctor: No stitches required; keep the area dry for 48 hours."  # noqa: E501
                         ),
                         "speaker_segments": [
                             {
                                 "speaker": "nurse",
-                                "content": "We’ll irrigate and close the cut with adhesive strips.",
+                                "content": (
+                                    "We'll irrigate and close the cut with "
+                                    "adhesive strips."
+                                ),
                             },
                             {
                                 "speaker": "patient",
@@ -418,16 +503,28 @@ async def seed_demo_data(session: AsyncSession) -> None:
                             },
                             {
                                 "speaker": "doctor",
-                                "content": "No stitches required; keep the area dry for 48 hours.",
+                                "content": (
+                                    "No stitches required; keep the area dry "
+                                    "for 48 hours."
+                                ),
                             },
                         ],
                         "source": "scribe",
                     },
                     "soap_note": {
-                        "subjective": "Minor superficial laceration to left forearm, bleeding controlled.",
-                        "objective": "2.5 cm superficial cut, no foreign body, intact neurovascular exam.",
+                        "subjective": (
+                            "Minor superficial laceration to left forearm, "
+                            "bleeding controlled."
+                        ),
+                        "objective": (
+                            "2.5 cm superficial cut, no foreign body, "
+                            "intact neurovascular exam."
+                        ),
                         "assessment": "Simple laceration without complication.",
-                        "plan": "Cleanse, apply adhesive closure, provide tetanus booster, discharge with wound care instructions.",
+                        "plan": (
+                            "Cleanse, apply adhesive closure, provide tetanus "
+                            "booster, discharge with wound care instructions."
+                        ),
                         "model_version": "scribe_v1",
                         "confidence_score": 0.86,
                     },
@@ -435,8 +532,9 @@ async def seed_demo_data(session: AsyncSession) -> None:
             ],
             "summary": {
                 "summary_text": (
-                    "Single urgent care visit for festival-related laceration. Wound closed with adhesive, "
-                    "tetanus updated, no follow-up required."
+                    "Single urgent care visit for festival-related laceration. "
+                    "Wound closed with adhesive, tetanus updated, no follow-up "
+                    "required."
                 ),
                 "model_version": "summary_v1",
                 "confidence_score": 0.73,

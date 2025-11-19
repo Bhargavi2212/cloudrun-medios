@@ -15,14 +15,11 @@ from sqlalchemy.orm import selectinload
 
 from database.models import Encounter, TriageObservation
 from database.session import get_session
-from services.manage_agent.core.triage import TriageEngine
-from shared.schemas import StandardResponse
-
-logger = logging.getLogger(__name__)
 from services.manage_agent.core.nurse_triage import (
     NurseTriageEngine,
     NurseTriagePayload,
 )
+from services.manage_agent.core.triage import TriageEngine
 from services.manage_agent.dependencies import (
     get_nurse_triage_engine,
     get_triage_engine,
@@ -33,6 +30,9 @@ from services.manage_agent.schemas import (
     TriageRequest,
     TriageResponse,
 )
+from shared.schemas import StandardResponse
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/manage", tags=["triage"])
 
@@ -59,7 +59,7 @@ async def classify_patient(
     "/encounters/{encounter_id}/vitals",
     response_model=StandardResponse,
     summary="Record vitals and update triage",
-    description="Capture vitals for an encounter and run the nurse triage model with vitals.",
+    description="Capture vitals for an encounter and run the nurse triage model with vitals.",  # noqa: E501
 )
 async def record_vitals(
     encounter_id: UUID,
@@ -78,7 +78,7 @@ async def record_vitals(
         flush=True,
     )
     print(
-        f"[VITALS] Vitals: HR={payload.hr}, RR={payload.rr}, BP={payload.sbp}/{payload.dbp}, Temp={payload.temp_c}C, SpO2={payload.spo2}, Pain={payload.pain}",
+        f"[VITALS] Vitals: HR={payload.hr}, RR={payload.rr}, BP={payload.sbp}/{payload.dbp}, Temp={payload.temp_c}C, SpO2={payload.spo2}, Pain={payload.pain}",  # noqa: E501
         file=sys.stderr,
         flush=True,
     )
@@ -117,7 +117,7 @@ async def record_vitals(
         )
 
     print(
-        f"[VITALS] Encounter found for patient: {encounter.patient_id if encounter.patient else 'unknown'}",
+        f"[VITALS] Encounter found for patient: {encounter.patient_id if encounter.patient else 'unknown'}",  # noqa: E501
         file=sys.stderr,
         flush=True,
     )
@@ -189,7 +189,7 @@ async def record_vitals(
         logger.info("[VITALS] Running nurse triage classification...")
         triage_result = engine.classify(nurse_payload)
         print(
-            f"[VITALS] Triage result: Level {triage_result.acuity_level} (model: {triage_result.model_version})",
+            f"[VITALS] Triage result: Level {triage_result.acuity_level} (model: {triage_result.model_version})",  # noqa: E501
             file=sys.stderr,
             flush=True,
         )
@@ -227,12 +227,12 @@ async def record_vitals(
     import sys
 
     print(
-        f"[VITALS] Vitals recorded and triage updated successfully. Encounter: {encounter.id}, Triage Level: {encounter.acuity_level}",
+        f"[VITALS] Vitals recorded and triage updated successfully. Encounter: {encounter.id}, Triage Level: {encounter.acuity_level}",  # noqa: E501
         file=sys.stderr,
         flush=True,
     )
     logger.info(
-        "[VITALS] Vitals recorded and triage updated successfully. Encounter: %s, Triage Level: %s",
+        "[VITALS] Vitals recorded and triage updated successfully. Encounter: %s, Triage Level: %s",  # noqa: E501
         encounter.id,
         encounter.acuity_level,
     )

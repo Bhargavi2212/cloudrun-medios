@@ -92,7 +92,7 @@ async def upload_document(
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Invalid patient_id format: {patient_id}",
-                )
+                ) from None
 
         if encounter_id:
             try:
@@ -106,7 +106,7 @@ async def upload_document(
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Invalid encounter_id format: {encounter_id}",
-                )
+                ) from None
 
         # Save file to storage
         file_id, storage_path, size_bytes, _ = await storage_service.save_file(file)
@@ -129,7 +129,7 @@ async def upload_document(
         import sys
 
         print(
-            f"[UPLOAD] Creating file asset: patient_id={patient_uuid}, encounter_id={encounter_uuid}, filename={file.filename}",
+            f"[UPLOAD] Creating file asset: patient_id={patient_uuid}, encounter_id={encounter_uuid}, filename={file.filename}",  # noqa: E501
             file=sys.stderr,
             flush=True,
         )
@@ -152,7 +152,7 @@ async def upload_document(
         )
 
         print(
-            f"[UPLOAD] File asset created: id={asset.id}, patient_id={asset.patient_id}",
+            f"[UPLOAD] File asset created: id={asset.id}, patient_id={asset.patient_id}",  # noqa: E501
             file=sys.stderr,
             flush=True,
         )
@@ -211,7 +211,7 @@ async def upload_document(
                         ) as client:  # Increased timeout for Gemini processing
                             process_response = await client.post(process_url)
                             print(
-                                f"[UPLOAD] Document processing response: status={process_response.status_code}",
+                                f"[UPLOAD] Document processing response: status={process_response.status_code}",  # noqa: E501
                                 file=sys.stderr,
                                 flush=True,
                             )
@@ -228,7 +228,7 @@ async def upload_document(
                                     processing_result.get("overall_confidence"),
                                 )
                                 print(
-                                    f"[UPLOAD] Document {asset.id} processed: success={success}, confidence={processing_result.get('overall_confidence')}",
+                                    f"[UPLOAD] Document {asset.id} processed: success={success}, confidence={processing_result.get('overall_confidence')}",  # noqa: E501
                                     file=sys.stderr,
                                     flush=True,
                                 )
@@ -236,12 +236,12 @@ async def upload_document(
                                     document_processed = True
                                 else:
                                     print(
-                                        "[UPLOAD] WARNING: Document processing completed but extraction failed or low confidence",
+                                        "[UPLOAD] WARNING: Document processing completed but extraction failed or low confidence",  # noqa: E501
                                         file=sys.stderr,
                                         flush=True,
                                     )
                                     logger.warning(
-                                        "Document %s processing completed but extraction failed or low confidence",
+                                        "Document %s processing completed but extraction failed or low confidence",  # noqa: E501
                                         asset.id,
                                     )
                             else:
@@ -251,7 +251,7 @@ async def upload_document(
                                     process_response.text,
                                 )
                                 print(
-                                    f"[UPLOAD] Document processing returned status {process_response.status_code}: {process_response.text[:200]}",
+                                    f"[UPLOAD] Document processing returned status {process_response.status_code}: {process_response.text[:200]}",  # noqa: E501
                                     file=sys.stderr,
                                     flush=True,
                                 )
@@ -268,7 +268,7 @@ async def upload_document(
                         )
                 else:
                     print(
-                        f"[UPLOAD] Content type {content_type} not processable, skipping document processing",
+                        f"[UPLOAD] Content type {content_type} not processable, skipping document processing",  # noqa: E501
                         file=sys.stderr,
                         flush=True,
                     )
@@ -279,13 +279,13 @@ async def upload_document(
 
                     # Wait for database commit to propagate
                     print(
-                        "[UPLOAD] Waiting 2 seconds for document processing to commit to DB",
+                        "[UPLOAD] Waiting 2 seconds for document processing to commit to DB",  # noqa: E501
                         file=sys.stderr,
                         flush=True,
                     )
                     await asyncio.sleep(2)
 
-                    # Verify the file asset was updated with extraction_data (with retries)
+  #  Verify the file asset was updated with extraction_data (with retries)
                     max_retries = 5
                     has_extraction_data = False
                     for attempt in range(max_retries):
@@ -303,28 +303,32 @@ async def upload_document(
                                 has_extraction = bool(updated_asset.extraction_data)
                                 has_raw_text = bool(updated_asset.raw_text)
                                 print(
-                                    f"[UPLOAD] Attempt {attempt+1}/{max_retries}: File asset {asset.id}: has_extraction_data={has_extraction}, has_raw_text={has_raw_text}, extraction_status={updated_asset.extraction_status}",
+                                    f"[UPLOAD] Attempt {attempt+1}/{max_retries}: "
+                                    f"File asset {asset.id}: "
+                                    f"has_extraction_data={has_extraction}, "
+                                    f"has_raw_text={has_raw_text}, "
+                                    f"extraction_status={updated_asset.extraction_status}",
                                     file=sys.stderr,
                                     flush=True,
                                 )
                                 if has_extraction:
                                     has_extraction_data = True
                                     logger.info(
-                                        "File asset %s verified: has_extraction_data=True",
+                                        "File asset %s verified: has_extraction_data=True",  # noqa: E501
                                         asset.id,
                                     )
                                     break
                                 else:
                                     if attempt < max_retries - 1:
                                         print(
-                                            "[UPLOAD] Extraction data not yet available, waiting 1 more second...",
+                                            "[UPLOAD] Extraction data not yet available, waiting 1 more second...",  # noqa: E501
                                             file=sys.stderr,
                                             flush=True,
                                         )
                                         await asyncio.sleep(1)
                         except Exception as e:
                             print(
-                                f"[UPLOAD] Error verifying file asset (attempt {attempt+1}): {e}",
+                                f"[UPLOAD] Error verifying file asset (attempt {attempt+1}): {e}",  # noqa: E501
                                 file=sys.stderr,
                                 flush=True,
                             )
@@ -333,12 +337,12 @@ async def upload_document(
 
                     if not has_extraction_data:
                         print(
-                            f"[UPLOAD] WARNING: File asset still has no extraction_data after {max_retries} attempts - proceeding anyway",
+                            f"[UPLOAD] WARNING: File asset still has no extraction_data after {max_retries} attempts - proceeding anyway",  # noqa: E501
                             file=sys.stderr,
                             flush=True,
                         )
                         logger.warning(
-                            "File asset %s still has no extraction_data after verification attempts",
+                            "File asset %s still has no extraction_data after verification attempts",  # noqa: E501
                             asset.id,
                         )
 
@@ -382,7 +386,7 @@ async def upload_document(
                         },
                     )
                     print(
-                        f"[UPLOAD] Summary response: status={summary_response.status_code}",
+                        f"[UPLOAD] Summary response: status={summary_response.status_code}",  # noqa: E501
                         file=sys.stderr,
                         flush=True,
                     )
@@ -391,7 +395,7 @@ async def upload_document(
                             "Summary updated successfully for patient %s", patient_uuid
                         )
                         print(
-                            f"[UPLOAD] Summary updated successfully for patient {patient_uuid}",
+                            f"[UPLOAD] Summary updated successfully for patient {patient_uuid}",  # noqa: E501
                             file=sys.stderr,
                             flush=True,
                         )
@@ -402,7 +406,7 @@ async def upload_document(
                             summary_response.text,
                         )
                         print(
-                            f"[UPLOAD] Summary update returned status {summary_response.status_code}: {summary_response.text[:200]}",
+                            f"[UPLOAD] Summary update returned status {summary_response.status_code}: {summary_response.text[:200]}",  # noqa: E501
                             file=sys.stderr,
                             flush=True,
                         )
@@ -421,7 +425,7 @@ async def upload_document(
                 # Don't fail the upload if processing fails
         else:
             print(
-                "[UPLOAD] No patient_id provided, skipping document processing and summary update",
+                "[UPLOAD] No patient_id provided, skipping document processing and summary update",  # noqa: E501
                 file=sys.stderr,
                 flush=True,
             )
@@ -446,7 +450,7 @@ async def upload_document(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid UUID format: {e!s}",
-        )
+        ) from e
     except Exception as e:
         # All other errors
         import traceback
@@ -457,7 +461,7 @@ async def upload_document(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Upload failed: {e!s}",
-        )
+        ) from e
 
 
 @router.get(

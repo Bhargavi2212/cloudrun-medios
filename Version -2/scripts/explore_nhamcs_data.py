@@ -170,9 +170,7 @@ def main() -> None:
         & (df["pain"] <= 10)
     ].copy()
     clean_pct = len(df_clean) / len(df) * 100
-    print(
-        f"✅ Clean records for training: {len(df_clean):,} ({clean_pct:.1f}%)"
-    )
+    print(f"✅ Clean records for training: {len(df_clean):,} ({clean_pct:.1f}%)")
     print("   ESI distribution in clean data:")
     print(df_clean["esi_level"].value_counts().sort_index())
 

@@ -19,8 +19,8 @@ SHARED_SECRET = "agg-secret"
 os.environ.setdefault("FEDERATION_SHARED_SECRET", SHARED_SECRET)
 os.environ.setdefault("FEDERATION_CORS_ORIGINS", '["http://localhost:5173"]')
 
-from federation.aggregator.main import create_app
-from federation.config import AggregatorSettings
+from federation.aggregator.main import create_app  # noqa: E402
+from federation.config import AggregatorSettings  # noqa: E402
 
 
 @pytest_asyncio.fixture()

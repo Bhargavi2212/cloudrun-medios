@@ -233,9 +233,7 @@ def outlier_analysis(df: pd.DataFrame) -> None:
         if outlier_count > 0:
             min_outlier = outliers.min()
             max_outlier = outliers.max()
-            print(
-                f"  Min Outlier: {min_outlier:.2f}, Max Outlier: {max_outlier:.2f}"
-            )
+            print(f"  Min Outlier: {min_outlier:.2f}, Max Outlier: {max_outlier:.2f}")
 
     outlier_df = pd.DataFrame(outlier_stats)
     outlier_df.to_csv(OUTPUT_DIR / "outlier_statistics.csv", index=False)
@@ -742,9 +740,7 @@ def bivariate_analysis_cat_cat(df: pd.DataFrame) -> None:
         )
 
         sig = "Yes" if p_value < 0.05 else "No"
-        print(
-            f"{var}: Chi2={chi2:.2f}, p={p_value:.4f}, significant={sig}"
-        )
+        print(f"{var}: Chi2={chi2:.2f}, p={p_value:.4f}, significant={sig}")
 
     chi2_df = pd.DataFrame(chi2_results)
     chi2_df.to_csv(OUTPUT_DIR / "bivariate_categorical_chi2_tests.csv", index=False)
@@ -900,9 +896,7 @@ def bivariate_analysis_num_cat(df: pd.DataFrame) -> None:
         )
 
         sig = "Yes" if p_value < 0.05 else "No"
-        print(
-            f"{num_var}: F={f_stat:.2f}, p={p_value:.4f}, significant={sig}"
-        )
+        print(f"{num_var}: F={f_stat:.2f}, p={p_value:.4f}, significant={sig}")
 
     anova_df = pd.DataFrame(anova_results)
     anova_df.to_csv(OUTPUT_DIR / "bivariate_num_cat_anova_tests.csv", index=False)

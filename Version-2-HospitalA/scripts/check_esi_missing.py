@@ -40,7 +40,8 @@ print(f"  Valid ESI values: {len(valid_esi):,} ({len(valid_esi)/len(df)*100:.2f}
 invalid_esi = df[(df["esi_level"] < 1) | (df["esi_level"] > 5)]
 if len(invalid_esi) > 0:
     print(
-        f"  Invalid ESI values: {len(invalid_esi):,} ({len(invalid_esi)/len(df)*100:.2f}%)"
+        f"  Invalid ESI values: {len(invalid_esi):,} "
+        f"({len(invalid_esi)/len(df)*100:.2f}%)"
     )
     print(f"  Invalid values: {sorted(invalid_esi['esi_level'].unique())}")
 else:

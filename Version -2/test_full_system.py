@@ -77,7 +77,8 @@ try:
     )
     if processor._model is None:
         print(
-            "[WARN] Document processor initialized but Gemini model not available (may need google-generativeai package)"
+            "[WARN] Document processor initialized but Gemini model not "
+            "available (may need google-generativeai package)"
         )
     else:
         print("[OK] Document processor initialized with Gemini")

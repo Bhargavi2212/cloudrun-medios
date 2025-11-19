@@ -44,7 +44,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 response.status_code,
             )
             print(
-                f"[REQUEST] RESPONSE: {request.method} {request.url.path} - Status {response.status_code}",
+                f"[REQUEST] RESPONSE: {request.method} {request.url.path} - Status {response.status_code}",  # noqa: E501
                 file=sys.stderr,
                 flush=True,
             )
@@ -84,7 +84,8 @@ def create_app(settings: SummarizerAgentSettings | None = None) -> FastAPI:
     )
 
     # Add request logging middleware AFTER CORS (so CORS is outermost)
-    # Note: Middleware executes in reverse order, so this will be: RequestLogging -> CORS -> handlers
+    # Note: Middleware executes in reverse order, so this will be:
+    # RequestLogging -> CORS -> handlers
     app.add_middleware(RequestLoggingMiddleware)
 
     app.state.settings = loaded_settings
@@ -106,7 +107,7 @@ def create_app(settings: SummarizerAgentSettings | None = None) -> FastAPI:
     # Verify engine initialization
     engine = app.state.summarizer_engine
     logger.info(
-        f"SummarizerEngine initialized: enabled={engine._enabled}, model={engine._model is not None}"
+        f"SummarizerEngine initialized: enabled={engine._enabled}, model={engine._model is not None}"  # noqa: E501
     )
 
     app.state.document_processor = DocumentProcessor(

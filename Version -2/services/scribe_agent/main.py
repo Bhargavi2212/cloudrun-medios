@@ -35,7 +35,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         try:
             response = await call_next(request)
             print(
-                f"[REQUEST] RESPONSE: {request.method} {request.url.path} - Status {response.status_code}",
+                f"[REQUEST] RESPONSE: {request.method} {request.url.path} - Status {response.status_code}",  # noqa: E501
                 file=sys.stderr,
                 flush=True,
             )
@@ -48,7 +48,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             return response
         except Exception as e:
             print(
-                f"[REQUEST] ERROR in request: {request.method} {request.url.path} - {e}",
+                f"[REQUEST] ERROR in request: {request.method} {request.url.path} - {e}",  # noqa: E501
                 file=sys.stderr,
                 flush=True,
             )
@@ -89,7 +89,7 @@ def create_app(settings: ScribeAgentSettings | None = None) -> FastAPI:
     api_key = loaded_settings.gemini_api_key
     if not api_key:
         logger.error(
-            "[CRITICAL] GEMINI_API_KEY is NOT set in settings! Scribe agent will fail to generate AI notes."
+            "[CRITICAL] GEMINI_API_KEY is NOT set in settings! Scribe agent will fail to generate AI notes."  # noqa: E501
         )
         # We won't raise an exception to allow startup, but we log visibly
     else:

@@ -18,7 +18,8 @@ class BaseAppSettings(BaseSettings):
     Base class for application settings.
 
     Attributes:
-        environment: Deployment environment identifier (e.g., development, staging, production).
+        environment: Deployment environment identifier
+            (e.g., development, staging, production).
         debug: Flag indicating whether debug instrumentation should be enabled.
         log_level: Default log level name for the service logger.
     """

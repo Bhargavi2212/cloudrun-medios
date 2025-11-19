@@ -53,7 +53,7 @@ class DocumentProcessor:
 
         if genai is None:
             logger.warning(
-                "google-generativeai not installed, document processing will be disabled"
+                "google-generativeai not installed, document processing will be disabled"  # noqa: E501
             )
             return
 
@@ -179,7 +179,11 @@ class DocumentProcessor:
         self, raw_text: str, metadata: dict[str, Any]
     ) -> str | None:
         """Step 1: Clean and normalize text."""
-        system_instruction = """You are a medical document text cleaning expert. Clean OCR/PDF text, fix errors, identify sections, and normalize formatting. Return only the cleaned text, no JSON."""
+        system_instruction = (
+            """You are a medical document text cleaning expert. Clean OCR/PDF """
+            """text, fix errors, identify sections, and normalize formatting. """
+            """Return only the cleaned text, no JSON."""
+        )
         prompt = f"""Clean this medical document text:
 
 {raw_text[:5000]}
@@ -202,7 +206,11 @@ Return the cleaned text only."""
 
     async def _step2_extract_data(self, cleaned_text: str) -> dict[str, Any] | None:
         """Step 2: Extract structured medical data."""
-        system_instruction = """You are a medical data extraction expert. Extract structured medical information from clinical documents. Return valid JSON only."""
+        system_instruction = (
+            """You are a medical data extraction expert. Extract structured """
+            """medical information from clinical documents. Return valid JSON """
+            """only."""
+        )
         prompt = f"""Extract medical data from this cleaned text:
 
 {cleaned_text[:5000]}
@@ -229,10 +237,12 @@ Return JSON in this exact format:
     "pain_score": {{"value": 8, "unit": "0-10"}}
   }},
   "diagnoses": [
-    {{"diagnosis": "Unstable Angina", "icd_code": "I20.0", "status": "Primary | Rule out | Possible"}}
+    {{"diagnosis": "Unstable Angina", "icd_code": "I20.0",
+      "status": "Primary | Rule out | Possible"}}
   ],
   "medications": {{
-    "new": [{{"name": "Aspirin", "dose": "325", "unit": "mg", "frequency": "1x daily"}}],
+    "new": [{{"name": "Aspirin", "dose": "325", "unit": "mg",
+              "frequency": "1x daily"}}],
     "continued": [],
     "discontinued": []
   }},
@@ -269,7 +279,7 @@ Return only valid JSON, no markdown formatting."""
         self, extracted_data: dict[str, Any]
     ) -> dict[str, Any] | None:
         """Step 3: De-identify PHI."""
-        system_instruction = """You are a PHI de-identification expert. Remove all personally identifiable information from medical data. Return valid JSON only."""
+        system_instruction = """You are a PHI de-identification expert. Remove all personally identifiable information from medical data. Return valid JSON only."""  # noqa: E501
         prompt = f"""De-identify this medical data by replacing PHI with placeholders:
 
 {json.dumps(extracted_data, indent=2)}
@@ -307,7 +317,7 @@ Return the same JSON structure with PHI replaced."""
         self, deidentified_data: dict[str, Any], cleaned_text: str, raw_text: str
     ) -> dict[str, Any] | None:
         """Step 4: Score confidence for each field."""
-        system_instruction = """You are a medical data quality expert. Score confidence (0-100%) for extracted fields. Return valid JSON only."""
+        system_instruction = """You are a medical data quality expert. Score confidence (0-100%) for extracted fields. Return valid JSON only."""  # noqa: E501
         prompt = f"""Score confidence for each extracted field:
 
 De-identified Data:

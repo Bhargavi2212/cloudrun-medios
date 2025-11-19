@@ -21,6 +21,7 @@ TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 if TEST_DATABASE_URL:
     os.environ.setdefault("DATABASE_URL", TEST_DATABASE_URL)
 
+# Imports after environment setup are intentional for test configuration
 from database import ensure_loaded
 from database.base import Base
 from database.session import dispose_engine, init_engine

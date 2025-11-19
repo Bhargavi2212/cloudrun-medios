@@ -51,7 +51,8 @@ class SummarizerEngine:
         )
         encounter_ids = [str(encounter_id) for encounter_id in payload.encounter_ids]
         summary_text = (
-            f"Patient {payload.patient_id} recent encounters ({', '.join(encounter_ids)}): "
+            f"Patient {payload.patient_id} recent encounters "
+            f"({', '.join(encounter_ids)}): "
             f"{bullet_points}"
         )
 

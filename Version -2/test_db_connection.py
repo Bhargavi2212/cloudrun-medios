@@ -31,13 +31,15 @@ async def main():
         ("Anuradha", "Anuradha"),
         ("postgres", "Anuradha"),
     ]
+    default_db = "medi_os_v2"
 
     for username, password in combinations:
-        success = await test_connection(username, password)
+        success = await test_connection(username, password, default_db)
         if success:
             print(f"\nWorking credentials: {username}:{password}")
             print(
-                f"DATABASE_URL=postgresql+asyncpg://{username}:{password}@localhost:5432/medi_os_v2"
+                f"DATABASE_URL=postgresql+asyncpg://{username}:{password}"
+                f"@localhost:5432/{default_db}"
             )
             return
 

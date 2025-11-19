@@ -18,7 +18,7 @@ async def test_summarizer():
             if resp.status_code == 200:
                 try:
                     print(f"Response: {resp.json()}")
-                except:
+                except Exception:
                     print(f"Response text: {resp.text[:200]}")
             else:
                 print(f"Error: {resp.text[:200]}")
@@ -29,7 +29,7 @@ async def test_summarizer():
             print("=" * 60)
             print("TEST 2: Testing summary generation...")
             print(
-                "Note: Replace patient_id and encounter_ids with real values from your DB"
+                "Note: Replace patient_id and encounter_ids with real values from your DB"  # noqa: E501
             )
 
             # Example - you may need to adjust these

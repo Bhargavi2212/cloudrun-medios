@@ -72,11 +72,11 @@ async def seed_demo_data(session: AsyncSession) -> None:
                             "spo2": 97,
                         },
                         "chief_complaint": (
-                            "Shortness of breath after community Kiroween event."
+                            "Shortness of breath after community " "Kiroween event."
                         ),
                         "notes": (
-                            "Triage nurse Elena Shaw reviewed vitals and flagged "
-                            "moderate acuity."
+                            "Triage nurse Elena Shaw reviewed vitals and "
+                            "flagged moderate acuity."
                         ),
                         "triage_score": 3,
                         "triage_model_version": "triage_local_v1",
@@ -85,8 +85,8 @@ async def seed_demo_data(session: AsyncSession) -> None:
                         "transcript": (
                             "Nurse: Alex, we're going to run a quick pulmonary check.\n"
                             "Patient: Breathing still feels tight.\n"
-                            "Doctor: We'll start a nebulizer and reassess in "
-                            "thirty minutes."
+                            "Doctor: We'll start a nebulizer and reassess "
+                            "in thirty minutes."
                         ),
                         "speaker_segments": [
                             {
@@ -144,10 +144,10 @@ async def seed_demo_data(session: AsyncSession) -> None:
                             "pain": 2,
                             "spo2": 99,
                         },
-                        "chief_complaint": "Follow-up on bronchodilator response.",
+                        "chief_complaint": ("Follow-up on bronchodilator response."),
                         "notes": (
-                            "Remote nurse Priya Das confirmed symptom improvement "
-                            "during tele-check."
+                            "Remote nurse Priya Das confirmed symptom "
+                            "improvement during tele-check."
                         ),
                         "triage_score": 2,
                         "triage_model_version": "triage_partner_v1",
@@ -156,8 +156,8 @@ async def seed_demo_data(session: AsyncSession) -> None:
                         "transcript": (
                             "Remote Doctor: Alex, any shortness of breath today?\n"
                             "Patient: Only with intense exercise.\n"
-                            "Remote Doctor: Continue inhaler pre-activity and "
-                            "schedule spirometry."
+                            "Remote Doctor: Continue inhaler pre-activity "
+                            "and schedule spirometry."
                         ),
                         "speaker_segments": [
                             {
@@ -337,8 +337,8 @@ async def seed_demo_data(session: AsyncSession) -> None:
                             "Initial urgent care visit prior to ED transfer."
                         ),
                         "notes": (
-                            "Lakeside RN Hannah Ortiz escalated case to Kiroween ED "
-                            "for higher acuity care."
+                            "Lakeside RN Hannah Ortiz escalated case to "
+                            "Kiroween ED for higher acuity care."
                         ),
                         "triage_score": 2,
                         "triage_model_version": "triage_partner_v1",
@@ -480,7 +480,8 @@ async def seed_demo_data(session: AsyncSession) -> None:
                             "Laceration from seasonal Kiroween festival setup."
                         ),
                         "notes": (
-                            "Nurse Lucia Mendez cleaned wound; no tendon involvement."
+                            "Nurse Lucia Mendez cleaned wound; no tendon "
+                            "involvement."
                         ),
                         "triage_score": 4,
                         "triage_model_version": "triage_local_v1",
@@ -490,8 +491,8 @@ async def seed_demo_data(session: AsyncSession) -> None:
                             "Nurse: We'll irrigate and close the cut with "
                             "adhesive strips.\n"
                             "Patient: It happened while moving props.\n"
-                            "Doctor: No stitches required; keep the area dry for "
-                            "48 hours."
+                            "Doctor: No stitches required; keep the area dry "
+                            "for 48 hours."
                         ),
                         "speaker_segments": [
                             {

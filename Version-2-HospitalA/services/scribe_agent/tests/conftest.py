@@ -19,12 +19,12 @@ ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from database import ensure_loaded
-from database.base import Base
-from database.models import Encounter, Patient
-from database.session import dispose_engine, init_engine
-from services.scribe_agent.config import ScribeAgentSettings
-from services.scribe_agent.main import create_app
+from database import ensure_loaded  # noqa: E402
+from database.base import Base  # noqa: E402
+from database.models import Encounter, Patient  # noqa: E402
+from database.session import dispose_engine, init_engine  # noqa: E402
+from services.scribe_agent.config import ScribeAgentSettings  # noqa: E402
+from services.scribe_agent.main import create_app  # noqa: E402
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 if TEST_DATABASE_URL:

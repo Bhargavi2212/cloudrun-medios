@@ -54,7 +54,8 @@ for col in rfv_cols:
     negative_count = (df[col] < 0).sum()
     if negative_count > 0:
         print(
-            f"  Negative values: {negative_count:,} ({(negative_count/len(df)*100):.2f}%)"
+            f"  Negative values: {negative_count:,} "
+            f"({(negative_count/len(df)*100):.2f}%)"
         )
 
     # Check for zero values
@@ -68,13 +69,15 @@ print("RECORDS WITH ALL RFV VALUES MISSING:")
 print("-" * 70)
 all_rfv_missing = df[rfv_cols].isnull().all(axis=1).sum()
 print(
-    f"Records with all RFV missing: {all_rfv_missing:,} ({(all_rfv_missing/len(df)*100):.2f}%)"
+    f"Records with all RFV missing: {all_rfv_missing:,} "
+    f"({(all_rfv_missing/len(df)*100):.2f}%)"
 )
 
 # Check records with at least one RFV
 at_least_one_rfv = df[rfv_cols].notnull().any(axis=1).sum()
 print(
-    f"Records with at least one RFV: {at_least_one_rfv:,} ({(at_least_one_rfv/len(df)*100):.2f}%)"
+    f"Records with at least one RFV: {at_least_one_rfv:,} "
+    f"({(at_least_one_rfv/len(df)*100):.2f}%)"
 )
 
 # Summary
@@ -83,13 +86,16 @@ print("SUMMARY")
 print("=" * 70)
 print(f"Total records: {len(df):,}")
 print(
-    f"Records with RFV1: {df[rfv_cols[0]].notna().sum():,} ({(df[rfv_cols[0]].notna().sum()/len(df)*100):.2f}%)"
+    f"Records with RFV1: {df[rfv_cols[0]].notna().sum():,} "
+    f"({(df[rfv_cols[0]].notna().sum()/len(df)*100):.2f}%)"
 )
 if len(rfv_cols) > 1:
     print(
-        f"Records with RFV2: {df[rfv_cols[1]].notna().sum():,} ({(df[rfv_cols[1]].notna().sum()/len(df)*100):.2f}%)"
+        f"Records with RFV2: {df[rfv_cols[1]].notna().sum():,} "
+        f"({(df[rfv_cols[1]].notna().sum()/len(df)*100):.2f}%)"
     )
 if len(rfv_cols) > 2:
     print(
-        f"Records with RFV3: {df[rfv_cols[2]].notna().sum():,} ({(df[rfv_cols[2]].notna().sum()/len(df)*100):.2f}%)"
+        f"Records with RFV3: {df[rfv_cols[2]].notna().sum():,} "
+        f"({(df[rfv_cols[2]].notna().sum()/len(df)*100):.2f}%)"
     )

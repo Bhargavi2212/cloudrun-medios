@@ -171,9 +171,9 @@ def clean_and_transform(df: pd.DataFrame) -> pd.DataFrame:
         # Replace missing value codes in Fahrenheit before conversion
         df["TEMPF"] = df["TEMPF"].replace([0, 9, 99, 999, 9999, -9, -8], None)
         # Check temp values before conversion
-        temp_min = df['TEMPF'].min()
-        temp_max = df['TEMPF'].max()
-        temp_count = df['TEMPF'].notna().sum()
+        temp_min = df["TEMPF"].min()
+        temp_max = df["TEMPF"].max()
+        temp_count = df["TEMPF"].notna().sum()
         print(
             f"  TEMPF stats (raw integer): min={temp_min:.1f}, "
             f"max={temp_max:.1f}, non-null={temp_count:,}"
@@ -183,9 +183,9 @@ def clean_and_transform(df: pd.DataFrame) -> pd.DataFrame:
         df["temp_c"] = df["TEMPF"].apply(
             lambda x: ((x / 10) - 32) * 5 / 9 if pd.notna(x) else None
         )
-        temp_c_min = df['temp_c'].min()
-        temp_c_max = df['temp_c'].max()
-        temp_c_count = df['temp_c'].notna().sum()
+        temp_c_min = df["temp_c"].min()
+        temp_c_max = df["temp_c"].max()
+        temp_c_count = df["temp_c"].notna().sum()
         print(
             f"  temp_c stats: min={temp_c_min:.1f}, max={temp_c_max:.1f}, "
             f"non-null={temp_c_count:,}"
@@ -431,8 +431,8 @@ def main() -> None:
     print("=" * 70)
     df_combined = pd.concat(all_dataframes, ignore_index=True)
     print(f"SUCCESS: Combined dataset: {len(df_combined):,} records")
-    year_min = df_combined['year'].min()
-    year_max = df_combined['year'].max()
+    year_min = df_combined["year"].min()
+    year_max = df_combined["year"].max()
     print(f"   Years: {year_min:.0f} - {year_max:.0f}")
 
     # Clean and transform
@@ -472,9 +472,7 @@ def main() -> None:
     print(f"\nSaving to {output_file}...")
     df_clean.to_csv(output_file, index=False)
     num_cols = len(df_clean.columns)
-    print(
-        f"SUCCESS: Dataset saved: {len(df_clean):,} records, {num_cols} columns"
-    )
+    print(f"SUCCESS: Dataset saved: {len(df_clean):,} records, {num_cols} columns")
     print(f"   File size: {output_file.stat().st_size / 1024 / 1024:.1f} MB")
 
 

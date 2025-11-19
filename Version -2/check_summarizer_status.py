@@ -21,11 +21,7 @@ if gemini_key:
 database_url = os.getenv("DATABASE_URL")
 print(f"\n2. DATABASE_URL: {'SET' if database_url else 'NOT SET'}")
 if database_url:
-    scheme = (
-        database_url.split("://")[0]
-        if "://" in database_url
-        else "unknown"
-    )
+    scheme = database_url.split("://")[0] if "://" in database_url else "unknown"
     print(f"   Scheme: {scheme}")
 
 # Check if google-generativeai is installed

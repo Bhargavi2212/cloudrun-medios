@@ -78,6 +78,6 @@ class EmojiLevelFilter(logging.Filter):
             Always True to keep the record.
         """
 
-        emoji = EMOJI_LEVEL_MAP.get(record.levelno, "ℹ️")
+        emoji = EMOJI_LEVEL_MAP.get(record.levelno, "i")
         record.emoji = emoji
         return True

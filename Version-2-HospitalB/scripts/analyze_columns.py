@@ -26,7 +26,7 @@ df = pd.read_csv(DATA_DIR / "nhamcs_triage_dataset.csv")
 print("=" * 80)
 print("COMPREHENSIVE COLUMN ANALYSIS FOR NHAMCS TRIAGE DATASET")
 print("=" * 80)
-print(f"\nDataset Shape: {df.shape[0]:,} rows × {df.shape[1]} columns")
+print(f"\nDataset Shape: {df.shape[0]:,} rows x {df.shape[1]} columns")
 print(f"Total Records: {len(df):,}")
 
 # Check for duplicates
@@ -140,12 +140,12 @@ for col in df.columns:
 
                 if abs(skewness) > 1:
                     print(
-                        "WARNING: Highly skewed (|skewness| > 1) - Consider transformation"
+                        "WARNING: Highly skewed (|skewness| > 1) - Consider transformation"  # noqa: E501
                     )
                     analysis["needs_transformation"] = True
                 elif abs(skewness) > 0.5:
                     print(
-                        "WARNING: Moderately skewed (|skewness| > 0.5) - May need transformation"
+                        "WARNING: Moderately skewed (|skewness| > 0.5) - May need transformation"  # noqa: E501
                     )
                     analysis["needs_transformation"] = "Maybe"
                 else:

@@ -6,7 +6,6 @@ authors = ["Medi OS Team <engineering@medios.health>"]
 license = "Apache-2.0"
 readme = "README.md"
 packages = []
-package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -53,6 +52,7 @@ ignore = ["B008"]
 
 [tool.ruff.per-file-ignores]
 "scripts/**/*.py" = ["N803", "N806"]  # ML naming conventions (X_train, etc.)
+"**/conftest.py" = ["E402"]  # Imports after env setup are intentional
 
 [tool.ruff.format]
 quote-style = "double"

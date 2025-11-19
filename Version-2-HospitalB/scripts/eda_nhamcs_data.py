@@ -232,7 +232,7 @@ def outlier_analysis(df: pd.DataFrame) -> None:
         print(f"  Outliers: {outlier_count:,} ({outlier_pct:.2f}%)")
         if outlier_count > 0:
             print(
-                f"  Min Outlier: {outliers.min():.2f}, Max Outlier: {outliers.max():.2f}"
+                f"  Min Outlier: {outliers.min():.2f}, Max Outlier: {outliers.max():.2f}"  # noqa: E501
             )
 
     outlier_df = pd.DataFrame(outlier_stats)
@@ -740,7 +740,7 @@ def bivariate_analysis_cat_cat(df: pd.DataFrame) -> None:
         )
 
         print(
-            f"{var}: Chi2={chi2:.2f}, p={p_value:.4f}, significant={'Yes' if p_value < 0.05 else 'No'}"
+            f"{var}: Chi2={chi2:.2f}, p={p_value:.4f}, significant={'Yes' if p_value < 0.05 else 'No'}"  # noqa: E501
         )
 
     chi2_df = pd.DataFrame(chi2_results)
@@ -897,7 +897,7 @@ def bivariate_analysis_num_cat(df: pd.DataFrame) -> None:
         )
 
         print(
-            f"{num_var}: F={f_stat:.2f}, p={p_value:.4f}, significant={'Yes' if p_value < 0.05 else 'No'}"
+            f"{num_var}: F={f_stat:.2f}, p={p_value:.4f}, significant={'Yes' if p_value < 0.05 else 'No'}"  # noqa: E501
         )
 
     anova_df = pd.DataFrame(anova_results)

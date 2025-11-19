@@ -25,7 +25,8 @@ async def main():
     print("Testing database connections...")
     print("-" * 60)
 
-    # Try different combinations (use environment variables - do not hardcode passwords!)
+    # Try different combinations
+    # (use environment variables - do not hardcode passwords!)
     # Get from environment or prompt user
     db_user = os.getenv("DB_USER", "postgres")
     db_password = os.getenv("DB_PASSWORD", "")
@@ -44,9 +45,10 @@ async def main():
     for username, password in combinations:
         success = await test_connection(username, password)
         if success:
+            db_name = os.getenv("DB_NAME", "medi_os_v2_a")
             print(f"\nWorking credentials: {username}:{password}")
             print(
-                f"DATABASE_URL=postgresql+asyncpg://{username}:{password}@localhost:5432/{database}"
+                f"DATABASE_URL=postgresql+asyncpg://{username}:{password}@localhost:5432/{db_name}"
             )
             return
 

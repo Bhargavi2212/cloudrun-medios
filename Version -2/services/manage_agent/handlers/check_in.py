@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
     response_model=StandardResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Check-in patient with chief complaint",
-    description="Create an encounter for a patient with chief complaint and initial triage estimate.",
+    description="Create an encounter for a patient with chief complaint and initial triage estimate.",  # noqa: E501
 )
 async def check_in_patient(
     payload: CheckInRequest,
@@ -53,7 +53,7 @@ async def check_in_patient(
     Check-in a patient by creating an encounter with chief complaint.
     """
     print(
-        f"[CHECK-IN] Starting check-in for patient_id: {payload.patient_id}, complaint: {payload.chief_complaint}",
+        f"[CHECK-IN] Starting check-in for patient_id: {payload.patient_id}, complaint: {payload.chief_complaint}",  # noqa: E501
         file=sys.stderr,
         flush=True,
     )
@@ -80,7 +80,7 @@ async def check_in_patient(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid patient_id format.",
-            )
+            ) from None
 
     patient_service = PatientService(session)
     patient = await patient_service.get_patient(patient_id)
@@ -96,7 +96,7 @@ async def check_in_patient(
         )
 
     print(
-        f"[CHECK-IN] Patient found: {patient.first_name} {patient.last_name} (MRN: {patient.mrn})",
+        f"[CHECK-IN] Patient found: {patient.first_name} {patient.last_name} (MRN: {patient.mrn})",  # noqa: E501
         file=sys.stderr,
         flush=True,
     )
@@ -166,7 +166,7 @@ async def check_in_patient(
     # Run receptionist triage classification (age + complaint only)
     try:
         print(
-            f"[CHECK-IN] Running receptionist triage (age: {patient_age}, complaint: {payload.chief_complaint})",
+            f"[CHECK-IN] Running receptionist triage (age: {patient_age}, complaint: {payload.chief_complaint})",  # noqa: E501
             file=sys.stderr,
             flush=True,
         )
@@ -180,7 +180,7 @@ async def check_in_patient(
         triage_obs.triage_model_version = triage_result.model_version
         encounter.acuity_level = triage_result.acuity_level
         print(
-            f"[CHECK-IN] Triage result: Level {triage_result.acuity_level} (model: {triage_result.model_version})",
+            f"[CHECK-IN] Triage result: Level {triage_result.acuity_level} (model: {triage_result.model_version})",  # noqa: E501
             file=sys.stderr,
             flush=True,
         )
@@ -192,12 +192,12 @@ async def check_in_patient(
     except Exception as e:
         # If triage fails, default to level 4 (routine)
         print(
-            f"[CHECK-IN] WARNING: Triage classification failed, defaulting to level 4: {e}",
+            f"[CHECK-IN] WARNING: Triage classification failed, defaulting to level 4: {e}",  # noqa: E501
             file=sys.stderr,
             flush=True,
         )
         logger.warning(
-            "[CHECK-IN] WARNING: Triage classification failed, defaulting to level 4: %s",
+            "[CHECK-IN] WARNING: Triage classification failed, defaulting to level 4: %s",  # noqa: E501
             e,
         )
         triage_obs.triage_score = 4
@@ -206,7 +206,7 @@ async def check_in_patient(
     await session.commit()
     await session.refresh(encounter)
     print(
-        f"[CHECK-IN] Check-in completed successfully. Encounter: {encounter.id}, Triage Level: {encounter.acuity_level}",
+        f"[CHECK-IN] Check-in completed successfully. Encounter: {encounter.id}, Triage Level: {encounter.acuity_level}",  # noqa: E501
         file=sys.stderr,
         flush=True,
     )
@@ -217,13 +217,14 @@ async def check_in_patient(
     )
 
     # Query DOL for cross-hospital profile and merge with local data
-    # Use MRN-based matching if patient_id lookup fails (enables cross-hospital patient matching)
+    # Use MRN-based matching if patient_id lookup fails
+    # (enables cross-hospital patient matching)
     merged_profile = None
     dol_profile_found = False
     if check_in_service is not None:
         try:
             print(
-                f"[CHECK-IN] Querying DOL for patient profile: {patient_id} (MRN: {patient.mrn})",
+                f"[CHECK-IN] Querying DOL for patient profile: {patient_id} (MRN: {patient.mrn})",  # noqa: E501
                 file=sys.stderr,
                 flush=True,
             )
@@ -262,7 +263,7 @@ async def check_in_patient(
                     )
                 except Exception as merge_error:
                     print(
-                        f"[CHECK-IN] WARNING: Failed to build local profile: {merge_error}",
+                        f"[CHECK-IN] WARNING: Failed to build local profile: {merge_error}",  # noqa: E501
                         file=sys.stderr,
                         flush=True,
                     )
@@ -272,12 +273,12 @@ async def check_in_patient(
                     )
             else:
                 print(
-                    f"[CHECK-IN] WARNING: DOL query failed (status {e.response.status_code}), using local profile only",
+                    f"[CHECK-IN] WARNING: DOL query failed (status {e.response.status_code}), using local profile only",  # noqa: E501
                     file=sys.stderr,
                     flush=True,
                 )
                 logger.warning(
-                    "[CHECK-IN] WARNING: DOL query failed (status %d), using local profile only",
+                    "[CHECK-IN] WARNING: DOL query failed (status %d), using local profile only",  # noqa: E501
                     e.response.status_code,
                 )
                 # DOL unavailable - use local profile only
@@ -287,7 +288,7 @@ async def check_in_patient(
                     )
                 except Exception as merge_error:
                     print(
-                        f"[CHECK-IN] WARNING: Failed to build local profile: {merge_error}",
+                        f"[CHECK-IN] WARNING: Failed to build local profile: {merge_error}",  # noqa: E501
                         file=sys.stderr,
                         flush=True,
                     )

@@ -21,7 +21,7 @@ if str(ROOT) not in sys.path:
 
 TEST_DATABASE_URL = (
     os.environ.get("TEST_DATABASE_URL")
-    or "postgresql+asyncpg://postgres:Anuradha@localhost:5432/medi_os_v2"
+    or "postgresql+asyncpg://postgres:test_password@localhost:5432/medi_os_v2_test"
 )
 os.environ["TEST_DATABASE_URL"] = TEST_DATABASE_URL
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL
@@ -32,9 +32,9 @@ os.environ["DOL_PEERS"] = "[]"
 SHARED_SECRET = "test-shared-secret"
 
 # Imports after environment setup are intentional for test configuration
-from database import ensure_loaded  # noqa: E402
-from database.base import Base  # noqa: E402
-from database.models import (  # noqa: E402
+from database import ensure_loaded
+from database.base import Base
+from database.models import (
     DialogueTranscript,
     Encounter,
     Patient,
@@ -42,9 +42,9 @@ from database.models import (  # noqa: E402
     Summary,
     TriageObservation,
 )
-from database.session import dispose_engine, init_engine  # noqa: E402
-from dol_service.config import DOLSettings  # noqa: E402
-from dol_service.main import create_app  # noqa: E402
+from database.session import dispose_engine, init_engine
+from dol_service.config import DOLSettings
+from dol_service.main import create_app
 
 
 @pytest_asyncio.fixture(scope="function")

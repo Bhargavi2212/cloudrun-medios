@@ -66,7 +66,7 @@ class ProfileMergeService:
                 return self._add_source_indicators_to_dol_profile(dol_profile)
             else:
                 raise ValueError(
-                    f"Patient {patient_id} not found locally and no DOL profile provided"
+                    f"Patient {patient_id} not found locally and no DOL profile provided"  # noqa: E501
                 )
 
         # Convert local profile to PortableProfileResponse format
@@ -149,7 +149,8 @@ class ProfileMergeService:
                     timestamp=event.timestamp,
                     content=event.content,
                     source="local",
-                    source_hospital_id=None,  # Local events don't have external hospital ID
+                    source_hospital_id=None,  # Local events don't have
+                    # external hospital ID
                 )
             )
 

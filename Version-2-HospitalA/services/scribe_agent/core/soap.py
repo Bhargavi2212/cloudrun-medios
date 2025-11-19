@@ -55,7 +55,10 @@ class ScribeEngine:
             subjective=f"Patient states: {summary_hint}",
             objective="Vitals are stable; see triage observations for details.",
             assessment="Provisional diagnosis pending further evaluation.",
-            plan="Document encounter, hand off to summarizer-agent for longitudinal update.",
+            plan=(
+                "Document encounter, hand off to summarizer-agent for "
+                "longitudinal update."
+            ),
             model_version=self.model_version,
         )
         logger.info(

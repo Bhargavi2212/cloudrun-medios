@@ -76,22 +76,26 @@ async def generate_soap_note(
             f"Transcript len: {len(payload.transcript) if payload.transcript else 0}\n"
         )
         f.write(
-            f"Transcript preview: {payload.transcript[:100] if payload.transcript else 'None'}\n"
+            f"Transcript preview: {payload.transcript[:100] if payload.transcript else 'None'}\n"  # noqa: E501
         )
 
     logger = logging.getLogger(__name__)
 
     try:
         print("=" * 80, file=sys.stderr, flush=True)
-        print("🔵🔵🔵 SOAP GENERATION REQUEST RECEIVED 🔵🔵🔵", file=sys.stderr, flush=True)
+        print(
+            "🔵🔵🔵 SOAP GENERATION REQUEST RECEIVED 🔵🔵🔵",
+            file=sys.stderr,
+            flush=True,
+        )
         print(f"Encounter ID: {payload.encounter_id}", file=sys.stderr, flush=True)
         print(
-            f"Transcript length: {len(payload.transcript) if payload.transcript else 0} chars",
+            f"Transcript length: {len(payload.transcript) if payload.transcript else 0} chars",  # noqa: E501
             file=sys.stderr,
             flush=True,
         )
         print(
-            f"Transcript preview: {payload.transcript[:200] if payload.transcript else 'EMPTY'}",
+            f"Transcript preview: {payload.transcript[:200] if payload.transcript else 'EMPTY'}",  # noqa: E501
             file=sys.stderr,
             flush=True,
         )
@@ -187,7 +191,9 @@ async def generate_soap_note(
         flush=True,
     )
     print(
-        f"🔵 Subjective preview: {note.subjective[:100]}...", file=sys.stderr, flush=True
+        f"🔵 Subjective preview: {note.subjective[:100]}...",
+        file=sys.stderr,
+        flush=True,
     )
     logger.info("🔵 SOAP note saved with ID=%s", note.id)
     return SoapResponse.model_validate(note, from_attributes=True)

@@ -103,14 +103,14 @@ class SummarizerEngine:
         )
         sys.stderr.write(f"[SUMMARIZE] Starting for patient={payload.patient_id}\n")
         sys.stderr.write(
-            f"[SUMMARIZE] Gemini enabled={self._enabled}, model={self._model is not None}\n"
+            f"[SUMMARIZE] Gemini enabled={self._enabled}, model={self._model is not None}\n"  # noqa: E501
         )
         sys.stderr.flush()
 
         if session is None:
             with open("debug_summarizer.log", "a", encoding="utf-8") as f:
                 f.write(
-                    f"[{dt_module.datetime.now()}] [SUMMARIZE] SESSION IS NONE - RETURNING STUB\n"
+                    f"[{dt_module.datetime.now()}] [SUMMARIZE] SESSION IS NONE - RETURNING STUB\n"  # noqa: E501
                 )
                 f.flush()
             logger.warning("No session provided, using stub summary")
@@ -132,12 +132,12 @@ class SummarizerEngine:
                 len(structured_data.get("timeline", [])),
             )
             print(
-                f"[SUMMARIZE] Timeline built: {len(structured_data.get('timeline', []))} entries",
+                f"[SUMMARIZE] Timeline built: {len(structured_data.get('timeline', []))} entries",  # noqa: E501
                 file=sys.stderr,
                 flush=True,
             )
 
-            # Generate narrative summary text using Gemini (optional, for backward compatibility)
+  #  Generate narrative summary text using Gemini (optional, for backward compatibility)
             summary_text = ""
             if self._enabled and self._model is not None:
                 logger.info("[SUMMARIZE] Calling Gemini for narrative summary...")
@@ -168,7 +168,8 @@ class SummarizerEngine:
                             prompt,
                             generation_config={
                                 "temperature": 0.7,
-                                "max_output_tokens": 3000,  # Increased for more comprehensive summaries
+                                "max_output_tokens": 3000,  # Increased for
+                                # more comprehensive summaries
                             },
                         )
                         result = (response.text or "").strip()
@@ -185,7 +186,7 @@ class SummarizerEngine:
                         len(summary_text),
                     )
                     print(
-                        f"[SUMMARIZE] Gemini summary generated: {len(summary_text)} chars",
+                        f"[SUMMARIZE] Gemini summary generated: {len(summary_text)} chars",  # noqa: E501
                         file=sys.stderr,
                         flush=True,
                     )
@@ -200,14 +201,14 @@ class SummarizerEngine:
                     )
             else:
                 print(
-                    f"[SUMMARIZE] Gemini not enabled (enabled={self._enabled}, model={self._model is not None})",
+                    f"[SUMMARIZE] Gemini not enabled (enabled={self._enabled}, model={self._model is not None})",  # noqa: E501
                     file=sys.stderr,
                     flush=True,
                 )
 
             # Fallback to simple text if Gemini failed
             if not summary_text:
-                fallback_text = f"Patient timeline with {len(structured_data.get('timeline', []))} entries"
+                fallback_text = f"Patient timeline with {len(structured_data.get('timeline', []))} entries"  # noqa: E501
                 print(
                     f"[SUMMARIZE] Using fallback text: {fallback_text}",
                     file=sys.stderr,
@@ -221,7 +222,7 @@ class SummarizerEngine:
                 payload.encounter_ids,
             )
             print(
-                f"[SUMMARIZE] Summary complete: text_len={len(summary_text)}, timeline_entries={len(structured_data.get('timeline', []))}",
+                f"[SUMMARIZE] Summary complete: text_len={len(summary_text)}, timeline_entries={len(structured_data.get('timeline', []))}",  # noqa: E501
                 file=sys.stderr,
                 flush=True,
             )
@@ -389,7 +390,9 @@ class SummarizerEngine:
             else "None provided."
         )
 
-        prompt = f"""You are an expert Medical AI assistant. Your task is to generate a highly structured, chronological timeline summary of the patient's medical history based on the provided context documents and encounters.
+        prompt = f"""You are an expert Medical AI assistant. Your task is to
+generate a highly structured, chronological timeline summary of the patient's
+medical history based on the provided context documents and encounters.
 
 Patient Context:
 {context_text if context_text else "No detailed context available."}
@@ -398,10 +401,15 @@ Recent Highlights:
 {highlights_text}
 
 **INSTRUCTIONS:**
-1.  **Format**: Group events chronologically by **Date and Time** (e.g., `### **October 1, 2024 – 2:05 PM**`).
-2.  **Structure**: Use numbered lists for distinct reports or encounters (e.g., `**1. Uric Acid Test (LAB141)**`).
-3.  **Key Findings**: Use bold headers for findings (e.g., `* **Result:**`, `* **Key Finding:**`, `* **Clinical Note:**`).
-4.  **Citations**: You MUST cite the source of information using the format `[Source: Document Name]` or `[Source: Encounter Date]` at the start or end of statements.
+1.  **Format**: Group events chronologically by **Date and Time**
+    (e.g., `### **October 1, 2024 - 2:05 PM**`).
+2.  **Structure**: Use numbered lists for distinct reports or encounters
+    (e.g., `**1. Uric Acid Test (LAB141)**`).
+3.  **Key Findings**: Use bold headers for findings (e.g., `* **Result:**`,
+    `* **Key Finding:**`, `* **Clinical Note:**`).
+4.  **Citations**: You MUST cite the source of information using the format
+    `[Source: Document Name]` or `[Source: Encounter Date]` at the start or
+    end of statements.
     *   Example: `[Source: Lab Report] Total Bilirubin was elevated at **2.1 mg/dL**`.
     *   If exact line numbers aren't available, cite the document title.
 5.  **Content**:
@@ -412,7 +420,7 @@ Recent Highlights:
 
 **EXAMPLE OUTPUT FORMAT:**
 
-### **October 1, 2024 – 2:05 PM**
+### **October 1, 2024 - 2:05 PM**
 
 **1. Uric Acid Test**
 * **Result:** 8.0 mg/dL [Source: Lab Report A].
@@ -435,7 +443,7 @@ Recent Highlights:
         )
         encounter_ids = [str(encounter_id) for encounter_id in payload.encounter_ids]
         summary_text = (
-            f"Patient {payload.patient_id} recent encounters ({', '.join(encounter_ids)}): "
+            f"Patient {payload.patient_id} recent encounters ({', '.join(encounter_ids)}): "  # noqa: E501
             f"{bullet_points}"
         )
 
@@ -455,7 +463,8 @@ Recent Highlights:
         self, payload: SummaryPayload, session
     ) -> dict[str, Any]:
         """
-        Build structured timeline format with patient info, alerts, and timeline entries.
+        Build structured timeline format with patient info, alerts, and
+        timeline entries.
         """
         import sys
 
@@ -542,14 +551,14 @@ Recent Highlights:
             has_extraction = bool(asset.extraction_data)
             has_raw_text = bool(asset.raw_text)
             logger.info(
-                "[TIMELINE] File asset %s: has_extraction_data=%s, has_raw_text=%s, extraction_status=%s",
+                "[TIMELINE] File asset %s: has_extraction_data=%s, has_raw_text=%s, extraction_status=%s",  # noqa: E501
                 asset.id,
                 has_extraction,
                 has_raw_text,
                 asset.extraction_status,
             )
             print(
-                f"[TIMELINE] File asset {asset.id}: has_extraction_data={has_extraction}, has_raw_text={has_raw_text}, extraction_status={asset.extraction_status}",
+                f"[TIMELINE] File asset {asset.id}: has_extraction_data={has_extraction}, has_raw_text={has_raw_text}, extraction_status={asset.extraction_status}",  # noqa: E501
                 file=sys.stderr,
                 flush=True,
             )
@@ -598,11 +607,11 @@ Recent Highlights:
                         else 99.0
                     )
                     if transcript:
-                        original_file = f"consultation_audio_{encounter.arrival_ts.strftime('%Y%m%d')}.webm"
+                        original_file = f"consultation_audio_{encounter.arrival_ts.strftime('%Y%m%d')}.webm"  # noqa: E501
                 elif transcript:
                     source_type = "ai_scribe"
                     confidence = 95.0
-                    original_file = f"consultation_audio_{encounter.arrival_ts.strftime('%Y%m%d')}.webm"
+                    original_file = f"consultation_audio_{encounter.arrival_ts.strftime('%Y%m%d')}.webm"  # noqa: E501
 
                 # Build entry title
                 title = "ED VISIT"
@@ -619,7 +628,7 @@ Recent Highlights:
                     v = triage.vitals
                     vitals = {
                         "hr": v.get("hr") or v.get("heart_rate"),
-                        "bp": f"{v.get('sbp') or v.get('systolic_bp')}/{v.get('dbp') or v.get('diastolic_bp')}"
+                        "bp": f"{v.get('sbp') or v.get('systolic_bp')}/{v.get('dbp') or v.get('diastolic_bp')}"  # noqa: E501
                         if (v.get("sbp") or v.get("dbp"))
                         else None,
                         "temp": v.get("temp_c") or v.get("temperature"),
@@ -676,27 +685,32 @@ Recent Highlights:
                 extracted_data = file_asset.extraction_data or {}
 
                 logger.info(
-                    "[TIMELINE] Processing file asset %s: filename=%s, has_extraction_data=%s, extraction_status=%s",
+                    "[TIMELINE] Processing file asset %s: filename=%s, has_extraction_data=%s, extraction_status=%s",  # noqa: E501
                     file_asset.id,
                     file_asset.original_filename,
                     bool(extracted_data),
                     file_asset.extraction_status,
                 )
                 print(
-                    f"[TIMELINE] Processing file asset {file_asset.id}: filename={file_asset.original_filename}, has_extraction_data={bool(extracted_data)}, extraction_status={file_asset.extraction_status}",
+                    f"[TIMELINE] Processing file asset {file_asset.id}: "
+                    f"filename={file_asset.original_filename}, "
+                    f"has_extraction_data={bool(extracted_data)}, "
+                    f"extraction_status={file_asset.extraction_status}",
                     file=sys.stderr,
                     flush=True,
                 )
 
-                # If extraction_data is empty but we have raw_text, try to extract basic info from raw_text
+                # If extraction_data is empty but we have raw_text, try to
+                # extract basic info from raw_text
                 if not extracted_data and file_asset.raw_text:
                     logger.warning(
-                        "[TIMELINE] File asset %s has raw_text (%d chars) but no extraction_data. Extracting basic info from raw_text.",
+                        "[TIMELINE] File asset %s has raw_text (%d chars) but "
+                        "no extraction_data. Extracting basic info from raw_text.",
                         file_asset.id,
                         len(file_asset.raw_text),
                     )
                     print(
-                        f"[TIMELINE] WARNING: File asset {file_asset.id} has raw_text ({len(file_asset.raw_text)} chars) but no extraction_data. Extracting basic info from raw_text.",
+                        f"[TIMELINE] WARNING: File asset {file_asset.id} has raw_text ({len(file_asset.raw_text)} chars) but no extraction_data. Extracting basic info from raw_text.",  # noqa: E501
                         file=sys.stderr,
                         flush=True,
                     )
@@ -745,7 +759,7 @@ Recent Highlights:
                         )
                     elif "LAB" in visit_type:
                         entry_type = "lab"
-                        title = f"LAB REPORT - {file_asset.document_type or 'MEDICAL REPORT'}"
+                        title = f"LAB REPORT - {file_asset.document_type or 'MEDICAL REPORT'}"  # noqa: E501
                     else:
                         entry_type = "visit"
                         title = (
@@ -758,19 +772,19 @@ Recent Highlights:
                     if file_asset.content_type:
                         if "image" in file_asset.content_type:
                             entry_type = "lab"
-                            title = f"LAB REPORT - {file_asset.document_type or 'MEDICAL REPORT'}"
+                            title = f"LAB REPORT - {file_asset.document_type or 'MEDICAL REPORT'}"  # noqa: E501
                         elif "pdf" in file_asset.content_type:
                             entry_type = "visit"
                             if chief_complaint_text:
-                                title = f"MEDICAL RECORD - {chief_complaint_text[:50].upper()}"
+                                title = f"MEDICAL RECORD - {chief_complaint_text[:50].upper()}"  # noqa: E501
                             else:
                                 title = (
                                     f"{file_asset.document_type or 'MEDICAL RECORD'}"
                                 )
                         else:
-                            title = f"DOCUMENT - {file_asset.document_type or 'UPLOADED FILE'}"
+                            title = f"DOCUMENT - {file_asset.document_type or 'UPLOADED FILE'}"  # noqa: E501
                     else:
-                        title = f"DOCUMENT - {file_asset.original_filename or 'UPLOADED FILE'}"
+                        title = f"DOCUMENT - {file_asset.original_filename or 'UPLOADED FILE'}"  # noqa: E501
 
                 source_type = (
                     "uploaded_pdf"
@@ -1012,7 +1026,8 @@ Recent Highlights:
         date_patterns = [
             r"\d{1,2}[/-]\d{1,2}[/-]\d{2,4}",  # MM/DD/YYYY or DD/MM/YYYY
             r"\d{4}[/-]\d{1,2}[/-]\d{1,2}",  # YYYY/MM/DD
-            r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4}",  # Month DD, YYYY
+            r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+"
+            r"\d{1,2},?\s+\d{4}",  # Month DD, YYYY
         ]
         for pattern in date_patterns:
             match = re.search(pattern, text, re.IGNORECASE)
@@ -1025,7 +1040,7 @@ Recent Highlights:
                         extracted["visit_metadata"][
                             "visit_date"
                         ] = file_asset.created_at.date().isoformat()
-                except:
+                except Exception:
                     pass
                 break
 

@@ -19,7 +19,10 @@ async def test_create_and_list_transcripts(
 
     payload = {
         "encounter_id": encounter_id,
-        "transcript": "Doctor: Describe your symptoms.\nPatient: I have a sharp headache.",
+        "transcript": (
+            "Doctor: Describe your symptoms.\n"
+            "Patient: I have a sharp headache."
+        ),
         "speaker_segments": [
             {"speaker": "doctor", "content": "Describe your symptoms."},
             {"speaker": "patient", "content": "I have a sharp headache."},

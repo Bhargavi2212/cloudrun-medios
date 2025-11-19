@@ -1,5 +1,6 @@
 """
-Receptionist triage model - uses trained ML model with age and chief complaint (no vitals).
+Receptionist triage model - uses trained ML model with age and chief complaint
+(no vitals).
 """
 
 from __future__ import annotations
@@ -72,7 +73,7 @@ class ReceptionistTriageEngine:
             model_path = MODEL_DIR / self.model_name
             if not model_path.exists():
                 logger.warning(
-                    f"Trained model not found at {model_path}. Using fallback heuristic."
+                    f"Trained model not found at {model_path}. Using fallback heuristic."  # noqa: E501
                 )
                 return
 
@@ -218,7 +219,7 @@ class ReceptionistTriageEngine:
                 acuity = max(1, min(5, acuity))
 
                 explanation = (
-                    f"ML model prediction (XGBoost v3-D) based on age ({payload.age or 'unknown'}) "
+                    f"ML model prediction (XGBoost v3-D) based on age ({payload.age or 'unknown'}) "  # noqa: E501
                     f"and chief complaint analysis. "
                     f"Model: {self.model_version}"
                 )

@@ -170,7 +170,8 @@ def apply_enhanced_smote(
 
     if enhanced:
         # Enhanced strategy: more aggressive for ESI 1-2
-        # Note: SMOTE only supports oversampling, so we keep original counts for classes that would be undersampled
+        # Note: SMOTE only supports oversampling, so we keep original counts
+        # for classes that would be undersampled
         sampling_strategy = {
             1: 20000,  # ESI 1: oversample to 20k (was 10k)
             2: 30000,  # ESI 2: oversample to 30k (was 25k)
@@ -247,7 +248,7 @@ def tune_logistic_regression(
         y_train_sample = y_train
         logger.info(f"Using full dataset ({len(X_train):,} rows) for grid search")
 
-    # Optimized parameter grid - only 10 combinations (5 C × 1 penalty × 2 class_weight)
+    # Optimized parameter grid - only 10 combinations (5 C x 1 penalty x 2 class_weight)
     # Using GridSearchCV for exhaustive search since space is small
     param_grid = {
         "C": [0.1, 1.0, 10.0, 100.0, 1000.0],  # Keep higher C values for convergence
@@ -259,7 +260,8 @@ def tune_logistic_regression(
         ],
     }
 
-    # Create base model with lower max_iter for CV (faster), will use higher for final model
+    # Create base model with lower max_iter for CV (faster), will use higher
+    # for final model
     base_model = LogisticRegression(
         solver="saga",
         max_iter=5000,  # Lower for CV speed, will increase for final model
@@ -281,7 +283,7 @@ def tune_logistic_regression(
     )
 
     logger.info(
-        f"Running grid search on sampled data (10 combinations, {cv}-fold CV, parallelized)..."
+        f"Running grid search on sampled data (10 combinations, {cv}-fold CV, parallelized)..."  # noqa: E501
     )
     start_time = time.time()
 
@@ -510,7 +512,7 @@ def tune_xgboost_enhanced(
 
     # Train final model on full training set with aggressive cost weights
     logger.info(
-        f"\nTraining final XGBoost model on full dataset ({len(X_train):,} rows) with cost-sensitive weights..."
+        f"\nTraining final XGBoost model on full dataset ({len(X_train):,} rows) with cost-sensitive weights..."  # noqa: E501
     )
     best_params = grid_search.best_params_.copy()
     class_weights_xgb = {0: 100, 1: 50, 2: 1, 3: 1, 4: 10}  # ESI 1->0, 2->1, etc.
@@ -790,7 +792,7 @@ def main():
                 f"\nBest model for feature set {feature_set}: {best_model_name}"
             )
             logger.info(
-                f"ESI 1-2 Recall: {feature_set_results[best_model_name]['metrics']['esi_1_2_recall']:.4f}"
+                f"ESI 1-2 Recall: {feature_set_results[best_model_name]['metrics']['esi_1_2_recall']:.4f}"  # noqa: E501
             )
 
     # Evaluate best models on test set
@@ -852,7 +854,7 @@ def main():
         test_metrics_file = (
             OUTPUT_DIR
             / "metrics"
-            / f"test_metrics_{best_model_name.lower().replace(' ', '_')}_{feature_set}.csv"
+            / f"test_metrics_{best_model_name.lower().replace(' ', '_')}_{feature_set}.csv"  # noqa: E501
         )
         pd.DataFrame([test_metrics]).to_csv(test_metrics_file, index=False)
 
@@ -946,18 +948,18 @@ def main():
         report_lines.append("")
         if esi_recall >= 0.75:
             report_lines.append(
-                f"- [OK] ESI 1-2 recall ({esi_recall:.2%}) meets target threshold (>= 75%)"
+                f"- [OK] ESI 1-2 recall ({esi_recall:.2%}) meets target threshold (>= 75%)"  # noqa: E501
             )
         elif esi_recall >= 0.50:
             report_lines.append(
-                f"- [WARN] ESI 1-2 recall ({esi_recall:.2%}) is below target but above 50%"
+                f"- [WARN] ESI 1-2 recall ({esi_recall:.2%}) is below target but above 50%"  # noqa: E501
             )
         else:
             report_lines.append(
-                f"- [ERROR] ESI 1-2 recall ({esi_recall:.2%}) is below 50% - needs improvement"
+                f"- [ERROR] ESI 1-2 recall ({esi_recall:.2%}) is below 50% - needs improvement"  # noqa: E501
             )
         report_lines.append(
-            f"- **Recommended Model**: {best_result['model']} with Feature Set {best_fs}"
+            f"- **Recommended Model**: {best_result['model']} with Feature Set {best_fs}"  # noqa: E501
         )
         report_lines.append("")
 

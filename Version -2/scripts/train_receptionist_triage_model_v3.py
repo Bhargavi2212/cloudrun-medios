@@ -561,9 +561,7 @@ def save_confusion_matrix(
     cm = confusion_matrix(y_true, y_pred, labels=[1, 2, 3, 4, 5])
     cm_df = pd.DataFrame(cm, index=[1, 2, 3, 4, 5], columns=[1, 2, 3, 4, 5])
     model_name_safe = model_name.lower().replace(" ", "_")
-    filename = (
-        f"confusion_matrix_{model_name_safe}_{feature_set}_{dataset_name}.csv"
-    )
+    filename = f"confusion_matrix_{model_name_safe}_{feature_set}_{dataset_name}.csv"
     cm_df.to_csv(output_dir / "analysis" / filename)
     logger.info(f"Saved confusion matrix to: {output_dir / 'analysis' / filename}")
 
@@ -972,8 +970,7 @@ def generate_comparison_report(all_results: dict, output_dir: Path) -> None:
 
         if esi_1_2_recall >= 0.40:
             report_lines.append(
-                f"- [OK] ESI 1-2 recall ({esi_1_2_recall:.2%}) meets "
-                "target (>= 40%)"
+                f"- [OK] ESI 1-2 recall ({esi_1_2_recall:.2%}) meets " "target (>= 40%)"
             )
         else:
             report_lines.append(
@@ -983,8 +980,7 @@ def generate_comparison_report(all_results: dict, output_dir: Path) -> None:
 
         if esi_3_4_recall >= 0.50:
             report_lines.append(
-                f"- [OK] ESI 3-4 recall ({esi_3_4_recall:.2%}) meets "
-                "target (>= 50%)"
+                f"- [OK] ESI 3-4 recall ({esi_3_4_recall:.2%}) meets " "target (>= 50%)"
             )
         else:
             report_lines.append(

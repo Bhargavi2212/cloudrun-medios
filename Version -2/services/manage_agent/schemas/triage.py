@@ -41,7 +41,8 @@ class TriageResponse(BaseModel):
 
 class NurseVitalsRequest(TriageRequest):
     """
-    Request payload for nurses recording vitals (extends triage inputs with optional notes).
+    Request payload for nurses recording vitals (extends triage inputs with
+    optional notes).
     """
 
     notes: str | None = Field(

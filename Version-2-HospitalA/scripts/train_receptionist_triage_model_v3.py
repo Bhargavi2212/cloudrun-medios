@@ -210,7 +210,8 @@ def create_batches(
     num_batches = (total_samples + batch_size - 1) // batch_size  # Ceiling division
 
     logger.info(
-        f"Splitting {total_samples:,} samples into {num_batches} batches of ~{batch_size:,} samples each..."
+        f"Splitting {total_samples:,} samples into {num_batches} batches "
+        f"of ~{batch_size:,} samples each..."
     )
 
     batches = []
@@ -233,7 +234,8 @@ def create_batches(
 
 
 def load_and_modify_params(model_name: str, feature_set: str) -> dict:
-    """Load best hyperparameters from v2 and replace class_weight with moderate weights."""
+    """Load best hyperparameters from v2 and replace class_weight with
+    moderate weights."""
     # Map model names to file names
     model_file_map = {
         "Logistic Regression": "logistic_regression",
@@ -279,7 +281,8 @@ def load_and_modify_params(model_name: str, feature_set: str) -> dict:
 def train_logistic_regression_no_tuning(
     X_train: pd.DataFrame, y_train: pd.Series, feature_set: str, batch_size: int = 5000
 ) -> tuple:
-    """Train Logistic Regression using best params from v2 with moderate class weights, in batches."""
+    """Train Logistic Regression using best params from v2 with moderate
+    class weights, in batches."""
     logger.info("\n" + "=" * 80)
     logger.info("TRAINING LOGISTIC REGRESSION (NO TUNING - BATCH TRAINING)")
     logger.info("=" * 80)
@@ -319,7 +322,8 @@ def train_logistic_regression_no_tuning(
 
     train_time = time.time() - start_time
     logger.info(
-        f"Training completed in {train_time:.2f} seconds (processed {len(X_train):,} samples in {len(batches)} batches)"
+        f"Training completed in {train_time:.2f} seconds "
+        f"(processed {len(X_train):,} samples in {len(batches)} batches)"
     )
 
     return model, params
@@ -328,7 +332,8 @@ def train_logistic_regression_no_tuning(
 def train_decision_tree_no_tuning(
     X_train: pd.DataFrame, y_train: pd.Series, feature_set: str, batch_size: int = 5000
 ) -> tuple:
-    """Train Decision Tree using best params from v2 with moderate class weights, in batches."""
+    """Train Decision Tree using best params from v2 with moderate "
+    "class weights, in batches."""
     logger.info("\n" + "=" * 80)
     logger.info("TRAINING DECISION TREE (NO TUNING - BATCH TRAINING)")
     logger.info("=" * 80)
@@ -354,7 +359,8 @@ def train_decision_tree_no_tuning(
 
     train_time = time.time() - start_time
     logger.info(
-        f"Training completed in {train_time:.2f} seconds (processed {len(X_train):,} samples in {len(batches)} batches)"
+        f"Training completed in {train_time:.2f} seconds "
+        f"(processed {len(X_train):,} samples in {len(batches)} batches)"
     )
 
     return model, params
@@ -363,7 +369,8 @@ def train_decision_tree_no_tuning(
 def train_random_forest_no_tuning(
     X_train: pd.DataFrame, y_train: pd.Series, feature_set: str, batch_size: int = 5000
 ) -> tuple:
-    """Train Random Forest using best params from v2 with moderate class weights, in batches."""
+    """Train Random Forest using best params from v2 with moderate "
+    "class weights, in batches."""
     logger.info("\n" + "=" * 80)
     logger.info("TRAINING RANDOM FOREST (NO TUNING - BATCH TRAINING)")
     logger.info("=" * 80)
@@ -391,7 +398,8 @@ def train_random_forest_no_tuning(
 
     train_time = time.time() - start_time
     logger.info(
-        f"Training completed in {train_time:.2f} seconds (processed {len(X_train):,} samples in {len(batches)} batches)"
+        f"Training completed in {train_time:.2f} seconds "
+        f"(processed {len(X_train):,} samples in {len(batches)} batches)"
     )
     if hasattr(model, "oob_score_"):
         logger.info(f"OOB Score: {model.oob_score_:.4f}")
@@ -402,7 +410,8 @@ def train_random_forest_no_tuning(
 def train_xgboost_no_tuning(
     X_train: pd.DataFrame, y_train: pd.Series, feature_set: str, batch_size: int = 5000
 ) -> tuple:
-    """Train XGBoost using best params from v2 with moderate class weights, in batches."""
+    """Train XGBoost using best params from v2 with moderate "
+    "class weights, in batches."""
     logger.info("\n" + "=" * 80)
     logger.info("TRAINING XGBOOST (NO TUNING - BATCH TRAINING)")
     logger.info("=" * 80)
@@ -458,7 +467,8 @@ def train_xgboost_no_tuning(
 
     train_time = time.time() - start_time
     logger.info(
-        f"Training completed in {train_time:.2f} seconds (processed {len(X_train):,} samples in {len(batches)} batches)"
+        f"Training completed in {train_time:.2f} seconds "
+        f"(processed {len(X_train):,} samples in {len(batches)} batches)"
     )
 
     return model, params
@@ -555,7 +565,10 @@ def save_confusion_matrix(
     """Save confusion matrix to file."""
     cm = confusion_matrix(y_true, y_pred, labels=[1, 2, 3, 4, 5])
     cm_df = pd.DataFrame(cm, index=[1, 2, 3, 4, 5], columns=[1, 2, 3, 4, 5])
-    filename = f"confusion_matrix_{model_name.lower().replace(' ', '_')}_{feature_set}_{dataset_name}.csv"
+    filename = (
+        f"confusion_matrix_{model_name.lower().replace(' ', '_')}_"
+        f"{feature_set}_{dataset_name}.csv"
+    )
     cm_df.to_csv(output_dir / "analysis" / filename)
     logger.info(f"Saved confusion matrix to: {output_dir / 'analysis' / filename}")
 
@@ -741,7 +754,8 @@ def main():
                 params_file = (
                     OUTPUT_DIR
                     / "parameters"
-                    / f"used_params_{model_name.lower().replace(' ', '_')}_{feature_set}.json"
+                    / f"used_params_"
+                    f"{model_name.lower().replace(' ', '_')}_{feature_set}.json"
                 )
                 with open(params_file, "w") as f:
                     json.dump(params, f, indent=2, default=str)
@@ -775,7 +789,8 @@ def main():
                     metrics_file = (
                         OUTPUT_DIR
                         / "metrics"
-                        / f"{dataset_name}_metrics_{model_name.lower().replace(' ', '_')}_{feature_set}.csv"
+                        / f"{dataset_name}_metrics_"
+                        f"{model_name.lower().replace(' ', '_')}_{feature_set}.csv"
                     )
                     pd.DataFrame([metrics]).to_csv(metrics_file, index=False)
                     logger.info(f"Saved {dataset_name} metrics to: {metrics_file}")
@@ -858,7 +873,8 @@ def generate_comparison_report(all_results: dict, output_dir: Path) -> None:
     report_lines.append("## Model Comparison (Test Set)")
     report_lines.append("")
     report_lines.append(
-        "| Model | Feature Set | Accuracy | ESI 1-2 Recall | ESI 3-4 Recall | Macro F1 | Train-Val Gap |"
+        "| Model | Feature Set | Accuracy | ESI 1-2 Recall | ESI 3-4 Recall | "
+        "Macro F1 | Train-Val Gap |"
     )
     report_lines.append(
         "|-------|-------------|----------|----------------|----------------|----------|---------------|"
@@ -885,8 +901,9 @@ def generate_comparison_report(all_results: dict, output_dir: Path) -> None:
             )
 
             report_lines.append(
-                f"| {model_name} | {feature_set} | {accuracy:.4f} | {esi_1_2_recall:.4f} | "
-                f"{esi_3_4_recall:.4f} | {macro_f1:.4f} | {train_val_gap:.4f} |"
+                f"| {model_name} | {feature_set} | {accuracy:.4f} | "
+                f"{esi_1_2_recall:.4f} | {esi_3_4_recall:.4f} | "
+                f"{macro_f1:.4f} | {train_val_gap:.4f} |"
             )
 
             # Track best model (prioritize accuracy >50% and ESI 1-2 recall >40%)
@@ -964,7 +981,8 @@ def generate_comparison_report(all_results: dict, output_dir: Path) -> None:
             )
         else:
             report_lines.append(
-                f"- [WARN] ESI 1-2 recall ({esi_1_2_recall:.2%}) is below target (>= 40%)"
+                f"- [WARN] ESI 1-2 recall ({esi_1_2_recall:.2%}) is below "
+                f"target (>= 40%)"
             )
 
         if esi_3_4_recall >= 0.50:
@@ -973,7 +991,8 @@ def generate_comparison_report(all_results: dict, output_dir: Path) -> None:
             )
         else:
             report_lines.append(
-                f"- [WARN] ESI 3-4 recall ({esi_3_4_recall:.2%}) is below target (>= 50%)"
+                f"- [WARN] ESI 3-4 recall ({esi_3_4_recall:.2%}) is below "
+                f"target (>= 50%)"
             )
 
         report_lines.append(

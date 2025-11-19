@@ -33,7 +33,8 @@ class CheckInService:
     ) -> PortableProfileResponse:
         """
         Retrieve the portable profile for the given patient identifier.
-        Tries patient_id first, then falls back to MRN-based search if patient_id lookup fails.
+        Tries patient_id first, then falls back to MRN-based search if
+        patient_id lookup fails.
 
         Args:
             patient_id: The patient UUID to search for
@@ -53,25 +54,25 @@ class CheckInService:
                 # Patient not found by patient_id - try MRN matching if available
                 if mrn:
                     logger.info(
-                        "Patient %s not found in DOL by patient_id, trying MRN-based matching: %s",
+                        "Patient %s not found in DOL by patient_id, trying MRN-based matching: %s",  # noqa: E501
                         patient_id,
                         mrn,
                     )
                     profile = await self.fetch_profile_by_mrn(mrn)
                     if profile:
                         logger.info(
-                            "Found patient profile in DOL via MRN matching (MRN: %s, DOL patient_id: %s)",
+                            "Found patient profile in DOL via MRN matching (MRN: %s, DOL patient_id: %s)",  # noqa: E501
                             mrn,
                             profile.patient.id,
                         )
                         return profile
                     logger.info(
-                        "Patient not found in DOL by MRN %s either, no cross-hospital history available",
+                        "Patient not found in DOL by MRN %s either, no cross-hospital history available",  # noqa: E501
                         mrn,
                     )
                 else:
                     logger.info(
-                        "Patient %s not found in DOL by patient_id, and no MRN provided for fallback matching",
+                        "Patient %s not found in DOL by patient_id, and no MRN provided for fallback matching",  # noqa: E501
                         patient_id,
                     )
                 # Re-raise the 404 if MRN matching also failed or wasn't attempted

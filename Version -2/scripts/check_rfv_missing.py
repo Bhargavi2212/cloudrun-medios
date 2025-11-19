@@ -54,9 +54,7 @@ for col in rfv_cols:
     negative_count = (df[col] < 0).sum()
     if negative_count > 0:
         neg_pct = negative_count / len(df) * 100
-        print(
-            f"  Negative values: {negative_count:,} ({neg_pct:.2f}%)"
-        )
+        print(f"  Negative values: {negative_count:,} ({neg_pct:.2f}%)")
 
     # Check for zero values
     zero_count = (df[col] == 0).sum()
@@ -69,16 +67,12 @@ print("RECORDS WITH ALL RFV VALUES MISSING:")
 print("-" * 70)
 all_rfv_missing = df[rfv_cols].isnull().all(axis=1).sum()
 all_missing_pct = all_rfv_missing / len(df) * 100
-print(
-    f"Records with all RFV missing: {all_rfv_missing:,} ({all_missing_pct:.2f}%)"
-)
+print(f"Records with all RFV missing: {all_rfv_missing:,} ({all_missing_pct:.2f}%)")
 
 # Check records with at least one RFV
 at_least_one_rfv = df[rfv_cols].notnull().any(axis=1).sum()
 one_rfv_pct = at_least_one_rfv / len(df) * 100
-print(
-    f"Records with at least one RFV: {at_least_one_rfv:,} ({one_rfv_pct:.2f}%)"
-)
+print(f"Records with at least one RFV: {at_least_one_rfv:,} ({one_rfv_pct:.2f}%)")
 
 # Summary
 print("\n" + "=" * 70)

@@ -89,7 +89,7 @@ def load_all_metrics() -> dict:
 def create_comparison_matrix(
     experiment_summary: dict, all_metrics: dict
 ) -> pd.DataFrame:
-    """Create comparison matrix: Feature Set × Model × Metrics."""
+    """Create comparison matrix: Feature Set x Model x Metrics."""
     comparison_data = []
 
     feature_sets = experiment_summary.get("feature_sets", ["A", "B", "C", "D"])
@@ -170,7 +170,8 @@ def generate_summary_report(
     report.append("## Overview")
     report.append("")
     report.append(
-        f"- Feature Sets Evaluated: {', '.join(experiment_summary.get('feature_sets', []))}"
+        f"- Feature Sets Evaluated: "
+        f"{', '.join(experiment_summary.get('feature_sets', []))}"
     )
     report.append(
         f"- Models Evaluated: {', '.join(experiment_summary.get('models', []))}"
@@ -270,19 +271,23 @@ def generate_summary_report(
         esi_recall = best.get("Test_ESI_1_2_Recall", 0)
         if esi_recall >= 0.75:
             report.append(
-                f"- [OK] ESI 1-2 recall ({esi_recall:.2%}) meets target threshold (>= 75%)"
+                f"- [OK] ESI 1-2 recall ({esi_recall:.2%}) meets target "
+                f"threshold (>= 75%)"
             )
         elif esi_recall >= 0.50:
             report.append(
-                f"- [WARN] ESI 1-2 recall ({esi_recall:.2%}) is below target but above 50%"
+                f"- [WARN] ESI 1-2 recall ({esi_recall:.2%}) is below target "
+                f"but above 50%"
             )
         else:
             report.append(
-                f"- [ERROR] ESI 1-2 recall ({esi_recall:.2%}) is below 50% - needs improvement"
+                f"- [ERROR] ESI 1-2 recall ({esi_recall:.2%}) is below 50% - "
+                f"needs improvement"
             )
 
         report.append(
-            f"- **Recommended Model**: {best.get('Model', 'N/A')} with Feature Set {best.get('Feature_Set', 'N/A')}"
+            f"- **Recommended Model**: {best.get('Model', 'N/A')} with "
+            f"Feature Set {best.get('Feature_Set', 'N/A')}"
         )
     report.append("")
 
@@ -333,7 +338,8 @@ def main():
     if "overall" in best_models:
         best = best_models["overall"]
         logger.info(
-            f"Best Overall Model: {best.get('Model', 'N/A')} (Feature Set {best.get('Feature_Set', 'N/A')})"
+            f"Best Overall Model: {best.get('Model', 'N/A')} "
+            f"(Feature Set {best.get('Feature_Set', 'N/A')})"
         )
         logger.info(f"  ESI 1-2 Recall: {best.get('Test_ESI_1_2_Recall', 0):.4f}")
         logger.info(f"  Accuracy: {best.get('Test_Accuracy', 0):.4f}")

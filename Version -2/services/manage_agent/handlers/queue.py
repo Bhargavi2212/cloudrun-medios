@@ -65,7 +65,7 @@ def _get_queue_status(encounter: Encounter) -> str:
     "/queue",
     response_model=ManageQueueResponse,
     summary="Get patient queue",
-    description="Retrieve all patients currently in the queue with their status and triage levels.",
+    description="Retrieve all patients currently in the queue with their status and triage levels.",  # noqa: E501
 )
 async def get_queue(
     session: AsyncSession = Depends(get_session),
@@ -157,4 +157,4 @@ async def get_queue(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve queue: {e!s}",
-        )
+        ) from e

@@ -21,11 +21,11 @@ TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 if TEST_DATABASE_URL:
     os.environ.setdefault("DATABASE_URL", TEST_DATABASE_URL)
 
-from database import ensure_loaded
-from database.base import Base
-from database.session import dispose_engine, init_engine
-from services.manage_agent.config import ManageAgentSettings
-from services.manage_agent.main import create_app
+from database import ensure_loaded  # noqa: E402
+from database.base import Base  # noqa: E402
+from database.session import dispose_engine, init_engine  # noqa: E402
+from services.manage_agent.config import ManageAgentSettings  # noqa: E402
+from services.manage_agent.main import create_app  # noqa: E402
 
 
 @pytest_asyncio.fixture(scope="function")

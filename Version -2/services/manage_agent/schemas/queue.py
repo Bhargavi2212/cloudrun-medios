@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 
 class CheckInRequest(BaseModel):
-    """Request to check in a patient (receptionist workflow - age + chief complaint only)."""
+    """Request to check in a patient (receptionist workflow - age + chief complaint only)."""  # noqa: E501
 
     patient_id: UUID | str = Field(
         ..., description="Patient identifier (UUID or string)."
@@ -30,7 +30,7 @@ class CheckInRequest(BaseModel):
     )
     seen_72h: bool = Field(
         False,
-        description="Whether the patient was seen in the hospital within the past 72 hours.",
+        description="Whether the patient was seen in the hospital within the past 72 hours.",  # noqa: E501
     )
 
     model_config = {

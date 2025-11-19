@@ -5,7 +5,7 @@ Declarative base and mixins for Medi OS database models.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, ClassVar
 
 from sqlalchemy import MetaData, func
 from sqlalchemy.dialects.postgresql import JSONB
@@ -25,8 +25,8 @@ class Base(DeclarativeBase):
     Root declarative base class with naming conventions and JSON mapping.
     """
 
-    metadata = MetaData(naming_convention=NAMING_CONVENTION)
-    type_annotation_map = {
+    metadata: ClassVar[MetaData] = MetaData(naming_convention=NAMING_CONVENTION)
+    type_annotation_map: ClassVar[dict[type, type]] = {
         dict[str, Any]: JSONB,
     }
 

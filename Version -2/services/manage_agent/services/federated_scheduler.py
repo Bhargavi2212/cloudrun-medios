@@ -80,14 +80,14 @@ class FederatedTrainingLoop:
             except httpx.HTTPError as exc:
                 consecutive_failures += 1
                 logger.error(
-                    "Federated training round failed due to HTTP error (consecutive failures: %d/%d): %s",
+                    "Federated training round failed due to HTTP error (consecutive failures: %d/%d): %s",  # noqa: E501
                     consecutive_failures,
                     max_consecutive_failures,
                     exc,
                 )
                 if consecutive_failures >= max_consecutive_failures:
                     logger.critical(
-                        "Too many consecutive failures (%d), pausing federated training for %d seconds",
+                        "Too many consecutive failures (%d), pausing federated training for %d seconds",  # noqa: E501
                         consecutive_failures,
                         self._interval * 2,
                     )
@@ -96,13 +96,13 @@ class FederatedTrainingLoop:
             except Exception:  # pragma: no cover - defensive logging
                 consecutive_failures += 1
                 logger.exception(
-                    "Federated training round failed with unexpected error (consecutive failures: %d/%d)",
+                    "Federated training round failed with unexpected error (consecutive failures: %d/%d)",  # noqa: E501
                     consecutive_failures,
                     max_consecutive_failures,
                 )
                 if consecutive_failures >= max_consecutive_failures:
                     logger.critical(
-                        "Too many consecutive failures (%d), pausing federated training for %d seconds",
+                        "Too many consecutive failures (%d), pausing federated training for %d seconds",  # noqa: E501
                         consecutive_failures,
                         self._interval * 2,
                     )
@@ -117,7 +117,7 @@ class FederatedTrainingLoop:
 
         summary = await self._trainer.run_round()
         logger.info(
-            "🏥 Federated round complete (hospital=%s, accuracy=%.3f, baseline=%s, samples=%s)",
+            "🏥 Federated round complete (hospital=%s, accuracy=%.3f, baseline=%s, samples=%s)",  # noqa: E501
             summary["hospital_id"],
             summary["accuracy"],
             summary["baseline_accuracy"],
@@ -145,7 +145,7 @@ class FederatedTrainingLoop:
             logger.warning("Network error refreshing global model: %s", exc)
             return
 
-        new_version = f"{self._triage_engine.model_version.split('::')[0]}::fed-round-{global_model.round_id}"
+        new_version = f"{self._triage_engine.model_version.split('::')[0]}::fed-round-{global_model.round_id}"  # noqa: E501
         self._triage_engine.update_model_version(new_version)
         logger.info(
             "📈 Updated triage engine model_version=%s (contributors=%s)",

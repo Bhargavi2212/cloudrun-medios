@@ -131,10 +131,10 @@ def create_interactions(X: pd.DataFrame) -> pd.DataFrame:
     Create interaction features.
 
     Creates 4 interaction features:
-    - ambulance_arrival × age_65_plus
-    - ambulance_arrival × rfv_high_risk
-    - age_65_plus × injury
-    - rfv_high_risk × injury
+    - ambulance_arrival x age_65_plus
+    - ambulance_arrival x rfv_high_risk
+    - age_65_plus x injury
+    - rfv_high_risk x injury
 
     Args:
         X: DataFrame with base features and engineered features

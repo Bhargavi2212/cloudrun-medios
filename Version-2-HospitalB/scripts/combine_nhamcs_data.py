@@ -1,5 +1,6 @@
 """
-Combine NHAMCS ED data files (2011-2022) into a unified dataset for triage model training.
+Combine NHAMCS ED data files (2011-2022) into a unified dataset for triage
+model training.
 
 This script:
 1. Parses .sps files to extract column definitions
@@ -172,7 +173,7 @@ def clean_and_transform(df: pd.DataFrame) -> pd.DataFrame:
         df["TEMPF"] = df["TEMPF"].replace([0, 9, 99, 999, 9999, -9, -8], None)
         # Check temp values before conversion
         print(
-            f"  TEMPF stats (raw integer): min={df['TEMPF'].min():.1f}, max={df['TEMPF'].max():.1f}, non-null={df['TEMPF'].notna().sum():,}"
+            f"  TEMPF stats (raw integer): min={df['TEMPF'].min():.1f}, max={df['TEMPF'].max():.1f}, non-null={df['TEMPF'].notna().sum():,}"  # noqa: E501
         )
         # Convert: divide by 10 to get actual Fahrenheit, then convert to Celsius
         # Only convert non-null values
@@ -180,7 +181,7 @@ def clean_and_transform(df: pd.DataFrame) -> pd.DataFrame:
             lambda x: ((x / 10) - 32) * 5 / 9 if pd.notna(x) else None
         )
         print(
-            f"  temp_c stats: min={df['temp_c'].min():.1f}, max={df['temp_c'].max():.1f}, non-null={df['temp_c'].notna().sum():,}"
+            f"  temp_c stats: min={df['temp_c'].min():.1f}, max={df['temp_c'].max():.1f}, non-null={df['temp_c'].notna().sum():,}"  # noqa: E501
         )
         df = df.drop(columns=["TEMPF"])
 
@@ -230,7 +231,7 @@ def clean_and_transform(df: pd.DataFrame) -> pd.DataFrame:
         # Replace negative values and invalid codes with NaN
         df["esi_level"] = df["esi_level"].replace([-9, -8, 0, 7, 9, 99, 999], None)
         # Convert to int if possible (1.0 -> 1), but keep as float for comparison
-        # Actually, pandas handles float(1.0) == int(1) in isin(), so we can keep as float
+  #  Actually, pandas handles float(1.0) == int(1) in isin(), so we can keep as float
 
     # Handle missing values for other numeric vars (temp_c already handled above)
     numeric_vars = [
@@ -245,7 +246,7 @@ def clean_and_transform(df: pd.DataFrame) -> pd.DataFrame:
     ]
     for var in numeric_vars:
         if var in df.columns:
-            # Replace common missing value codes (0, 9, 99, 999, etc.) with NaN for numeric vars
+  #  Replace common missing value codes (0, 9, 99, 999, etc.) with NaN for numeric vars
             # But keep 0 for some vars like pain, age if it's valid
             if var in ["pain", "age"]:
                 df[var] = df[var].replace([999, 9999, 99, -9, -8], None)
@@ -387,7 +388,7 @@ def main() -> None:
             data_file = DATA_DIR / "ed2012-spss.sav"
             if data_file.exists():
                 print("  Using SPSS .sav file for 2012")
-                # For .sav, we'd need pyreadstat, skip for now or use existing combined CSV
+  #  For .sav, we'd need pyreadstat, skip for now or use existing combined CSV
                 continue
 
         if not sps_file.exists():
@@ -431,7 +432,7 @@ def main() -> None:
     print("=" * 70)
     df_clean = clean_and_transform(df_combined)
     print(
-        f"SUCCESS: Clean dataset: {len(df_clean):,} records ({len(df_clean)/len(df_combined)*100:.1f}% retained)"
+        f"SUCCESS: Clean dataset: {len(df_clean):,} records ({len(df_clean)/len(df_combined)*100:.1f}% retained)"  # noqa: E501
     )
 
     # Summary statistics
@@ -460,7 +461,7 @@ def main() -> None:
     print(f"\nSaving to {output_file}...")
     df_clean.to_csv(output_file, index=False)
     print(
-        f"SUCCESS: Dataset saved: {len(df_clean):,} records, {len(df_clean.columns)} columns"
+        f"SUCCESS: Dataset saved: {len(df_clean):,} records, {len(df_clean.columns)} columns"  # noqa: E501
     )
     print(f"   File size: {output_file.stat().st_size / 1024 / 1024:.1f} MB")
 

@@ -57,8 +57,6 @@ async def generate_summary(
         f.write(f"Session type: {type(session) if session else 'None'}\n")
         f.flush()
 
-    import sys
-
     sys.stderr.write("[HANDLER] ====== HANDLER FUNCTION CALLED ======\n")
     sys.stderr.write(f"[HANDLER] Patient: {payload.patient_id}\n")
     sys.stderr.flush()
@@ -84,7 +82,7 @@ async def generate_summary(
         f"[SUMMARY] Encounter IDs: {payload.encounter_ids}", file=sys.stderr, flush=True
     )
     print(
-        f"[SUMMARY] Engine enabled: {engine._enabled}, model exists: {engine._model is not None}",
+        f"[SUMMARY] Engine enabled: {engine._enabled}, model exists: {engine._model is not None}",  # noqa: E501
         file=sys.stderr,
         flush=True,
     )
@@ -163,7 +161,7 @@ async def generate_summary(
             flush=True,
         )
         print(
-            f"[SUMMARY] Summary text length: {len(generation.summary_text) if generation.summary_text else 0}",
+            f"[SUMMARY] Summary text length: {len(generation.summary_text) if generation.summary_text else 0}",  # noqa: E501
             file=sys.stderr,
             flush=True,
         )
@@ -175,7 +173,7 @@ async def generate_summary(
 
         with open("debug_summarizer.log", "a", encoding="utf-8") as f:
             f.write(
-                f"[{datetime.datetime.now()}] Generation complete. Confidence: {generation.confidence_score}\n"
+                f"[{datetime.datetime.now()}] Generation complete. Confidence: {generation.confidence_score}\n"  # noqa: E501
             )
 
         summary_service = SummaryService(session)
@@ -202,7 +200,9 @@ async def generate_summary(
         with open("debug_summarizer.log", "a", encoding="utf-8") as f:
             f.write(f"[{datetime.datetime.now()}] ERROR: {e}\n")
             f.write(f"TRACEBACK:\n{error_trace}\n")
-        raise HTTPException(status_code=500, detail=f"Summary generation failed: {e!s}")
+        raise HTTPException(
+            status_code=500, detail=f"Summary generation failed: {e!s}"
+        ) from e
 
 
 @router.get(

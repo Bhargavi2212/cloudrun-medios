@@ -117,8 +117,9 @@ def extract_receptionist_features() -> tuple:
     X_receptionist_val = X_val[receptionist_features].copy()
     X_receptionist_test = X_test[receptionist_features].copy()
 
-    # Fix RFV clusters: rows with all zeros should be assigned to "Other" cluster
-    # (This happens when the baseline category "Musculoskeletal" was dropped by OneHotEncoder)
+    # Fix RFV clusters: rows with all zeros should be assigned to "Other"
+    # cluster (This happens when the baseline category "Musculoskeletal"
+    # was dropped by OneHotEncoder)
     logger.info(
         "\nFixing RFV clusters (assigning default cluster to rows with all zeros)..."
     )
@@ -158,7 +159,8 @@ def extract_receptionist_features() -> tuple:
         val_issues = (val_rfv_sum != 1).sum()
         test_issues = (test_rfv_sum != 1).sum()
         logger.warning(
-            f"  [WARN] Still have issues - Train: {train_issues}, Val: {val_issues}, Test: {test_issues}"
+            f"  [WARN] Still have issues - Train: {train_issues}, "
+            f"Val: {val_issues}, Test: {test_issues}"
         )
 
     logger.info("\nExtracted receptionist features:")
@@ -266,10 +268,12 @@ def verify_data_quality(
         val_issues = (val_rfv_sum != 1).sum()
         test_issues = (test_rfv_sum != 1).sum()
         logger.warning(
-            f"  RFV clusters: [WARN] - Train: {train_issues}, Val: {val_issues}, Test: {test_issues} rows with issues"
+            f"  RFV clusters: [WARN] - Train: {train_issues}, "
+            f"Val: {val_issues}, Test: {test_issues} rows with issues"
         )
         report.append(
-            f"RFV clusters: Invalid [WARN] - Train: {train_issues}, Val: {val_issues}, Test: {test_issues}"
+            f"RFV clusters: Invalid [WARN] - Train: {train_issues}, "
+            f"Val: {val_issues}, Test: {test_issues}"
         )
 
     # Check age
@@ -294,7 +298,8 @@ def verify_data_quality(
             f.write(line + "\n")
 
     logger.info(
-        f"\nSaved verification report to: {OUTPUT_DIR / 'analysis' / 'data_quality_check.txt'}"
+        f"\nSaved verification report to: "
+        f"{OUTPUT_DIR / 'analysis' / 'data_quality_check.txt'}"
     )
 
 
@@ -390,7 +395,8 @@ def apply_smote(
             f.write(f"  ESI {esi}: {count:,} ({pct:.2f}%)\n")
 
     logger.info(
-        f"\nSaved SMOTE report to: {OUTPUT_DIR / 'analysis' / 'smote_balancing_report.txt'}"
+        f"\nSaved SMOTE report to: "
+        f"{OUTPUT_DIR / 'analysis' / 'smote_balancing_report.txt'}"
     )
 
     return X_train_balanced, y_train_balanced
@@ -482,7 +488,8 @@ def analyze_feature_correlations(
     # Instead, we'll check multicollinearity among all features
     if len(continuous_features) > 0:
         logger.info(
-            f"  Note: VIF requires >=2 features. Single continuous feature '{continuous_features[0]}' - skipping VIF."
+            f"  Note: VIF requires >=2 features. Single continuous "
+            f"feature '{continuous_features[0]}' - skipping VIF."
         )
         logger.info("  Multicollinearity already checked via correlation matrix above.")
 
@@ -553,7 +560,8 @@ def train_logistic_regression(
         OUTPUT_DIR / "analysis" / "receptionist_lr_coefficients.csv", index=False
     )
     logger.info(
-        f"Saved coefficients to: {OUTPUT_DIR / 'analysis' / 'receptionist_lr_coefficients.csv'}"
+        f"Saved coefficients to: "
+        f"{OUTPUT_DIR / 'analysis' / 'receptionist_lr_coefficients.csv'}"
     )
 
     return model, metrics
@@ -601,7 +609,8 @@ def train_decision_tree(
         OUTPUT_DIR / "analysis" / "receptionist_dt_feature_importance.csv", index=False
     )
     logger.info(
-        f"Saved feature importance to: {OUTPUT_DIR / 'analysis' / 'receptionist_dt_feature_importance.csv'}"
+        f"Saved feature importance to: "
+        f"{OUTPUT_DIR / 'analysis' / 'receptionist_dt_feature_importance.csv'}"
     )
 
     return model, metrics
@@ -659,7 +668,8 @@ def train_random_forest(
         OUTPUT_DIR / "analysis" / "receptionist_rf_feature_importance.csv", index=False
     )
     logger.info(
-        f"Saved feature importance to: {OUTPUT_DIR / 'analysis' / 'receptionist_rf_feature_importance.csv'}"
+        f"Saved feature importance to: "
+        f"{OUTPUT_DIR / 'analysis' / 'receptionist_rf_feature_importance.csv'}"
     )
 
     return model, metrics
@@ -801,7 +811,8 @@ def train_xgboost(
         index=False,
     )
     logger.info(
-        f"Saved grid search results to: {OUTPUT_DIR / 'parameters' / 'receptionist_xgboost_grid_search_results.csv'}"
+        f"Saved grid search results to: "
+        f"{OUTPUT_DIR / 'parameters' / 'receptionist_xgboost_grid_search_results.csv'}"
     )
 
     # Step 5.2: Random Search (simplified - use best from grid)
@@ -844,7 +855,8 @@ def train_xgboost(
     ) as f:
         json.dump(best_params, f, indent=2)
     logger.info(
-        f"Saved best parameters to: {OUTPUT_DIR / 'parameters' / 'receptionist_xgboost_best_params.json'}"
+        f"Saved best parameters to: "
+        f"{OUTPUT_DIR / 'parameters' / 'receptionist_xgboost_best_params.json'}"
     )
 
     # Step 5.4: Probability Calibration
@@ -881,7 +893,8 @@ def train_xgboost(
         index=False,
     )
     logger.info(
-        f"Saved feature importance to: {OUTPUT_DIR / 'analysis' / 'receptionist_xgboost_feature_importance.csv'}"
+        f"Saved feature importance to: "
+        f"{OUTPUT_DIR / 'analysis' / 'receptionist_xgboost_feature_importance.csv'}"
     )
 
     return calibrated_model, metrics
@@ -977,7 +990,8 @@ def compare_models(all_metrics: dict) -> None:
         OUTPUT_DIR / "metrics" / "receptionist_model_comparison.csv", index=False
     )
     logger.info(
-        f"\nSaved comparison to: {OUTPUT_DIR / 'metrics' / 'receptionist_model_comparison.csv'}"
+        f"\nSaved comparison to: "
+        f"{OUTPUT_DIR / 'metrics' / 'receptionist_model_comparison.csv'}"
     )
 
     # Select best model
@@ -1000,7 +1014,8 @@ def compare_models(all_metrics: dict) -> None:
         f.write("2. Overall accuracy on test set\n")
         f.write("3. Train-validation gap < 10%\n")
         f.write(
-            f"\n{'[OK]' if best_esi_1_2_recall >= 0.75 else '[WARN]'} ESI 1-2 recall meets threshold\n"
+            f"\n{'[OK]' if best_esi_1_2_recall >= 0.75 else '[WARN]'} "
+            f"ESI 1-2 recall meets threshold\n"
         )
 
     return best_model_name
@@ -1142,7 +1157,8 @@ def evaluate_all_models_on_test(
         index=False,
     )
     logger.info(
-        f"\nSaved test set comparison to: {OUTPUT_DIR / 'metrics' / 'receptionist_model_comparison_test_set.csv'}"
+        f"\nSaved test set comparison to: "
+        f"{OUTPUT_DIR / 'metrics' / 'receptionist_model_comparison_test_set.csv'}"
     )
 
     return test_metrics
@@ -1296,7 +1312,8 @@ def main() -> None:
             OUTPUT_DIR / "analysis" / "feature_importance_ranking.csv", index=False
         )
         logger.info(
-            f"Saved feature importance ranking to: {OUTPUT_DIR / 'analysis' / 'feature_importance_ranking.csv'}"
+            f"Saved feature importance ranking to: "
+            f"{OUTPUT_DIR / 'analysis' / 'feature_importance_ranking.csv'}"
         )
 
         # Phase 7: Save Training Configuration
@@ -1304,7 +1321,11 @@ def main() -> None:
             "feature_list": feature_names,
             "n_features": len(feature_names),
             "medical_flags_available": False,
-            "medical_flags_note": "cebvd, chf, diabetes, ed_dialysis, hiv, no_chronic_conditions were not present in original NHAMCS dataset",
+            "medical_flags_note": (
+                "cebvd, chf, diabetes, ed_dialysis, hiv, "
+                "no_chronic_conditions were not present in original "
+                "NHAMCS dataset"
+            ),
             "training_set_size": len(X_receptionist_train),
             "validation_set_size": len(X_receptionist_val),
             "test_set_size": len(X_receptionist_test),
@@ -1317,7 +1338,9 @@ def main() -> None:
                 "5": 10000,
             },
             "best_model": best_model_name,
-            "best_model_file": f"receptionist_{best_model_name.lower().replace(' ', '_')}.pkl",
+            "best_model_file": (
+                f"receptionist_{best_model_name.lower().replace(' ', '_')}.pkl"
+            ),
             "training_date": pd.Timestamp.now().strftime("%Y-%m-%d"),
             "correlation_check": True,
             "multicollinearity_check": True,
@@ -1330,7 +1353,8 @@ def main() -> None:
             json.dump(config, f, indent=2)
 
         logger.info(
-            f"\nSaved training configuration to: {OUTPUT_DIR / 'parameters' / 'receptionist_training_config.json'}"
+            f"\nSaved training configuration to: "
+            f"{OUTPUT_DIR / 'parameters' / 'receptionist_training_config.json'}"
         )
 
         logger.info("\n" + "=" * 80)
