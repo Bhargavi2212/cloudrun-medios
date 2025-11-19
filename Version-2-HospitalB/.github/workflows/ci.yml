@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: medi_os_v2
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready -U postgres
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/medi_os_v2
+      TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/medi_os_v2_test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18.18.2"
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Install Poetry
+        run: |
+          pip install poetry
+
+      - name: Install dependencies
+        working-directory: Version -2
+        run: |
+          poetry install
+
+      - name: Install frontend dependencies
+        working-directory: Version -2/apps/frontend
+        run: |
+          npm install
+
+      - name: Prepare databases
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d postgres -c "CREATE DATABASE \"medi_os_v2_test\";"
+
+      - name: Ruff lint
+        working-directory: Version -2
+        run: |
+          poetry run ruff check .
+
+      - name: Black format check
+        working-directory: Version -2
+        run: |
+          poetry run black --check .
+
+      - name: MyPy type check
+        working-directory: Version -2
+        run: |
+          poetry run mypy .
+
+      - name: Pytest
+        working-directory: Version -2
+        run: |
+          poetry run pytest
+
+      - name: Frontend lint
+        working-directory: Version -2/apps/frontend
+        run: |
+          npm run lint -- --max-warnings=0
+
+      - name: Frontend unit tests
+        working-directory: Version -2/apps/frontend
+        run: |
+          npm run test -- --run
+

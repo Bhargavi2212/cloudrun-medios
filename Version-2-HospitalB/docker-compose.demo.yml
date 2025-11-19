@@ -1,0 +1,102 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: medi_os
+      POSTGRES_PASSWORD: medi_os
+      POSTGRES_DB: medi_os
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  manage-agent:
+    build:
+      context: .
+      dockerfile: services/manage_agent/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://medi_os:medi_os@postgres:5432/medi_os
+      MANAGE_AGENT_MODEL_VERSION: triage_v0
+      MANAGE_AGENT_CORS_ORIGINS: http://localhost:5173
+      MANAGE_AGENT_DOL_URL: http://dol-service:8004
+      MANAGE_AGENT_DOL_SECRET: super-secret
+      MANAGE_AGENT_HOSPITAL_ID: hospital-b
+    depends_on:
+      - postgres
+    ports:
+      - "9001:9001"
+
+  scribe-agent:
+    build:
+      context: .
+      dockerfile: services/scribe_agent/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://medi_os:medi_os@postgres:5432/medi_os
+      SCRIBE_AGENT_MODEL_VERSION: scribe_v0
+      SCRIBE_AGENT_CORS_ORIGINS: http://localhost:5173
+    depends_on:
+      - postgres
+    ports:
+      - "9002:9002"
+
+  summarizer-agent:
+    build:
+      context: .
+      dockerfile: services/summarizer_agent/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://medi_os:medi_os@postgres:5432/medi_os
+      SUMMARIZER_AGENT_MODEL_VERSION: summary_v0
+      SUMMARIZER_AGENT_CORS_ORIGINS: http://localhost:5173
+    depends_on:
+      - postgres
+    ports:
+      - "9003:9003"
+
+  dol-service:
+    build:
+      context: .
+      dockerfile: dol_service/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://medi_os:medi_os@postgres:5432/medi_os
+      DOL_HOSPITAL_ID: hospital-b
+      DOL_SHARED_SECRET: super-secret
+      DOL_CORS_ORIGINS: http://localhost:5173
+      DOL_PEERS: "[]"
+    depends_on:
+      - postgres
+    ports:
+      - "8004:8004"
+
+  federation-aggregator:
+    build:
+      context: .
+      dockerfile: federation/Dockerfile
+    environment:
+      FEDERATION_SHARED_SECRET: super-secret
+      FEDERATION_CORS_ORIGINS: http://localhost:5173
+    ports:
+      - "8010:8010"
+
+  frontend:
+    build:
+      context: apps/frontend
+    environment:
+      VITE_MANAGE_API_URL: http://localhost:9001
+      VITE_SCRIBE_API_URL: http://localhost:9002
+      VITE_SUMMARIZER_API_URL: http://localhost:9003
+      VITE_DOL_API_URL: http://localhost:8004
+      VITE_FEDERATION_API_URL: http://localhost:8010
+    ports:
+      - "5173:5173"
+    depends_on:
+      - manage-agent
+      - scribe-agent
+      - summarizer-agent
+      - dol-service
+      - federation-aggregator
+
+volumes:
+  pgdata:
+

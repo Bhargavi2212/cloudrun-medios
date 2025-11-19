@@ -1,0 +1,980 @@
+==============================================================================
+
+
+
+MEDI OS: AI-Powered Hospital Operating System
+
+Cursor AI Development Constitution & Project Rules
+
+Version: 1.0
+
+Last Updated: November 1, 2025
+
+==============================================================================
+
+PROJECT OVERVIEW
+
+This is a multi-agent microservices system for hospital operations built for
+
+Google Cloud Run hackathon. Three independent AI agents (Triage, SOAP,
+
+Summarizer) deployed as separate containerized FastAPI services with a
+
+React/TypeScript/MUI frontend.
+
+==============================================================================
+
+1. ARCHITECTURE & TECHNOLOGY STACK
+
+==============================================================================
+
+Core Architecture
+
+- Monorepo with microservices architecture
+
+- Each backend agent is an independent, self-contained FastAPI service
+
+- Frontend is a separate React application
+
+- Services communicate via REST APIs only (no direct imports between services)
+
+- Each service deploys independently to Google Cloud Run
+
+Backend Stack (All Services)
+
+- Python 3.11+
+
+- FastAPI framework
+
+- Pydantic for data validation
+
+- Use async/await for all I/O operations
+
+- Type hints required on all functions
+
+- Google-style docstrings required
+
+Frontend Stack
+
+- React 18+ with TypeScript
+
+- Vite as build tool
+
+- Material UI (MUI) for all UI components
+
+- Axios for API calls
+
+- No other CSS frameworks allowed
+
+Deployment
+
+- Docker containers for each service
+
+- Google Cloud Run as deployment target
+
+- Each service has its own Dockerfile
+
+- Environment-based configuration
+
+==============================================================================
+
+2. PROJECT STRUCTURE
+
+==============================================================================
+
+medi-os/
+
+├── .cursorrules                 # This file
+
+├── .gitignore                   # Comprehensive git exclusions
+
+├── README.md                    # Root documentation
+
+├── docker-compose.yml           # Local development orchestration
+
+├── data/                        # Shared datasets (NOT in git)
+
+├── apps/
+
+│   └── frontend/               # React application
+
+│       ├── src/
+
+│       ├── package.json
+
+│       ├── Dockerfile
+
+│       └── README.md
+
+└── services/
+
+    ├── manage-agent/           # Triage service (port 8001)
+
+    │   ├── core/              # Business logic
+
+    │   ├── handlers/          # API routes
+
+    │   ├── models/            # Trained models (NOT in git)
+
+    │   ├── tests/
+
+    │   ├── main.py
+
+    │   ├── train.py
+
+    │   ├── requirements.txt
+
+    │   ├── Dockerfile
+
+    │   └── README.md
+
+    ├── scribe-agent/          # SOAP generation (port 8002)
+
+    │   └── [same structure]
+
+    └── summarizer-agent/      # Patient history (port 8003)
+
+        └── [same structure]
+
+Service Internal Structure Rules
+
+- core/ contains business logic (data_loader.py, classifier.py, etc.)
+
+- handlers/ contains ONLY FastAPI route definitions
+
+- Business logic must be separate from API handlers
+
+- No circular dependencies between modules
+
+==============================================================================
+
+3. NAMING CONVENTIONS
+
+==============================================================================
+
+Files & Directories
+
+- All lowercase with underscores: data_loader.py, triage_handler.py
+
+- Training scripts: train.py (at service root)
+
+- Test files: test_<module_name>.py
+
+Python Code
+
+- Classes: PascalCase (TriageClassifier, PatientSummarizer)
+
+- Functions: snake_case (classify_patient, load_data, generate_soap)
+
+- Variables: snake_case (patient_data, acuity_level, soap_note)
+
+- Constants: ALL_CAPS (MODEL_PATH, MAX_RETRIES, API_TIMEOUT)
+
+- Private methods: _leading_underscore
+
+TypeScript/React
+
+- Components: PascalCase (TriageCard.tsx, PatientList.tsx)
+
+- Functions: camelCase (fetchPatients, handleSubmit)
+
+- Files: PascalCase for components, camelCase for utilities
+
+==============================================================================
+
+4. CODE QUALITY STANDARDS
+
+==============================================================================
+
+Required for All Python Code
+
+- Type hints on ALL function signatures
+
+- Google-style docstrings on ALL functions and classes
+
+- No unused imports
+
+- No commented-out code blocks
+
+- Black formatting (line length: 88)
+
+- No hardcoded values (use constants or config)
+
+Docstring Format
+
+def classify_patient(vitals: dict) -> int:
+
+    """
+
+    Classify patient acuity based on vital signs.
+
+
+
+    Args:
+
+        vitals: Dictionary containing age, sbp, dbp, hr, rr, bt, pain, saturation
+
+
+
+    Returns:
+
+        Acuity level (1=Critical, 5=Routine)
+
+
+
+    Raises:
+
+        ValueError: If vitals are missing or invalid
+
+    """
+
+Logging with Emojis
+
+Use emojis for quick visual scanning in logs:
+
+- ✅ Success: "✅ Model loaded successfully"
+
+- ❌ Error: "❌ Failed to load data"
+
+- 📊 Info: "📊 Training accuracy: 0.89"
+
+- 🚀 Start: "🚀 Starting API server"
+
+- 📥 Load: "📥 Downloading dataset"
+
+- ⚠️  Warning: "⚠️  High latency detected"
+
+==============================================================================
+
+5. API DESIGN (FastAPI)
+
+==============================================================================
+
+Endpoint Structure
+
+- Pattern: /<agent>/<action>
+
+- Examples:
+
+  - POST /manage/classify
+
+  - POST /scribe/generate-soap
+
+  - POST /summarizer/generate-summary
+
+  - GET /health (required for all services)
+
+Request/Response Models
+
+- Always use Pydantic models for request bodies
+
+- Always use Pydantic models for response bodies
+
+- Include field descriptions for auto-generated docs
+
+- Example:
+
+  class PatientVitals(BaseModel):
+
+      age: float = Field(..., description="Patient age in years")
+
+      sbp: float = Field(..., description="Systolic blood pressure")
+
+Error Handling
+
+- Use HTTPException for all API errors
+
+- 400 for bad input/validation errors
+
+- 500 for internal server errors
+
+- Always include descriptive error messages
+
+CORS
+
+- All services MUST enable CORS for frontend communication
+
+- Configure allowed origins via environment variable
+
+Health Checks
+
+- Every service MUST have GET /health endpoint
+
+- Must return 200 status in < 100ms
+
+- Format: {"status": "healthy", "service": "manage-agent"}
+
+==============================================================================
+
+6. DATA & MODELS
+
+==============================================================================
+
+Data Storage
+
+- Raw datasets: /data folder at monorepo root
+
+- Trained models: /services/<agent>/models/ folder
+
+- NEVER commit data or models to git
+
+Data Philosophy
+
+- Use ONLY real (non-synthetic) datasets
+
+- Document all data sources with download links in README
+
+- Current datasets:
+
+  - Manage Agent: Korean ED Triage (Kaggle)
+
+  - Scribe Agent: MTS-Dialog (GitHub)
+
+  - Summarizer Agent: AGBonnet (HuggingFace)
+
+Model Loading
+
+- Load models ONCE at startup using @app.on_event("startup")
+
+- NEVER load models inside endpoint functions
+
+- Cache models in global variables or application state
+
+- Example:
+
+  @app.on_event("startup")
+
+  async def load_models():
+
+      global classifier
+
+      classifier = TriageClassifier()
+
+      classifier.load('models/triage_classifier.pkl')
+
+Model Training
+
+- Separate training script: train.py at service root
+
+- Save models with clear versioning: triage_v1.pkl
+
+- Print training metrics (accuracy, loss, etc.)
+
+- Training must be reproducible (set random seeds)
+
+==============================================================================
+
+7. SECRETS & CONFIGURATION
+
+==============================================================================
+
+Environment Variables
+
+- All secrets in .env file at service root
+
+- Load using python-dotenv: load_dotenv()
+
+- NEVER hardcode secrets in code
+
+- Example .env:
+
+  GOOGLE_API_KEY=your_key_here
+
+  SERVICE_URL=http://localhost:8001
+
+.env.example
+
+- Commit .env.example with placeholder values
+
+- Document all required environment variables
+
+- Example:
+
+  GOOGLE_API_KEY=your_gemini_api_key_here
+
+  SERVICE_URL=http://localhost:8001
+
+Service URLs
+
+- Use environment variables for inter-service communication
+
+- Example: SCRIBE_SERVICE_URL=http://localhost:8002
+
+==============================================================================
+
+8. TESTING
+
+==============================================================================
+
+Testing Framework
+
+- Python: pytest
+
+- Frontend: Vitest + React Testing Library
+
+Test Organization
+
+- tests/ folder in each service
+
+- Naming: test_<module_name>.py
+
+- One test file per module
+
+Test Coverage
+
+- Aim for >70% coverage on business logic
+
+- 100% coverage on critical paths (classification, generation)
+
+Test Pattern
+
+def test_classifier_prediction():
+
+    """Test triage classifier returns valid acuity"""
+
+    classifier = TriageClassifier()
+
+    classifier.load('models/triage_classifier.pkl')
+
+
+
+    vitals = [62, 160, 90, 88, 18, 37.2, 8, 98]
+
+    acuity = classifier.predict_single(vitals)
+
+
+
+    assert 1 <= acuity <= 5, "Acuity must be 1-5"
+
+    assert isinstance(acuity, int)
+
+==============================================================================
+
+9. GIT & VERSION CONTROL
+
+==============================================================================
+
+.gitignore Must Include
+
+# Python
+
+venv/
+
+.venv/
+
+__pycache__/
+
+*.pyc
+
+*.egg-info/
+
+.pytest_cache/
+
+# Data & Models
+
+data/
+
+*/models/*.pkl
+
+*/models/*.pt
+
+# Secrets
+
+.env
+
+*.key
+
+# Node
+
+node_modules/
+
+dist/
+
+# IDE
+
+.vscode/
+
+.idea/
+
+.cursor/
+
+Commit Message Format (Conventional Commits)
+
+<type>(<scope>): <description>
+
+Types: feat, fix, docs, refactor, test, chore, style, perf
+
+Scope: service name (manage-agent, scribe-agent, etc.)
+
+Examples:
+
+- feat(manage-agent): add triage classifier with XGBoost
+
+- fix(scribe-agent): handle missing patient data gracefully
+
+- docs(readme): update deployment instructions
+
+- refactor(summarizer-agent): extract data loader to separate module
+
+Branch Naming
+
+- feature/<agent>-<description>
+
+- bugfix/<agent>-<description>
+
+- hotfix/<description>
+
+==============================================================================
+
+10. DOCKER & DEPLOYMENT
+
+==============================================================================
+
+Dockerfile Standards
+
+- Base image: python:3.11-slim
+
+- Multi-stage builds when possible
+
+- Run as non-root user for security
+
+- Copy requirements.txt first (layer caching)
+
+- Example:
+
+  FROM python:3.11-slim
+
+  WORKDIR /app
+
+  COPY requirements.txt .
+
+  RUN pip install --no-cache-dir -r requirements.txt
+
+  COPY . .
+
+  RUN useradd -m appuser
+
+  USER appuser
+
+  CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
+
+Port Assignments
+
+- manage-agent: 8001
+
+- scribe-agent: 8002
+
+- summarizer-agent: 8003
+
+- frontend: 5173 (Vite default)
+
+Cloud Run Deployment Checklist
+
+- [ ] Dockerfile builds successfully
+
+- [ ] Service runs locally in Docker
+
+- [ ] Health endpoint returns 200
+
+- [ ] Environment variables documented
+
+- [ ] No secrets in code or Dockerfile
+
+- [ ] Tests pass
+
+- [ ] README updated
+
+==============================================================================
+
+11. PERFORMANCE & OPTIMIZATION
+
+==============================================================================
+
+Response Time Targets
+
+- ML predictions (XGBoost): < 500ms
+
+- LLM generations (Gemini): < 3s
+
+- Health checks: < 100ms
+
+- Database queries: < 200ms
+
+Best Practices
+
+- Use async/await for all I/O operations
+
+- Load models at startup, not per-request
+
+- Cache frequently accessed data
+
+- Use connection pooling for databases
+
+- Implement request timeouts
+
+Async Pattern
+
+from fastapi import FastAPI
+
+import httpx
+
+app = FastAPI()
+
+@app.post("/classify")
+
+async def classify(vitals: PatientVitals):
+
+    # Async I/O operations
+
+    async with httpx.AsyncClient() as client:
+
+        response = await client.post(url, json=data)
+
+    return response.json()
+
+==============================================================================
+
+12. ERROR HANDLING & LOGGING
+
+==============================================================================
+
+Logging
+
+- Use Python's logging module
+
+- Configure at service startup
+
+- Log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+- Include context: patient_id, request_id, timestamps
+
+Error Handling Pattern
+
+from fastapi import HTTPException
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+@app.post("/classify")
+
+async def classify(vitals: PatientVitals):
+
+    try:
+
+        result = classifier.predict(vitals)
+
+        logger.info(f"✅ Classification successful: {result}")
+
+        return result
+
+    except ValueError as e:
+
+        logger.warning(f"⚠️  Invalid input: {e}")
+
+        raise HTTPException(status_code=400, detail=str(e))
+
+    except Exception as e:
+
+        logger.error(f"❌ Unexpected error: {e}", exc_info=True)
+
+        raise HTTPException(status_code=500, detail="Internal error")
+
+Never Use Empty Except
+
+# Bad
+
+try:
+
+    do_something()
+
+except:
+
+    pass
+
+# Good
+
+try:
+
+    do_something()
+
+except SpecificException as e:
+
+    logger.error(f"Error: {e}")
+
+    raise
+
+==============================================================================
+
+13. DOCUMENTATION
+
+==============================================================================
+
+README Requirements
+
+Every service MUST have README.md with:
+
+1. Service purpose & description
+
+2. API endpoints (list all routes)
+
+3. Request/response examples
+
+4. How to run locally
+
+5. How to train models (if applicable)
+
+6. Environment variables needed
+
+7. How to run tests
+
+Root README Must Include
+
+1. Project overview & architecture
+
+2. Service diagram (visual or text)
+
+3. How to run all services locally
+
+4. Dataset download instructions
+
+5. Deployment instructions
+
+6. Contributing guidelines
+
+API Documentation
+
+- FastAPI auto-generates /docs (Swagger UI)
+
+- Ensure all Pydantic models have descriptions
+
+- Add operation descriptions to endpoints:
+
+  @app.post("/classify", description="Classify patient triage acuity")
+
+==============================================================================
+
+14. FRONTEND (React + TypeScript + MUI)
+
+==============================================================================
+
+Component Structure
+
+- Organize by feature, not type
+
+- Example: /features/triage/, not /components/buttons/
+
+- Each feature has: components/, hooks/, services/, types/
+
+TypeScript Rules
+
+- All files MUST be .tsx (not .jsx)
+
+- Define interfaces for all props
+
+- Use type inference where obvious
+
+- No 'any' types (use 'unknown' if needed)
+
+Material UI
+
+- Import components from @mui/material
+
+- Use MUI theme for styling
+
+- No custom CSS unless absolutely necessary
+
+- Example:
+
+  import { Button, Card, TextField } from '@mui/material';
+
+API Calls
+
+- Create service files: services/api.ts
+
+- Use axios for all HTTP requests
+
+- Handle errors consistently
+
+- Example:
+
+  import axios from 'axios';
+
+
+
+  const api = axios.create({
+
+    baseURL: import.meta.env.VITE_API_URL
+
+  });
+
+
+
+  export const classifyPatient = async (vitals) => {
+
+    const response = await api.post('/manage/classify', vitals);
+
+    return response.data;
+
+  };
+
+State Management
+
+- Use React Context API for global state
+
+- Zustand for more complex state (if needed)
+
+- Avoid Redux unless absolutely necessary
+
+==============================================================================
+
+15. CURSOR AI SPECIFIC INSTRUCTIONS
+
+==============================================================================
+
+When Generating Code
+
+- ALWAYS include type hints and docstrings
+
+- ALWAYS create corresponding Pydantic models for endpoints
+
+- Suggest unit tests for new business logic
+
+- Use emoji logging for better visibility
+
+- Follow the exact project structure defined above
+
+When Editing Code
+
+- Maintain existing patterns and conventions
+
+- Don't break the modular structure
+
+- Update docstrings if function signature changes
+
+- Update tests if logic changes
+
+Multi-File Operations
+
+- Use Cursor Composer (Cmd+I or Ctrl+I) for cross-file changes
+
+- Specify all files that need modification
+
+- Review all changes before accepting
+
+Code Generation Preferences
+
+- Prefer explicit over implicit
+
+- Prefer composition over inheritance
+
+- Prefer async over sync for I/O
+
+- Prefer Pydantic models over raw dicts
+
+- Prefer specific exceptions over generic Exception
+
+==============================================================================
+
+16. MICROSERVICES COMMUNICATION
+
+==============================================================================
+
+Service-to-Service Calls
+
+- Use httpx (async HTTP client)
+
+- Configure service URLs via environment variables
+
+- Implement retries with exponential backoff
+
+- Add request timeouts
+
+- Example:
+
+  import httpx
+
+
+
+  async def call_scribe_service(dialogue: str):
+
+      async with httpx.AsyncClient(timeout=10.0) as client:
+
+          response = await client.post(
+
+              f"{SCRIBE_SERVICE_URL}/scribe/generate-soap",
+
+              json={"dialogue": dialogue}
+
+          )
+
+          return response.json()
+
+API Gateway (Future)
+
+- Consider adding API gateway for request routing
+
+- Gateway handles authentication, rate limiting, logging
+
+- Services remain stateless and focused
+
+==============================================================================
+
+17. SECURITY BEST PRACTICES
+
+==============================================================================
+
+- Never log sensitive data (API keys, patient info)
+
+- Validate all inputs with Pydantic
+
+- Use HTTPS in production
+
+- Implement rate limiting on public endpoints
+
+- Run containers as non-root user
+
+- Keep dependencies up to date
+
+- Use environment variables for secrets
+
+- Implement proper CORS policies
+
+==============================================================================
+
+18. PRE-COMMIT CHECKLIST
+
+==============================================================================
+
+Before committing code, verify:
+
+- [ ] All functions have type hints
+
+- [ ] All functions have docstrings
+
+- [ ] No unused imports
+
+- [ ] No commented-out code
+
+- [ ] No hardcoded secrets or paths
+
+- [ ] Error handling on external calls
+
+- [ ] Emoji logging used appropriately
+
+- [ ] Tests written for new logic
+
+- [ ] Tests pass: pytest tests/
+
+- [ ] README updated if needed
+
+- [ ] Commit message follows convention
+
+==============================================================================
+
+END OF .cursorrules
+
+Medi OS - Built for Google Cloud Run Hackathon
+
+==============================================================================
+

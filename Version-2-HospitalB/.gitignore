@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-wheel-metadata/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Editors & IDEs
+.idea/
+.vscode/
+.DS_Store
+
+# Node / Frontend
+node_modules/
+pnpm-lock.yaml
+dist/
+coverage/
+*.log
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+!**/.env.example
+*.key
+*.pem
+*.p12
+
+# Docker & Compose
+.docker/
+.compose/
+
+# Misc
+tmp/
+*.swp
+
