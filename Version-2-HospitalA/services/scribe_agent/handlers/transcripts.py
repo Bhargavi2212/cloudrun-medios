@@ -45,7 +45,9 @@ async def create_transcript(
 )
 async def list_transcripts(
     encounter_id: UUID
-    | None = Query(default=None, description="Filter transcripts by encounter ID."),
+    | None = Query(  # fmt: skip
+        default=None, description="Filter transcripts by encounter ID."
+    ),
     session: AsyncSession = Depends(get_session),
 ) -> Sequence[TranscriptRead]:
     """
