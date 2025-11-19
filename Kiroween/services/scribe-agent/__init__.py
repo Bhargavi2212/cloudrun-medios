@@ -1,1 +1,0 @@
-"""Scribe Agent Service - Clinical Documentation."""
