@@ -56,8 +56,6 @@ indent-style = "space"
 line-ending = "lf"
 # Skip formatting for transcripts.py due to black/ruff format conflict
 exclude = ["services/scribe_agent/handlers/transcripts.py"]
-# Skip formatting for transcripts.py due to black/ruff format conflict
-exclude = ["services/scribe_agent/handlers/transcripts.py"]
 
 [tool.ruff.isort]
 known-first-party = ["shared"]
