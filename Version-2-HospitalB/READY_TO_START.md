@@ -9,17 +9,17 @@ The database migration has been successfully run. The following tables have been
 ## Database Credentials
 
 - Username: `postgres`
-- Password: `Anuradha`
+- Password: `YOUR_DATABASE_PASSWORD` (set as environment variable)
 - Database: `medi_os_v2_b`
-- Connection String: `postgresql+asyncpg://postgres:Anuradha@localhost:5432/medi_os_v2_b`
+- Connection String: `postgresql+asyncpg://postgres:YOUR_PASSWORD@localhost:5432/medi_os_v2_b`
 
 ## Environment Variables
 
 Set these in each terminal before starting services:
 
 ```powershell
-$env:DATABASE_URL="postgresql+asyncpg://postgres:Anuradha@localhost:5432/medi_os_v2_b"
-$env:GEMINI_API_KEY="AIzaSyD3R7WCLviEOxz8oFkr1uFbZK7Nibe4Xuo"
+$env:DATABASE_URL="postgresql+asyncpg://postgres:YOUR_PASSWORD@localhost:5432/medi_os_v2_b"
+$env:GEMINI_API_KEY="YOUR_GEMINI_API_KEY_HERE"
 $env:MANAGE_AGENT_STORAGE_ROOT="./storage/hospital_b"
 $env:SUMMARIZER_AGENT_STORAGE_ROOT="./storage/hospital_b"
 ```
@@ -30,8 +30,8 @@ $env:SUMMARIZER_AGENT_STORAGE_ROOT="./storage/hospital_b"
 
 ```powershell
 cd "D:\Hackathons\Cloud Run\Version -2"
-$env:DATABASE_URL="postgresql+asyncpg://postgres:Anuradha@localhost:5432/medi_os_v2_b"
-$env:GEMINI_API_KEY="AIzaSyD3R7WCLviEOxz8oFkr1uFbZK7Nibe4Xuo"
+$env:DATABASE_URL="postgresql+asyncpg://postgres:YOUR_PASSWORD@localhost:5432/medi_os_v2_b"
+$env:GEMINI_API_KEY="YOUR_GEMINI_API_KEY_HERE"
 $env:MANAGE_AGENT_STORAGE_ROOT="./storage/hospital_b"
 uvicorn services.manage_agent.main:app --port 9001 --reload
 ```
@@ -40,8 +40,8 @@ uvicorn services.manage_agent.main:app --port 9001 --reload
 
 ```powershell
 cd "D:\Hackathons\Cloud Run\Version -2"
-$env:DATABASE_URL="postgresql+asyncpg://postgres:Anuradha@localhost:5432/medi_os_v2_b"
-$env:GEMINI_API_KEY="AIzaSyD3R7WCLviEOxz8oFkr1uFbZK7Nibe4Xuo"
+$env:DATABASE_URL="postgresql+asyncpg://postgres:YOUR_PASSWORD@localhost:5432/medi_os_v2_b"
+$env:GEMINI_API_KEY="YOUR_GEMINI_API_KEY_HERE"
 $env:SUMMARIZER_AGENT_STORAGE_ROOT="./storage/hospital_b"
 uvicorn services.summarizer_agent.main:app --port 9003 --reload
 ```

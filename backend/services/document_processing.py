@@ -160,14 +160,41 @@ class DocumentProcessingService:
                 "document_type": extraction.document_type,
                 "page_count": extraction.page_count,
             }
-            summary_result = await self.ai_models.summarize_document(extraction.text, summarizer_metadata)
-            summary_text = summary_result.get("summary", "").strip()
-            highlights = summary_result.get("highlights", [])
-            summary_confidence = float(summary_result.get("confidence") or 0.0)
-            if summary_result.get("warning"):
-                warnings.append(str(summary_result["warning"]))
-            if not summary_result.get("success"):
-                warnings.append("Document summarizer reported failure; marking for review.")
+
+            # Try multi-step Gemini pipeline first, fallback to single-step summarization
+            raw_text = asset.raw_text or extraction.text
+            multi_step_result = await self.ai_models.process_document_multi_step(
+                raw_text, summarizer_metadata
+            )
+
+            summary_result = None
+            if multi_step_result.get("overall_confidence", 0.0) > 0:
+                # Use multi-step results
+                step4_result = multi_step_result.get("step4_scored", {})
+                deidentified_data = multi_step_result.get("step3_deidentified", {}).get(
+                    "deidentified_data", {}
+                )
+                summary_confidence = multi_step_result.get("overall_confidence", 0.0)
+                # Generate summary from extracted data
+                summary_text = self._generate_summary_from_extracted_data(deidentified_data)
+                highlights = self._extract_highlights_from_data(deidentified_data)
+                if multi_step_result.get("errors"):
+                    warnings.extend(multi_step_result["errors"])
+                if multi_step_result.get("warnings"):
+                    warnings.extend(multi_step_result["warnings"])
+                summary_result = {"success": True, "is_stub": False}
+            else:
+                # Fallback to single-step summarization
+                summary_result = await self.ai_models.summarize_document(
+                    extraction.text, summarizer_metadata
+                )
+                summary_text = summary_result.get("summary", "").strip()
+                highlights = summary_result.get("highlights", [])
+                summary_confidence = float(summary_result.get("confidence") or 0.0)
+                if summary_result.get("warning"):
+                    warnings.append(str(summary_result["warning"]))
+                if not summary_result.get("success"):
+                    warnings.append("Document summarizer reported failure; marking for review.")
 
             overall_confidence = min(summary_confidence, extraction.confidence)
             needs_review = (
@@ -250,7 +277,8 @@ class DocumentProcessingService:
                         session,
                         patient_id=resolved_patient_id,
                         consultation_id=resolved_consultation_id,
-                        source_file_id=updated_asset.id,
+                        source_file_asset_id=updated_asset.id,
+                        source_type="document_processing",
                         event_type=entry.event_type,
                         event_date=entry.event_date,
                         title=entry.title,
@@ -258,8 +286,12 @@ class DocumentProcessingService:
                         data=entry.data,
                         status=entry.status,
                         confidence=entry.confidence,
+                        extraction_confidence=entry.confidence,
+                        extraction_metadata={"document_id": updated_asset.id},
                     )
                     session.flush()
+                    if updated_asset.linked_timeline_event_id is None:
+                        updated_asset.linked_timeline_event_id = event.id
                     timeline_event_ids.append(event.id)
 
                 # Session will commit on context exit
@@ -361,7 +393,8 @@ class DocumentProcessingService:
                         session,
                         patient_id=resolved_patient_id,
                         consultation_id=resolved_consultation_id,
-                        source_file_id=asset.id,
+                        source_file_asset_id=asset.id,
+                        source_type="document_processing",
                         event_type=TimelineEventType.DOCUMENT,
                         event_date=base_date,
                         title=f"Document uploaded: {asset.original_filename or 'Unknown'}",
@@ -374,6 +407,8 @@ class DocumentProcessingService:
                         },
                         status=TimelineEventStatus.NEEDS_REVIEW,
                         confidence=0.0,
+                        extraction_confidence=0.0,
+                        extraction_metadata={"document_id": asset.id, "processing_failed": True},
                     )
                     session.flush()
                     session.commit()
@@ -628,6 +663,49 @@ class DocumentProcessingService:
         if not words:
             return "Document Update"
         return " ".join(words[:8]).rstrip(",.;:") or "Document Update"
+
+    @staticmethod
+    def _generate_summary_from_extracted_data(data: Dict[str, Any]) -> str:
+        """Generate a summary text from extracted structured data."""
+        parts = []
+        if data.get("chief_complaint", {}).get("text"):
+            parts.append(f"Chief Complaint: {data['chief_complaint']['text']}")
+        if data.get("diagnoses"):
+            diag_list = [d.get("diagnosis", "") for d in data["diagnoses"] if d.get("diagnosis")]
+            if diag_list:
+                parts.append(f"Diagnoses: {', '.join(diag_list)}")
+        if data.get("plan", {}).get("disposition"):
+            parts.append(f"Disposition: {data['plan']['disposition']}")
+        if data.get("assessment", {}).get("clinical_impression"):
+            parts.append(f"Assessment: {data['assessment']['clinical_impression']}")
+        return ". ".join(parts) if parts else "Document processed and structured data extracted."
+
+    @staticmethod
+    def _extract_highlights_from_data(data: Dict[str, Any]) -> List[str]:
+        """Extract highlight strings from structured data."""
+        highlights = []
+        if data.get("chief_complaint", {}).get("text"):
+            highlights.append(f"Chief Complaint: {data['chief_complaint']['text']}")
+        if data.get("vital_signs"):
+            vitals = data["vital_signs"]
+            vital_parts = []
+            if vitals.get("pulse", {}).get("value"):
+                vital_parts.append(f"HR: {vitals['pulse']['value']} bpm")
+            if vitals.get("systolic_bp", {}).get("value"):
+                vital_parts.append(
+                    f"BP: {vitals['systolic_bp']['value']}/{vitals.get('diastolic_bp', {}).get('value', '')} mmHg"
+                )
+            if vital_parts:
+                highlights.append("Vitals: " + ", ".join(vital_parts))
+        if data.get("diagnoses"):
+            for diag in data["diagnoses"][:3]:
+                if diag.get("diagnosis"):
+                    highlights.append(f"Diagnosis: {diag['diagnosis']}")
+        if data.get("medications", {}).get("new"):
+            meds = [m.get("name", "") for m in data["medications"]["new"][:3] if m.get("name")]
+            if meds:
+                highlights.append(f"New Medications: {', '.join(meds)}")
+        return highlights[:5]
 
     @staticmethod
     def _guess_content_type(asset: FileAsset) -> str:

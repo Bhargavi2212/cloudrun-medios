@@ -1126,6 +1126,319 @@ class AIModelsService:
             warning="Gemini disabled. Returning heuristic summary.",
         )
 
+    async def process_document_multi_step(
+        self, raw_text: str, metadata: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """Process document through 4-step Gemini pipeline:
+        1. Text cleaning & normalization
+        2. Medical data extraction (structured JSON)
+        3. De-identification
+        4. Confidence scoring
+        """
+        metadata = metadata or {}
+        results = {
+            "step1_cleaned": None,
+            "step2_extracted": None,
+            "step3_deidentified": None,
+            "step4_scored": None,
+            "overall_confidence": 0.0,
+            "errors": [],
+            "warnings": [],
+        }
+
+        if not self._gemini_enabled or self._gemini_model is None:
+            results["errors"].append("Gemini is disabled")
+            return results
+
+        try:
+            # Step 1: Text cleaning & normalization
+            step1_result = await self._gemini_step1_clean_text(raw_text, metadata)
+            results["step1_cleaned"] = step1_result
+            if not step1_result.get("success"):
+                results["errors"].append("Step 1 (text cleaning) failed")
+                return results
+
+            cleaned_text = step1_result.get("cleaned_text", raw_text)
+            cleaned_sections = step1_result.get("sections", {})
+
+            # Step 2: Medical data extraction
+            step2_result = await self._gemini_step2_extract_data(cleaned_text, cleaned_sections)
+            results["step2_extracted"] = step2_result
+            if not step2_result.get("success"):
+                results["errors"].append("Step 2 (data extraction) failed")
+                return results
+
+            extracted_data = step2_result.get("extracted_data", {})
+
+            # Step 3: De-identification
+            step3_result = await self._gemini_step3_deidentify(extracted_data)
+            results["step3_deidentified"] = step3_result
+            if not step3_result.get("success"):
+                results["warnings"].append("Step 3 (de-identification) failed, using original data")
+                deidentified_data = extracted_data
+            else:
+                deidentified_data = step3_result.get("deidentified_data", extracted_data)
+
+            # Step 4: Confidence scoring
+            step4_result = await self._gemini_step4_score_confidence(
+                deidentified_data, cleaned_text, raw_text
+            )
+            results["step4_scored"] = step4_result
+            results["overall_confidence"] = step4_result.get("overall_confidence", 0.0)
+
+            return results
+
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("Multi-step Gemini pipeline failed: %s", exc)
+            results["errors"].append(str(exc))
+            return results
+
+    async def _gemini_step1_clean_text(
+        self, raw_text: str, metadata: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Step 1: Clean and normalize OCR text, identify document sections."""
+        prompt = f"""You are a medical document processing expert. Clean and normalize this OCR-extracted medical document text.
+
+RAW TEXT TO CLEAN:
+{raw_text[:5000]}
+
+TASKS:
+1. Fix OCR errors (recognize medical terms: "tropoinn" → "troponin")
+2. Identify document structure (find dates, vital signs, tests, medications)
+3. Remove: Headers, footers, page numbers, stamps
+4. Normalize formatting (consistent line breaks, spacing)
+5. Mark unclear sections (if confidence <70%, add [UNCLEAR: description])
+
+RETURN JSON:
+{{
+  "document_type": "ED Visit | Discharge Summary | Lab Report | etc",
+  "cleaned_text": "cleaned and normalized text",
+  "sections": {{
+    "dates": ["2024-05-10", ...],
+    "chief_complaint": "text",
+    "vital_signs_section": "text",
+    "tests_section": "text",
+    "diagnosis_section": "text",
+    "medications_section": "text",
+    "assessment_section": "text",
+    "plan_section": "text"
+  }},
+  "quality_notes": "Clear scanned PDF, minimal OCR errors",
+  "unclear_sections": ["Section X: Unclear handwriting in margins"]
+}}"""
+
+        try:
+            response = await asyncio.to_thread(
+                lambda: self._gemini_model.generate_content(
+                    prompt,
+                    generation_config={"temperature": 0.1, "max_output_tokens": 4000},
+                )
+            )
+            response_text = (response.text or "").strip()
+            # Try to extract JSON from response
+            json_match = re.search(r"\{.*\}", response_text, re.DOTALL)
+            if json_match:
+                parsed = json.loads(json_match.group(0))
+                return {
+                    "success": True,
+                    "cleaned_text": parsed.get("cleaned_text", raw_text),
+                    "sections": parsed.get("sections", {}),
+                    "document_type": parsed.get("document_type", "unknown"),
+                    "quality_notes": parsed.get("quality_notes", ""),
+                    "unclear_sections": parsed.get("unclear_sections", []),
+                }
+            return {"success": False, "error": "No valid JSON in response"}
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("Gemini Step 1 failed: %s", exc)
+            return {"success": False, "error": str(exc)}
+
+    async def _gemini_step2_extract_data(
+        self, cleaned_text: str, sections: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Step 2: Extract structured medical data from cleaned text."""
+        sections_json = json.dumps(sections, indent=2)
+        prompt = f"""You are a medical data extraction expert. Extract specific medical information from this cleaned document.
+
+CLEANED SECTIONS:
+{sections_json}
+
+EXTRACT & STRUCTURE into this JSON format:
+{{
+  "visit_metadata": {{
+    "visit_date": "YYYY-MM-DD",
+    "visit_type": "ED Visit | Clinic | Procedure | Lab",
+    "hospital_name": "[Hospital Name - will be de-id later]",
+    "doctor_name": "[Doctor Name - will be de-id later]"
+  }},
+  "chief_complaint": {{
+    "text": "Patient's main reason for visit",
+    "symptom_duration": "2 hours | 2 weeks | etc"
+  }},
+  "vital_signs": {{
+    "pulse": {{"value": 110, "unit": "bpm"}},
+    "systolic_bp": {{"value": 145, "unit": "mmHg"}},
+    "diastolic_bp": {{"value": 95, "unit": "mmHg"}},
+    "temperature": {{"value": 37.2, "unit": "C"}},
+    "respiration_rate": {{"value": 24, "unit": "breaths/min"}},
+    "o2_saturation": {{"value": 94, "unit": "%"}},
+    "pain_score": {{"value": 8, "unit": "0-10"}}
+  }},
+  "rfv_classification": {{
+    "primary_category": "Cardiovascular | Respiratory | Gastrointestinal | etc",
+    "secondary_category": "Chest Pain | Shortness of Breath | etc"
+  }},
+  "tests_and_findings": {{
+    "laboratory": [
+      {{"test_name": "Troponin I", "value": "0.02", "unit": "ng/mL", "reference_range": "0-0.04", "status": "Normal"}}
+    ],
+    "diagnostic_tests": [
+      {{"test_name": "EKG", "finding": "ST depression", "status": "Abnormal"}}
+    ]
+  }},
+  "diagnoses": [
+    {{"diagnosis": "Unstable Angina", "icd_code": "I20.0", "status": "Primary | Rule out | Possible", "confidence": "High"}}
+  ],
+  "medications": {{
+    "new": [{{"name": "Aspirin", "dose": "325", "unit": "mg", "frequency": "1x daily", "route": "PO"}}],
+    "continued": [],
+    "discontinued": []
+  }},
+  "procedures_and_treatments": ["IV access", "Continuous cardiac monitoring"],
+  "assessment": {{
+    "clinical_impression": "Patient likely has unstable angina",
+    "risk_factors": ["Smoking", "Hypertension"]
+  }},
+  "plan": {{
+    "disposition": "Discharged",
+    "follow_up": "Cardiology in 1 week",
+    "patient_instructions": "Take medications, rest, return if worsens"
+  }}
+}}
+
+Return ONLY valid JSON, no other text."""
+
+        try:
+            response = await asyncio.to_thread(
+                lambda: self._gemini_model.generate_content(
+                    prompt,
+                    generation_config={"temperature": 0.2, "max_output_tokens": 4000},
+                )
+            )
+            response_text = (response.text or "").strip()
+            json_match = re.search(r"\{.*\}", response_text, re.DOTALL)
+            if json_match:
+                parsed = json.loads(json_match.group(0))
+                return {"success": True, "extracted_data": parsed}
+            return {"success": False, "error": "No valid JSON in response"}
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("Gemini Step 2 failed: %s", exc)
+            return {"success": False, "error": str(exc)}
+
+    async def _gemini_step3_deidentify(self, extracted_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Step 3: Remove PHI from extracted data."""
+        data_json = json.dumps(extracted_data, indent=2)
+        prompt = f"""You are a PHI de-identification expert. Remove all personally identifiable information from this medical data.
+
+STRUCTURED DATA:
+{data_json}
+
+DE-IDENTIFY BY REPLACING:
+- All hospital names → [Hospital]
+- All doctor/staff names → [Doctor]
+- All patient names → [Patient]
+- All patient IDs/MRN → [ID]
+- All phone numbers → [Phone]
+- All specific locations → [Location]
+- All facility names → [Facility]
+
+KEEP CLINICAL DATA:
+- Dates (important for timeline!)
+- Diagnoses
+- Medications
+- Vitals
+- Lab values
+- Tests
+- Procedures
+- Assessment/Plan
+
+Return the same JSON structure but with PHI removed. Return ONLY valid JSON."""
+
+        try:
+            response = await asyncio.to_thread(
+                lambda: self._gemini_model.generate_content(
+                    prompt,
+                    generation_config={"temperature": 0.1, "max_output_tokens": 4000},
+                )
+            )
+            response_text = (response.text or "").strip()
+            json_match = re.search(r"\{.*\}", response_text, re.DOTALL)
+            if json_match:
+                parsed = json.loads(json_match.group(0))
+                return {"success": True, "deidentified_data": parsed}
+            return {"success": False, "error": "No valid JSON in response"}
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("Gemini Step 3 failed: %s", exc)
+            return {"success": False, "error": str(exc)}
+
+    async def _gemini_step4_score_confidence(
+        self, deidentified_data: Dict[str, Any], cleaned_text: str, raw_text: str
+    ) -> Dict[str, Any]:
+        """Step 4: Score confidence for each extracted field."""
+        data_json = json.dumps(deidentified_data, indent=2)
+        prompt = f"""You are a quality assurance expert. Score confidence (0-100%) for each extracted field.
+
+DE-IDENTIFIED DATA:
+{data_json}
+
+ORIGINAL CLEANED TEXT (for reference):
+{cleaned_text[:2000]}
+
+SCORE EACH FIELD (0-100%):
+- 95-100%: Clear, unambiguous
+- 85-95%: Clear, minor uncertainty
+- 70-85%: Reasonably clear, some ambiguity
+- 50-70%: Unclear, needs review
+- <50%: Very unclear, should not use
+
+Return JSON:
+{{
+  "overall_confidence": 92,
+  "field_scores": {{
+    "pulse": {{"value": 110, "confidence": 98, "flag": null}},
+    "troponin": {{"value": "0.02", "confidence": 88, "flag": null}},
+    "diagnosis": {{"value": "Unstable Angina", "confidence": 72, "flag": "REVIEW: Status is 'rule out', not confirmed"}}
+  }},
+  "overall_assessment": "Good extraction, 92% confidence",
+  "flags": ["Diagnosis marked as 'possible' - flag for confirmation"],
+  "should_flag_for_manual_review": false
+}}
+
+Return ONLY valid JSON."""
+
+        try:
+            response = await asyncio.to_thread(
+                lambda: self._gemini_model.generate_content(
+                    prompt,
+                    generation_config={"temperature": 0.1, "max_output_tokens": 2000},
+                )
+            )
+            response_text = (response.text or "").strip()
+            json_match = re.search(r"\{.*\}", response_text, re.DOTALL)
+            if json_match:
+                parsed = json.loads(json_match.group(0))
+                overall = float(parsed.get("overall_confidence", 0.0)) / 100.0
+                return {
+                    "success": True,
+                    "overall_confidence": overall,
+                    "field_scores": parsed.get("field_scores", {}),
+                    "flags": parsed.get("flags", []),
+                    "should_flag_for_manual_review": parsed.get("should_flag_for_manual_review", False),
+                }
+            return {"success": False, "error": "No valid JSON in response", "overall_confidence": 0.0}
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("Gemini Step 4 failed: %s", exc)
+            return {"success": False, "error": str(exc), "overall_confidence": 0.0}
+
     # --------------------------------------------------------------------- #
     # Helpers
     # --------------------------------------------------------------------- #

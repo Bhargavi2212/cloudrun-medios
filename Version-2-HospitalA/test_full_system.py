@@ -11,7 +11,10 @@ from pathlib import Path
 os.environ.setdefault(
     "DATABASE_URL", "postgresql+asyncpg://test:test@localhost:5432/test"
 )
-os.environ.setdefault("GEMINI_API_KEY", "AIzaSyD3R7WCLviEOxz8oFkr1uFbZK7Nibe4Xuo")
+# GEMINI_API_KEY must be set as environment variable - do not hardcode!
+if not os.getenv("GEMINI_API_KEY"):
+    print("WARNING: GEMINI_API_KEY not set. Document processing will be disabled.")
+    os.environ.setdefault("GEMINI_API_KEY", "")
 
 print("=" * 60)
 print("Document System Integration Test")

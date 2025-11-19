@@ -10,17 +10,17 @@ Set the environment variable before starting the services:
 
 **Windows PowerShell:**
 ```powershell
-$env:GEMINI_API_KEY="AIzaSyD3R7WCLviEOxz8oFkr1uFbZK7Nibe4Xuo"
+$env:GEMINI_API_KEY="YOUR_GEMINI_API_KEY_HERE"
 ```
 
 **Windows CMD:**
 ```cmd
-set GEMINI_API_KEY=AIzaSyD3R7WCLviEOxz8oFkr1uFbZK7Nibe4Xuo
+set GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE
 ```
 
 **Linux/Mac:**
 ```bash
-export GEMINI_API_KEY="AIzaSyD3R7WCLviEOxz8oFkr1uFbZK7Nibe4Xuo"
+export GEMINI_API_KEY="YOUR_GEMINI_API_KEY_HERE"
 ```
 
 ### Option 2: .env File
@@ -28,7 +28,7 @@ export GEMINI_API_KEY="AIzaSyD3R7WCLviEOxz8oFkr1uFbZK7Nibe4Xuo"
 Create a `.env` file in the `Version -2/services/summarizer_agent/` directory:
 
 ```env
-GEMINI_API_KEY=AIzaSyD3R7WCLviEOxz8oFkr1uFbZK7Nibe4Xuo
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE
 DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/summarizer_agent
 SUMMARIZER_AGENT_STORAGE_ROOT=./storage
 ```
@@ -37,12 +37,12 @@ SUMMARIZER_AGENT_STORAGE_ROOT=./storage
 
 **Windows:**
 1. Open System Properties > Environment Variables
-2. Add new variable: `GEMINI_API_KEY` = `AIzaSyD3R7WCLviEOxz8oFkr1uFbZK7Nibe4Xuo`
+2. Add new variable: `GEMINI_API_KEY` = `YOUR_GEMINI_API_KEY_HERE`
 
 **Linux/Mac:**
 Add to `~/.bashrc` or `~/.zshrc`:
 ```bash
-export GEMINI_API_KEY="AIzaSyD3R7WCLviEOxz8oFkr1uFbZK7Nibe4Xuo"
+export GEMINI_API_KEY="YOUR_GEMINI_API_KEY_HERE"
 ```
 
 ## Verify Setup

@@ -31,6 +31,11 @@ Important environment variables:
     STORAGE_GCS_BUCKET          Google Cloud Storage bucket name (when using GCS backend)
     STORAGE_GCS_CREDENTIALS     Path to GCP service account JSON (optional if using ADC)
     STORAGE_SIGNED_URL_EXPIRY   Signed URL expiry in seconds (default: 3600)
+    DOCUMENT_UPLOAD_MAX_MB      Maximum upload size for AI summarizer documents (default 25)
+    DOCUMENT_MIN_TEXT_CHARS     Minimum OCR characters before auto-approval (default 200)
+    DOCUMENT_RAW_TEXT_MAX_CHARS Max raw OCR characters persisted (default 50000)
+    VISION_API_ENABLED          Enable Google Cloud Vision for OCR ("true"/"false")
+    VISION_CREDENTIALS_PATH     Optional service account JSON for Vision API
 
     SECRET_MANAGER_ENABLED      Enable Cloud Secret Manager integration ("true"/"false", default false)
     SECRET_MANAGER_PROJECT_ID   GCP project ID for Secret Manager (required if SECRET_MANAGER_ENABLED=true)
@@ -132,6 +137,11 @@ class ScribeSettings(BaseSettings):
     storage_gcs_bucket: Optional[str] = Field(default=None, alias="STORAGE_GCS_BUCKET")
     storage_gcs_credentials: Optional[Path] = Field(default=None, alias="STORAGE_GCS_CREDENTIALS")
     storage_signed_url_expiry_seconds: int = Field(default=3600, alias="STORAGE_SIGNED_URL_EXPIRY")
+    document_upload_max_mb: int = Field(default=25, alias="DOCUMENT_UPLOAD_MAX_MB")
+    document_min_text_chars: int = Field(default=200, alias="DOCUMENT_MIN_TEXT_CHARS")
+    document_raw_text_max_chars: int = Field(default=50000, alias="DOCUMENT_RAW_TEXT_MAX_CHARS")
+    vision_api_enabled: bool = Field(default=False, alias="VISION_API_ENABLED")
+    vision_credentials_path: Optional[Path] = Field(default=None, alias="VISION_CREDENTIALS_PATH")
 
     # Retention policy configuration (in days)
     storage_retention_default_days: int = Field(default=365, alias="STORAGE_RETENTION_DEFAULT_DAYS")
@@ -157,6 +167,7 @@ class ScribeSettings(BaseSettings):
         default=None,
         alias="CORS_ALLOW_ORIGIN_REGEX",
     )
+    models_preload_enabled: bool = Field(default=True, alias="MODELS_PRELOAD_ENABLED")
 
     triage_model_dir: Path = Field(
         default=Path("medi-os/services/manage-agent/models"),
@@ -167,6 +178,10 @@ class ScribeSettings(BaseSettings):
     triage_stacking_model: str = Field(default="final_stacking_ensemble.pkl", alias="TRIAGE_STACKING_MODEL")
     triage_xgb_model: str = Field(default="final_xgboost_full_features.pkl", alias="TRIAGE_XGB_MODEL")
     triage_lgbm_model: str = Field(default="final_lightgbm_full_features.pkl", alias="TRIAGE_LGBM_MODEL")
+    nurse_triage_model_path: Path = Field(
+        default=Path("Version -2/data/nurse_models/models/random_forest.pkl"),
+        alias="NURSE_TRIAGE_MODEL_PATH",
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -182,6 +197,8 @@ class ScribeSettings(BaseSettings):
         "storage_local_path",
         "storage_gcs_credentials",
         "summarizer_codes_path",
+        "nurse_triage_model_path",
+        "vision_credentials_path",
         mode="before",
     )
     @classmethod
@@ -192,9 +209,16 @@ class ScribeSettings(BaseSettings):
             return value
         return Path(value).expanduser()
 
-    @field_validator("summarizer_enabled", "summarizer_use_fake_llm", mode="before")
+    @field_validator("summarizer_enabled", "summarizer_use_fake_llm", "vision_api_enabled", mode="before")
     @classmethod
     def _coerce_bool_fields(cls, value):
+        return cls._coerce_bool(value)
+    @field_validator(
+        "models_preload_enabled",
+        mode="before",
+    )
+    @classmethod
+    def _coerce_models_preload(cls, value):
         return cls._coerce_bool(value)
 
     @field_validator("cors_allow_origins", mode="before")

@@ -1,6 +1,7 @@
 """Verify database tables were created successfully."""
 
 import asyncio
+import os
 
 import asyncpg
 
@@ -8,8 +9,19 @@ import asyncpg
 async def verify_tables():
     """Check if file_assets and timeline_events tables exist."""
     try:
+        # Get database credentials from environment - do not hardcode!
+        db_user = os.getenv("DB_USER", "postgres")
+        db_password = os.getenv("DB_PASSWORD", "")
+        db_name = os.getenv("DB_NAME", "medi_os_v2_a")
+        
+        if not db_password:
+            raise ValueError(
+                "DB_PASSWORD environment variable not set. "
+                "Please set it before running this script."
+            )
+        
         conn = await asyncpg.connect(
-            "postgresql://postgres:Anuradha@localhost:5432/medi_os_v2_a"
+            f"postgresql://{db_user}:{db_password}@localhost:5432/{db_name}"
         )
 
         # Check for file_assets table

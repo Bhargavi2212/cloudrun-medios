@@ -1,0 +1,170 @@
+{
+  "start_time": "2025-11-18T17:14:45.494266",
+  "tests": [
+    {
+      "name": "Login (receptionist)",
+      "passed": true,
+      "message": "Successfully logged in as Jane Receptionist",
+      "details": {
+        "role": "RECEPTIONIST"
+      },
+      "timestamp": "2025-11-18T17:14:46.824911"
+    },
+    {
+      "name": "Receptionist: Get Queue",
+      "passed": true,
+      "message": "Queue retrieved: 0 patients",
+      "details": {
+        "total_count": 0
+      },
+      "timestamp": "2025-11-18T17:14:46.847629"
+    },
+    {
+      "name": "Receptionist: List Patients",
+      "passed": true,
+      "message": "Listed 10 patients",
+      "details": {
+        "count": 10
+      },
+      "timestamp": "2025-11-18T17:14:46.854173"
+    },
+    {
+      "name": "Receptionist: Search Patients",
+      "passed": true,
+      "message": "Search completed: 10 results",
+      "details": {
+        "count": 10
+      },
+      "timestamp": "2025-11-18T17:14:46.859518"
+    },
+    {
+      "name": "Receptionist: Create Patient",
+      "passed": true,
+      "message": "Patient created: 54d51cbc-7939-4420-8365-85018651a3f4",
+      "details": {
+        "patient_id": "54d51cbc-7939-4420-8365-85018651a3f4"
+      },
+      "timestamp": "2025-11-18T17:14:46.870638"
+    },
+    {
+      "name": "Receptionist: Get Patient by ID",
+      "passed": true,
+      "message": "Patient retrieved: Test Patient",
+      "details": {
+        "patient_id": "54d51cbc-7939-4420-8365-85018651a3f4"
+      },
+      "timestamp": "2025-11-18T17:14:46.875093"
+    },
+    {
+      "name": "Receptionist: Update Patient",
+      "passed": true,
+      "message": "Patient updated successfully",
+      "details": {
+        "patient_id": "54d51cbc-7939-4420-8365-85018651a3f4"
+      },
+      "timestamp": "2025-11-18T17:14:46.888429"
+    },
+    {
+      "name": "Receptionist: Check-In Patient",
+      "passed": true,
+      "message": "Patient checked in: encounter 7b6a37b9-98ab-47de-81c5-fd2ea4c69e33, triage ESI 1",
+      "details": {
+        "encounter_id": "7b6a37b9-98ab-47de-81c5-fd2ea4c69e33",
+        "triage_level": 1,
+        "patient_id": "54d51cbc-7939-4420-8365-85018651a3f4"
+      },
+      "timestamp": "2025-11-18T17:14:47.180006"
+    },
+    {
+      "name": "Login (nurse)",
+      "passed": true,
+      "message": "Successfully logged in as John Nurse",
+      "details": {
+        "role": "NURSE"
+      },
+      "timestamp": "2025-11-18T17:14:47.183084"
+    },
+    {
+      "name": "Nurse: Get Queue",
+      "passed": true,
+      "message": "Queue retrieved: 0 awaiting vitals",
+      "details": {
+        "awaiting_vitals": 0
+      },
+      "timestamp": "2025-11-18T17:14:47.197774"
+    },
+    {
+      "name": "Nurse: Record Vitals",
+      "passed": true,
+      "message": "Vitals recorded, triage level: ESI 3",
+      "details": {
+        "triage_level": 3,
+        "encounter_id": "7b6a37b9-98ab-47de-81c5-fd2ea4c69e33"
+      },
+      "timestamp": "2025-11-18T17:14:47.384329"
+    },
+    {
+      "name": "Nurse: Upload Document",
+      "passed": false,
+      "message": "Failed with status 500",
+      "details": {
+        "response": "Internal Server Error"
+      },
+      "timestamp": "2025-11-18T17:14:47.393509"
+    },
+    {
+      "name": "Nurse: Summary Operations",
+      "passed": false,
+      "message": "Summarizer service unavailable - skipping summary tests",
+      "details": {},
+      "timestamp": "2025-11-18T17:14:47.658752"
+    },
+    {
+      "name": "Login (doctor)",
+      "passed": true,
+      "message": "Successfully logged in as Dr. Sarah Doctor",
+      "details": {
+        "role": "DOCTOR"
+      },
+      "timestamp": "2025-11-18T17:14:47.925186"
+    },
+    {
+      "name": "Doctor: Get Queue",
+      "passed": true,
+      "message": "Queue retrieved: 0 triaged patients",
+      "details": {
+        "triaged_count": 0
+      },
+      "timestamp": "2025-11-18T17:14:47.947384"
+    },
+    {
+      "name": "Doctor: Transcript Operations",
+      "passed": false,
+      "message": "Scribe service unavailable - skipping transcript tests",
+      "details": {},
+      "timestamp": "2025-11-18T17:14:48.218912"
+    },
+    {
+      "name": "Login (admin)",
+      "passed": true,
+      "message": "Successfully logged in as Admin User",
+      "details": {
+        "role": "ADMIN"
+      },
+      "timestamp": "2025-11-18T17:14:48.225411"
+    },
+    {
+      "name": "Admin: Dashboard Access",
+      "passed": true,
+      "message": "Admin dashboard accessible (features coming soon)",
+      "details": {},
+      "timestamp": "2025-11-18T17:14:48.225753"
+    }
+  ],
+  "summary": {
+    "passed": 15,
+    "failed": 3,
+    "total": 18
+  },
+  "end_time": "2025-11-18T17:14:48.227083"
+}

@@ -1,0 +1,229 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database for Hospital A
+  postgres-hospital-a:
+    image: postgres:15-alpine
+    container_name: medi-os-db-hospital-a
+    environment:
+      POSTGRES_DB: medi_os_hospital_a
+      POSTGRES_USER: medi_user
+      POSTGRES_PASSWORD: medi_password_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_a:/var/lib/postgresql/data
+      - ./shared/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - medi-network
+
+  # PostgreSQL Database for Hospital B
+  postgres-hospital-b:
+    image: postgres:15-alpine
+    container_name: medi-os-db-hospital-b
+    environment:
+      POSTGRES_DB: medi_os_hospital_b
+      POSTGRES_USER: medi_user
+      POSTGRES_PASSWORD: medi_password_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data_b:/var/lib/postgresql/data
+      - ./shared/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - medi-network
+
+  # PostgreSQL Database for Hospital C
+  postgres-hospital-c:
+    image: postgres:15-alpine
+    container_name: medi-os-db-hospital-c
+    environment:
+      POSTGRES_DB: medi_os_hospital_c
+      POSTGRES_USER: medi_user
+      POSTGRES_PASSWORD: medi_password_dev
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data_c:/var/lib/postgresql/data
+      - ./shared/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - medi-network
+
+  # Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    container_name: medi-os-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - medi-network
+
+  # Hospital A Services
+  manage-agent-a:
+    build:
+      context: ./services/manage-agent
+      dockerfile: Dockerfile
+    container_name: medi-os-manage-a
+    environment:
+      - DATABASE_URL=postgresql://medi_user:medi_password_dev@postgres-hospital-a:5432/medi_os_hospital_a
+      - REDIS_URL=redis://redis:6379
+      - HOSPITAL_ID=hospital-a
+      - SERVICE_PORT=8001
+    ports:
+      - "8001:8001"
+    depends_on:
+      - postgres-hospital-a
+      - redis
+    networks:
+      - medi-network
+    volumes:
+      - ./services/manage-agent:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+
+  scribe-agent-a:
+    build:
+      context: ./services/scribe-agent
+      dockerfile: Dockerfile
+    container_name: medi-os-scribe-a
+    environment:
+      - DATABASE_URL=postgresql://medi_user:medi_password_dev@postgres-hospital-a:5432/medi_os_hospital_a
+      - HOSPITAL_ID=hospital-a
+      - SERVICE_PORT=8002
+    ports:
+      - "8002:8002"
+    depends_on:
+      - postgres-hospital-a
+    networks:
+      - medi-network
+    volumes:
+      - ./services/scribe-agent:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8002 --reload
+
+  summarizer-agent-a:
+    build:
+      context: ./services/summarizer-agent
+      dockerfile: Dockerfile
+    container_name: medi-os-summarizer-a
+    environment:
+      - DATABASE_URL=postgresql://medi_user:medi_password_dev@postgres-hospital-a:5432/medi_os_hospital_a
+      - HOSPITAL_ID=hospital-a
+      - SERVICE_PORT=8003
+    ports:
+      - "8003:8003"
+    depends_on:
+      - postgres-hospital-a
+    networks:
+      - medi-network
+    volumes:
+      - ./services/summarizer-agent:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8003 --reload
+
+  dol-service-a:
+    build:
+      context: ./services/dol-service
+      dockerfile: Dockerfile
+    container_name: medi-os-dol-a
+    environment:
+      - DATABASE_URL=postgresql://medi_user:medi_password_dev@postgres-hospital-a:5432/medi_os_hospital_a
+      - HOSPITAL_ID=hospital-a
+      - SERVICE_PORT=8004
+    ports:
+      - "8004:8004"
+    depends_on:
+      - postgres-hospital-a
+    networks:
+      - medi-network
+    volumes:
+      - ./services/dol-service:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8004 --reload
+
+  # Hospital B Services (ports 8011-8014)
+  manage-agent-b:
+    build:
+      context: ./services/manage-agent
+      dockerfile: Dockerfile
+    container_name: medi-os-manage-b
+    environment:
+      - DATABASE_URL=postgresql://medi_user:medi_password_dev@postgres-hospital-b:5432/medi_os_hospital_b
+      - REDIS_URL=redis://redis:6379
+      - HOSPITAL_ID=hospital-b
+      - SERVICE_PORT=8011
+    ports:
+      - "8011:8011"
+    depends_on:
+      - postgres-hospital-b
+      - redis
+    networks:
+      - medi-network
+    volumes:
+      - ./services/manage-agent:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8011 --reload
+
+  # Hospital C Services (ports 8021-8024)
+  manage-agent-c:
+    build:
+      context: ./services/manage-agent
+      dockerfile: Dockerfile
+    container_name: medi-os-manage-c
+    environment:
+      - DATABASE_URL=postgresql://medi_user:medi_password_dev@postgres-hospital-c:5432/medi_os_hospital_c
+      - REDIS_URL=redis://redis:6379
+      - HOSPITAL_ID=hospital-c
+      - SERVICE_PORT=8021
+    ports:
+      - "8021:8021"
+    depends_on:
+      - postgres-hospital-c
+      - redis
+    networks:
+      - medi-network
+    volumes:
+      - ./services/manage-agent:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8021 --reload
+
+  # Frontend Application
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+    container_name: medi-os-frontend
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8004
+      - VITE_HOSPITAL_ID=hospital-a
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./apps/frontend:/app
+      - /app/node_modules
+    networks:
+      - medi-network
+    command: npm run dev -- --host 0.0.0.0
+
+  # Federated Learning Aggregator
+  federated-aggregator:
+    build:
+      context: ./services/federated-aggregator
+      dockerfile: Dockerfile
+    container_name: medi-os-federated-aggregator
+    environment:
+      - SERVICE_PORT=9000
+      - PARTICIPATING_HOSPITALS=hospital-a,hospital-b,hospital-c
+    ports:
+      - "9000:9000"
+    networks:
+      - medi-network
+    volumes:
+      - ./services/federated-aggregator:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 9000 --reload
+
+volumes:
+  postgres_data_a:
+  postgres_data_b:
+  postgres_data_c:
+  redis_data:
+
+networks:
+  medi-network:
+    driver: bridge

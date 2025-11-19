@@ -208,12 +208,18 @@ export interface TimelineEventEntry {
   id: string
   patient_id: string
   consultation_id?: string | null
-  source_file_id?: string | null
+  source_type?: string | null
+  source_file_asset_id?: string | null
   event_type: string
   status: string
   title: string
   summary: string
   confidence?: number | null
+  extraction_confidence?: number | null
+  extraction_metadata?: Record<string, unknown>
+  doctor_verified?: boolean
+  verified_at?: string | null
+  verified_by?: string | null
   event_date?: string | null
   data?: Record<string, unknown>
   notes?: string | null
@@ -235,4 +241,80 @@ export interface TimelineSummary {
   generated_at: string
   model?: string | null
   token_usage: Record<string, number>
+}
+
+export interface ScribeSession {
+  id: string
+  consultation_id?: string
+  patient_id?: string
+  status: string
+  language?: string
+  started_at?: string | null
+  ended_at?: string | null
+  transcript_snapshot?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ScribeSegment {
+  id: string
+  session_id: string
+  speaker_label?: string | null
+  text: string
+  start_ms?: number | null
+  end_ms?: number | null
+  confidence?: number | null
+  created_at: string
+}
+
+export interface ScribeVital {
+  id: number
+  session_id: string
+  recorded_at: string
+  source: string
+  heart_rate?: number | null
+  respiratory_rate?: number | null
+  systolic_bp?: number | null
+  diastolic_bp?: number | null
+  temperature_c?: number | null
+  oxygen_saturation?: number | null
+  pain_score?: number | null
+}
+
+export interface SoapNoteContent {
+  subjective?: Record<string, unknown>
+  objective?: Record<string, unknown>
+  assessment?: Record<string, unknown>
+  plan?: Record<string, unknown>
+  entities?: Record<string, unknown>
+}
+
+export interface SoapNote {
+  id: string
+  session_id: string
+  consultation_id?: string | null
+  status: string
+  model_name?: string | null
+  content?: SoapNoteContent | null
+  raw_markdown?: string | null
+  confidence?: Record<string, unknown> | null
+  created_at: string
+  updated_at: string
+}
+
+export interface TriagePredictionSnapshot {
+  id: number
+  esi_level: number
+  probability: number
+  probabilities?: Record<string, number>
+  flagged: boolean
+  created_at: string
+}
+
+export interface ScribeSessionDetails {
+  session: ScribeSession
+  segments: ScribeSegment[]
+  vitals: ScribeVital[]
+  notes: SoapNote[]
+  triage_predictions: TriagePredictionSnapshot[]
 }

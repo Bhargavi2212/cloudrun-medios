@@ -1,7 +1,7 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
-import { Heart, Users, UserCheck, Activity, Settings, User } from 'lucide-react'
+import { Heart, Users, UserCheck, Activity, Settings, User, Mic, FileText, ClipboardCheck } from 'lucide-react'
 
 interface MenuItem {
   icon: React.ComponentType<{ className?: string }>
@@ -23,10 +23,16 @@ export const Sidebar: React.FC = () => {
       case 'NURSE':
         return [
           { icon: Activity, label: 'Dashboard', href: '/nurse/dashboard' },
+          { icon: Mic, label: 'Scribe Live', href: '/scribe/live' },
+          { icon: FileText, label: 'Scribe Review', href: '/scribe/review' },
+          { icon: ClipboardCheck, label: 'Document Review', href: '/nurse/documents/review' },
         ]
       case 'DOCTOR':
         return [
           { icon: UserCheck, label: 'Workspace', href: '/doctor/dashboard' },
+          { icon: Mic, label: 'Scribe Live', href: '/scribe/live' },
+          { icon: FileText, label: 'Scribe Review', href: '/scribe/review' },
+          { icon: ClipboardCheck, label: 'Document Review', href: '/nurse/documents/review' },
         ]
       case 'ADMIN':
         return [

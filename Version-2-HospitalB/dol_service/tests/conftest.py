@@ -21,7 +21,7 @@ if str(ROOT) not in sys.path:
 
 TEST_DATABASE_URL = (
     os.environ.get("TEST_DATABASE_URL")
-    or "postgresql+asyncpg://postgres:Anuradha@localhost:5432/medi_os_v2_b_test"
+    or os.getenv("TEST_DATABASE_URL", "postgresql+asyncpg://postgres:test_password@localhost:5432/medi_os_v2_b_test")
 )
 os.environ["TEST_DATABASE_URL"] = TEST_DATABASE_URL
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL

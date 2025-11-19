@@ -98,6 +98,65 @@ class AudioFileRead(ORMBase):
     created_at: datetime
 
 
+class ScribeSessionRead(ORMBase):
+    id: UUID
+    consultation_id: Optional[UUID]
+    patient_id: Optional[UUID]
+    status: str
+    language: Optional[str]
+    started_at: Optional[datetime]
+    ended_at: Optional[datetime]
+    transcript_snapshot: Optional[str]
+    session_metadata: Optional[dict] = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class ScribeSegmentRead(ORMBase):
+    id: UUID
+    session_id: UUID
+    speaker_label: Optional[str]
+    text: str
+    start_ms: Optional[int]
+    end_ms: Optional[int]
+    confidence: Optional[float]
+    is_final: bool
+    created_at: datetime
+
+
+class ScribeVitalRead(ORMBase):
+    id: int
+    session_id: UUID
+    recorded_by: Optional[UUID]
+    recorded_at: datetime
+    source: str
+    heart_rate: Optional[int]
+    respiratory_rate: Optional[int]
+    systolic_bp: Optional[int]
+    diastolic_bp: Optional[int]
+    temperature_c: Optional[float]
+    oxygen_saturation: Optional[int]
+    pain_score: Optional[int]
+
+
+class SoapNoteRead(ORMBase):
+    id: UUID
+    session_id: UUID
+    consultation_id: Optional[UUID]
+    status: str
+    model_name: Optional[str]
+    specialty: Optional[str]
+    version: int
+    content: Optional[dict]
+    raw_markdown: Optional[str]
+    confidence: Optional[dict]
+    tokens_prompt: Optional[int]
+    tokens_completion: Optional[int]
+    latency_ms: Optional[int]
+    created_at: datetime
+    updated_at: datetime
+
+
 class PatientSummaryRead(ORMBase):
     id: UUID
     patient_id: UUID

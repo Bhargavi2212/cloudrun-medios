@@ -19,6 +19,9 @@ import DoctorWorkflow from '@/pages/doctor/DoctorWorkflow';
 import AdminDashboard from '@/pages/AdminDashboard';
 import NotFoundPage from '@/pages/NotFoundPage';
 import Root from '@/pages/Root';
+import ScribeLivePage from '@/pages/scribe/ScribeLive';
+import ScribeReviewPage from '@/pages/scribe/ScribeReview';
+import { DocumentReviewDashboard } from '@/pages/nurse/DocumentReviewDashboard';
 
 function App() {
   return (
@@ -91,6 +94,48 @@ function App() {
               <ProtectedRoute allowedRoles={['DOCTOR']}>
                 <AppLayout>
                   <DoctorWorkflow />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/scribe/live"
+            element={
+              <ProtectedRoute allowedRoles={['NURSE', 'DOCTOR', 'ADMIN']}>
+                <AppLayout>
+                  <ScribeLivePage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/scribe/review"
+            element={
+              <ProtectedRoute allowedRoles={['NURSE', 'DOCTOR', 'ADMIN']}>
+                <AppLayout>
+                  <ScribeReviewPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/scribe/review/:sessionId"
+            element={
+              <ProtectedRoute allowedRoles={['NURSE', 'DOCTOR', 'ADMIN']}>
+                <AppLayout>
+                  <ScribeReviewPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/nurse/documents/review"
+            element={
+              <ProtectedRoute allowedRoles={['NURSE', 'DOCTOR', 'ADMIN']}>
+                <AppLayout>
+                  <DocumentReviewDashboard />
                 </AppLayout>
               </ProtectedRoute>
             }

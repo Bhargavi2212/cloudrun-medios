@@ -133,13 +133,21 @@ class TimelineSummaryService:
             "id": event.id,
             "patient_id": event.patient_id,
             "consultation_id": event.consultation_id,
-            "source_file_id": event.source_file_id,
+            "source_type": event.source_type,
+            "source_file_asset_id": event.source_file_asset_id,
             "event_type": (event.event_type.value if hasattr(event.event_type, "value") else str(event.event_type)),
             "status": (event.status.value if hasattr(event.status, "value") else str(event.status)),
             "title": event.title or "Timeline Update",
             "summary": event.summary or "",
             "data": event.data or {},
             "confidence": (float(event.confidence) if event.confidence is not None else None),
+            "extraction_confidence": (
+                float(event.extraction_confidence) if event.extraction_confidence is not None else None
+            ),
+            "extraction_metadata": event.extraction_metadata or {},
+            "doctor_verified": event.doctor_verified,
+            "verified_at": event.verified_at.isoformat() if event.verified_at else None,
+            "verified_by": event.verified_by,
             "event_date": event.event_date.isoformat() if event.event_date else None,
             "notes": event.notes,
         }

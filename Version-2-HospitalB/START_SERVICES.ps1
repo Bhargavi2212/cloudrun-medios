@@ -3,7 +3,11 @@
 Write-Host "Starting Document System Services..." -ForegroundColor Green
 
 # Set environment variables
-$env:GEMINI_API_KEY = "AIzaSyD3R7WCLviEOxz8oFkr1uFbZK7Nibe4Xuo"
+# NEVER hardcode API keys! Use environment variables or secret management
+if (-not $env:GEMINI_API_KEY) {
+    Write-Warning "GEMINI_API_KEY not set. Document processing will be disabled."
+    $env:GEMINI_API_KEY = ""
+}
 $env:MANAGE_AGENT_STORAGE_ROOT = "./storage/hospital_b"
 $env:SUMMARIZER_AGENT_STORAGE_ROOT = "./storage/hospital_b"
 

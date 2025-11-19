@@ -63,7 +63,7 @@ All components have been implemented and verified.
 
 **Environment Variables Required:**
 - DATABASE_URL - PostgreSQL connection string
-- GEMINI_API_KEY - Set to: AIzaSyD3R7WCLviEOxz8oFkr1uFbZK7Nibe4Xuo
+- GEMINI_API_KEY - Google Gemini API key (set as environment variable, never commit to git!)
 - MANAGE_AGENT_STORAGE_ROOT - Default: ./storage
 - SUMMARIZER_AGENT_STORAGE_ROOT - Default: ./storage
 

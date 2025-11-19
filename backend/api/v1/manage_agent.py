@@ -4,6 +4,7 @@ import asyncio
 import json
 import os
 from datetime import date, datetime, timezone
+import mimetypes
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile, status
@@ -41,11 +42,12 @@ from backend.security.dependencies import require_roles
 from backend.security.permissions import UserRole
 from backend.services.document_processing import DocumentProcessingService
 from backend.services.error_response import StandardResponse
+from backend.services.job_queue import JobQueueService
 from backend.services.manage_agent_state_machine import ManageAgentStateMachine
 from backend.services.manage_agent_wait_time import ManageAgentWaitTimePredictor
 from backend.services.notifier import notification_service
 from backend.services.queue_service import queue_service
-from backend.services.storage import StorageService
+from backend.services.storage import ALLOWED_DOCUMENT_MIME_TYPES, StorageError, StorageService
 from backend.services.timeline_summary_service import TimelineSummaryService
 from backend.services.triage_engine import TriageEngine
 
@@ -57,6 +59,10 @@ wait_time_predictor = ManageAgentWaitTimePredictor()
 storage_service = StorageService()
 timeline_summary_service = TimelineSummaryService()
 document_processing_service = DocumentProcessingService(storage_service=storage_service)
+job_queue_service = JobQueueService(
+    storage_service=storage_service,
+    document_processing_service=document_processing_service,
+)
 
 
 @router.post(
@@ -251,6 +257,7 @@ async def upload_consultation_records(
     consultation_id: str,
     files: List[UploadFile] = File(...),
     notes: Optional[str] = Form(None),
+    upload_method: Optional[str] = Form(None),
     session: Session = Depends(get_db_session),
     current_user: User = Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR, UserRole.ADMIN)),
 ) -> StandardResponse:
@@ -265,6 +272,11 @@ async def upload_consultation_records(
 
     processing_results: List[Dict[str, Any]] = []
 
+    # Normalize upload_method (camera, drag_and_drop, file_picker, etc.)
+    normalized_upload_method = upload_method or "file_picker"
+    if normalized_upload_method not in ("camera", "drag_and_drop", "file_picker", "scan", "manual"):
+        normalized_upload_method = "file_picker"
+
     for upload in files:
         record, _ = await storage_service.save_file_asset(
             upload,
@@ -272,13 +284,22 @@ async def upload_consultation_records(
             owner_id=consultation_id,
             uploaded_by=str(current_user.id),
             description=notes,
+            upload_method=normalized_upload_method,
         )
-        processing_result = await document_processing_service.process_document(
+        # Enqueue document processing as background job
+        job = await job_queue_service.enqueue_document_processing(
             record.id,
             patient_id=consultation.patient_id,
             consultation_id=consultation_id,
         )
-        processing_results.append(processing_result.to_dict())
+        processing_results.append(
+            {
+                "file_id": record.id,
+                "job_id": job.id,
+                "status": "queued",
+                "message": "Document processing queued for background processing",
+            }
+        )
         refreshed = crud.get_file_asset(session, record.id)
         if refreshed:
             uploaded_records.append(_serialize_consultation_record(session, refreshed))
@@ -475,6 +496,127 @@ def review_consultation_record(
         success=True,
         data={"record": refreshed_payload.model_dump()},
         message="Document review updated.",
+    )
+
+
+@router.get("/documents/pending-review", response_model=StandardResponse)
+def list_pending_documents(
+    consultation_id: Optional[str] = None,
+    patient_id: Optional[str] = None,
+    session: Session = Depends(get_db_session),
+    _: User = Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR, UserRole.ADMIN)),
+) -> StandardResponse:
+    """List all documents that need manual review."""
+    query = session.query(FileAsset).filter(
+        FileAsset.is_deleted.is_(False),
+        FileAsset.status.in_(
+            [DocumentProcessingStatus.NEEDS_REVIEW, DocumentProcessingStatus.FAILED]
+        ),
+    )
+    if consultation_id:
+        query = query.filter(FileAsset.owner_type == "consultation", FileAsset.owner_id == consultation_id)
+    elif patient_id:
+        # Find consultations for patient, then filter files
+        consultations = session.query(Consultation).filter(Consultation.patient_id == patient_id).all()
+        consultation_ids = [c.id for c in consultations]
+        query = query.filter(
+            FileAsset.owner_type == "consultation", FileAsset.owner_id.in_(consultation_ids)
+        )
+    records = query.order_by(FileAsset.created_at.desc()).all()
+    payload = [_serialize_consultation_record(session, record).model_dump() for record in records]
+    return StandardResponse(success=True, data={"records": payload, "count": len(payload)})
+
+
+@router.get("/documents/{file_id}/extraction", response_model=StandardResponse)
+def get_document_extraction(
+    file_id: str,
+    session: Session = Depends(get_db_session),
+    _: User = Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR, UserRole.ADMIN)),
+) -> StandardResponse:
+    """Get extracted data from a document."""
+    record = crud.get_file_asset(session, file_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    extraction_data = record.extraction_data or {}
+    raw_text = record.raw_text or ""
+    return StandardResponse(
+        success=True,
+        data={
+            "file_id": record.id,
+            "extraction_data": extraction_data,
+            "raw_text_preview": raw_text[:1000] if raw_text else None,
+            "confidence": float(record.confidence) if record.confidence is not None else None,
+            "processing_metadata": record.processing_metadata or {},
+        },
+    )
+
+
+@router.post("/documents/{file_id}/confirm", response_model=StandardResponse)
+def confirm_document_extraction(
+    file_id: str,
+    notes: Optional[str] = Form(None),
+    session: Session = Depends(get_db_session),
+    current_user: User = Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR, UserRole.ADMIN)),
+) -> StandardResponse:
+    """Confirm document extraction (nurse approves)."""
+    record = crud.get_file_asset(session, file_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    updated_record = crud.update_file_asset(
+        session,
+        record,
+        status=DocumentProcessingStatus.COMPLETED,
+        review_status="confirmed",
+        needs_manual_review=False,
+        processing_notes=notes or record.processing_notes,
+        processed_at=datetime.now(timezone.utc),
+    )
+
+    # Update linked timeline events
+    timeline_events = crud.list_timeline_events_for_file(session, file_id)
+    for event in timeline_events:
+        crud.update_timeline_event(session, event, status=TimelineEventStatus.COMPLETED)
+
+    return StandardResponse(
+        success=True,
+        data={"record": _serialize_consultation_record(session, updated_record).model_dump()},
+        message="Document extraction confirmed.",
+    )
+
+
+@router.post("/documents/{file_id}/reject", response_model=StandardResponse)
+def reject_document_extraction(
+    file_id: str,
+    reason: Optional[str] = Form(None),
+    session: Session = Depends(get_db_session),
+    current_user: User = Depends(require_roles(UserRole.NURSE, UserRole.DOCTOR, UserRole.ADMIN)),
+) -> StandardResponse:
+    """Reject document extraction (request re-upload)."""
+    record = crud.get_file_asset(session, file_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    updated_record = crud.update_file_asset(
+        session,
+        record,
+        status=DocumentProcessingStatus.FAILED,
+        review_status="rejected",
+        needs_manual_review=True,
+        processing_notes=f"Rejected: {reason}" if reason else record.processing_notes,
+        last_error=reason or "Document extraction rejected by reviewer",
+    )
+
+    # Update linked timeline events
+    timeline_events = crud.list_timeline_events_for_file(session, file_id)
+    for event in timeline_events:
+        crud.update_timeline_event(session, event, status=TimelineEventStatus.FAILED)
+
+    return StandardResponse(
+        success=True,
+        data={"record": _serialize_consultation_record(session, updated_record).model_dump()},
+        message="Document extraction rejected. Please re-upload.",
     )
 
 

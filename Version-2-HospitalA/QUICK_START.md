@@ -13,7 +13,7 @@ python test_full_system.py
 **PowerShell:**
 ```powershell
 $env:DATABASE_URL="postgresql+asyncpg://user:pass@localhost:5432/medi_os_v2_a"
-$env:GEMINI_API_KEY="AIzaSyD3R7WCLviEOxz8oFkr1uFbZK7Nibe4Xuo"
+$env:GEMINI_API_KEY="YOUR_GEMINI_API_KEY_HERE"
 $env:MANAGE_AGENT_STORAGE_ROOT="./storage/hospital_a"
 $env:SUMMARIZER_AGENT_STORAGE_ROOT="./storage/hospital_a"
 ```
@@ -21,7 +21,7 @@ $env:SUMMARIZER_AGENT_STORAGE_ROOT="./storage/hospital_a"
 **Linux/Mac:**
 ```bash
 export DATABASE_URL="postgresql+asyncpg://user:pass@localhost:5432/medi_os_v2_a"
-export GEMINI_API_KEY="AIzaSyD3R7WCLviEOxz8oFkr1uFbZK7Nibe4Xuo"
+export GEMINI_API_KEY="YOUR_GEMINI_API_KEY_HERE"
 export MANAGE_AGENT_STORAGE_ROOT="./storage/hospital_a"
 export SUMMARIZER_AGENT_STORAGE_ROOT="./storage/hospital_a"
 ```

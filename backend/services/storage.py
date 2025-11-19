@@ -10,8 +10,10 @@ import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
+import contextlib
+import mimetypes
 from pathlib import Path
-from typing import Optional, Protocol
+from typing import Any, Dict, Optional, Protocol, Tuple
 from uuid import uuid4
 
 from fastapi import UploadFile
@@ -24,10 +26,31 @@ from .config import get_settings
 
 logger = logging.getLogger(__name__)
 
+IMAGE_MIME_TYPES = {
+    "image/jpeg",
+    "image/png",
+    "image/heic",
+    "image/heif",
+    "image/tiff",
+}
+ALLOWED_DOCUMENT_MIME_TYPES = {"application/pdf"} | IMAGE_MIME_TYPES
+DEFAULT_UPLOAD_METHOD = "file_picker"
+MAX_RAW_TEXT_FALLBACK = 50000
+
+try:
+    from PyPDF2 import PdfReader  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    PdfReader = None
+
 try:
     from google.cloud import storage as gcs_storage  # type: ignore
 except ImportError:  # pragma: no cover - optional dependency
     gcs_storage = None
+
+try:
+    from google.cloud import vision  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    vision = None
 
 
 class StorageError(Exception):
@@ -190,6 +213,12 @@ class StorageService:
         self.settings = get_settings()
         self.provider = provider or self._build_provider()
         self._is_local_backend = isinstance(self.provider, LocalStorageProvider)
+        self._vision_client = None
+        self._vision_enabled = bool(self.settings.vision_api_enabled and vision is not None)
+        if self.settings.vision_api_enabled and vision is None:
+            logger.warning(
+                "VISION_API_ENABLED is true but google-cloud-vision is not installed; OCR will be limited to PDF extraction."
+            )
 
     def _build_provider(self) -> StorageProvider:
         backend = self.settings.storage_backend.lower()
@@ -204,6 +233,136 @@ class StorageService:
                 self.settings.storage_signed_url_expiry_seconds,
             )
         raise StorageError(f"Unsupported storage backend: {backend}")
+
+    def _get_vision_client(self):
+        if not self._vision_enabled:
+            return None
+        if self._vision_client is None:
+            if self.settings.vision_credentials_path:
+                self._vision_client = vision.ImageAnnotatorClient.from_service_account_json(
+                    str(self.settings.vision_credentials_path)
+                )
+            else:
+                self._vision_client = vision.ImageAnnotatorClient()
+        return self._vision_client
+
+    def _infer_document_type(self, filename: Optional[str], content_type: Optional[str]) -> Optional[str]:
+        if (content_type and content_type.lower() == "application/pdf") or (
+            filename and filename.lower().endswith(".pdf")
+        ):
+            return "pdf"
+        if content_type and content_type.lower() in IMAGE_MIME_TYPES:
+            return "image"
+        return None
+
+    def _truncate_text(self, text: Optional[str]) -> Optional[str]:
+        if not text:
+            return None
+        limit = max(1000, self.settings.document_raw_text_max_chars or MAX_RAW_TEXT_FALLBACK)
+        if len(text) <= limit:
+            return text
+        return text[:limit]
+
+    def _score_extraction_confidence(self, text: Optional[str]) -> Tuple[Optional[float], Optional[str]]:
+        if not text:
+            return None, "red"
+        length = len(text)
+        min_chars = max(1, self.settings.document_min_text_chars)
+        if length >= min_chars * 5:
+            return 0.98, "green"
+        if length >= min_chars * 2:
+            return 0.92, "yellow"
+        return 0.75, "yellow"
+
+    def _validate_file_size(self, stored_file: StoredFile) -> None:
+        max_bytes = max(1, self.settings.document_upload_max_mb) * 1024 * 1024
+        if stored_file.size_bytes > max_bytes:
+            self.provider.delete_file(stored_file.storage_path)
+            raise StorageError(
+                f"File '{stored_file.file_id}' exceeds maximum allowed size of {self.settings.document_upload_max_mb} MB."
+            )
+
+    @staticmethod
+    def _extract_pdf_text(path: str) -> Tuple[Optional[str], Dict[str, Any]]:
+        if PdfReader is None:
+            return None, {"source": "pypdf2", "error": "PyPDF2 not installed"}
+        try:
+            reader = PdfReader(path)
+            pages = []
+            for page in reader.pages:
+                try:
+                    pages.append(page.extract_text() or "")
+                except Exception:  # pragma: no cover - PDF quirks
+                    pages.append("")
+            text = "\n".join(fragment for fragment in pages if fragment).strip()
+            return text or None, {"source": "pypdf2", "page_count": len(reader.pages)}
+        except Exception as exc:  # pragma: no cover - PDF parsing errors
+            return None, {"source": "pypdf2", "error": str(exc)}
+
+    async def _extract_image_text(self, path: str, content_type: str) -> Tuple[Optional[str], Dict[str, Any]]:
+        client = self._get_vision_client()
+        if client is None:
+            return None, {"source": "vision", "error": "disabled"}
+
+        def _run_detection():
+            with open(path, "rb") as image_file:
+                image = vision.Image(content=image_file.read())
+            response = client.document_text_detection(image=image)
+            if response.error.message:
+                raise RuntimeError(response.error.message)
+            return response
+
+        try:
+            response = await asyncio.to_thread(_run_detection)
+        except Exception as exc:  # pragma: no cover - Vision API errors
+            logger.warning("Vision OCR failed for %s: %s", path, exc)
+            return None, {"source": "vision", "error": str(exc)}
+
+        annotation = response.full_text_annotation
+        text = annotation.text.strip() if annotation and annotation.text else None
+        languages = []
+        if annotation and annotation.pages:
+            for page in annotation.pages:
+                if not page.property:
+                    continue
+                for lang in page.property.detected_languages:
+                    if lang.language_code:
+                        languages.append(lang.language_code)
+        metadata: Dict[str, Any] = {
+            "source": "vision_document",
+            "languages": list(dict.fromkeys(languages)),
+            "content_type": content_type,
+        }
+        return text or None, metadata
+
+    async def _extract_text_preview(
+        self,
+        stored_file: StoredFile,
+        *,
+        filename: Optional[str],
+    ) -> Tuple[Optional[str], Dict[str, Any], bool]:
+        content_type = stored_file.content_type or mimetypes.guess_type(filename or "")[0] or "application/octet-stream"
+        resolved_path = self.provider.resolve_path(stored_file.storage_path)
+        cleanup_after_use = not self._is_local_backend
+        text: Optional[str] = None
+        metadata: Dict[str, Any] = {"content_type": content_type}
+        try:
+            if content_type == "application/pdf":
+                text, pdf_meta = await asyncio.to_thread(self._extract_pdf_text, resolved_path)
+                metadata.update(pdf_meta or {})
+            elif content_type in IMAGE_MIME_TYPES:
+                text, image_meta = await self._extract_image_text(resolved_path, content_type)
+                metadata.update(image_meta or {})
+            else:
+                metadata["reason"] = "unsupported_content_type"
+            truncated = self._truncate_text(text)
+            needs_review = not bool(truncated and len(truncated) >= self.settings.document_min_text_chars)
+            metadata["char_count"] = len(truncated or "") if truncated else 0
+            return truncated, metadata, needs_review
+        finally:
+            if cleanup_after_use:
+                with contextlib.suppress(OSError):
+                    Path(resolved_path).unlink(missing_ok=True)
 
     async def save_audio_file(
         self,
@@ -307,6 +466,8 @@ class StorageService:
         description: Optional[str] = None,
         file_type: Optional[str] = None,
         retention_policy: Optional[str] = None,
+        document_type: Optional[str] = None,
+        upload_method: Optional[str] = None,
     ) -> tuple[FileAsset, StoredFile]:
         """Save file asset with retention policy.
 
@@ -320,6 +481,8 @@ class StorageService:
             retention_policy: Optional explicit retention policy (e.g., "365d"). If not provided, determined from file_type
         """
         stored_file = await self.provider.store_file(upload_file)
+        self._validate_file_size(stored_file)
+        upload_method = upload_method or DEFAULT_UPLOAD_METHOD
         signed_url = stored_file.signed_url or self.provider.generate_signed_url(
             stored_file.storage_path,
             expires_in=self.settings.storage_signed_url_expiry_seconds,
@@ -328,6 +491,30 @@ class StorageService:
         # Determine retention policy
         if retention_policy is None:
             retention_policy = self._get_retention_policy(file_type)
+
+        inferred_document_type = document_type or self._infer_document_type(
+            upload_file.filename, stored_file.content_type
+        )
+        raw_text: Optional[str] = None
+        extraction_metadata: Dict[str, Any] = {}
+        needs_review = True
+        try:
+            raw_text, extraction_metadata, needs_review = await self._extract_text_preview(
+                stored_file,
+                filename=upload_file.filename,
+            )
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.warning("Initial OCR preview failed for %s: %s", stored_file.file_id, exc)
+            extraction_metadata = {"error": str(exc)}
+            needs_review = True
+        extraction_confidence, confidence_tier = self._score_extraction_confidence(raw_text)
+        extraction_status = "extracted" if raw_text else "pending_ocr"
+        review_status = "pending" if needs_review else "auto_approved"
+        extraction_payload = {
+            **(extraction_metadata or {}),
+            "extraction_status": extraction_status,
+            "review_status": review_status,
+        }
 
         with get_session() as session:
             record = crud.create_file_asset(
@@ -345,6 +532,16 @@ class StorageService:
                 uploaded_by=uploaded_by,
                 description=description,
                 status=DocumentProcessingStatus.UPLOADED,
+                document_type=inferred_document_type,
+                upload_method=upload_method,
+                raw_text=raw_text,
+                extraction_status=extraction_status,
+                extraction_confidence=extraction_confidence,
+                confidence_tier=confidence_tier,
+                review_status=review_status,
+                needs_manual_review=needs_review,
+                extraction_data=extraction_payload,
+                processing_metadata={"ocr": extraction_payload},
             )
             session.refresh(record)
 

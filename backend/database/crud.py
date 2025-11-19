@@ -26,12 +26,17 @@ from .models import (
     QueueStage,
     QueueState,
     Role,
+    ScribeSession,
+    ScribeTranscriptSegment,
+    ScribeVitalsEntry,
     ServiceMetric,
+    SoapNote,
     SummaryCache,
     SummaryType,
     TimelineEvent,
     TimelineEventStatus,
     TimelineEventType,
+    TriagePrediction,
     User,
 )
 
@@ -215,6 +220,169 @@ def update_file_asset(
     return asset
 
 
+def create_scribe_session(session: Session, **kwargs) -> ScribeSession:
+    return create_instance(session, ScribeSession, **kwargs)
+
+
+def get_scribe_session(session: Session, session_id: str) -> Optional[ScribeSession]:
+    stmt = select(ScribeSession).where(ScribeSession.id == session_id, ScribeSession.is_deleted.is_(False))
+    return session.execute(stmt).scalars().first()
+
+
+def update_scribe_session(session: Session, instance: ScribeSession, **kwargs) -> ScribeSession:
+    for key, value in kwargs.items():
+        setattr(instance, key, value)
+    session.add(instance)
+    session.flush()
+    session.refresh(instance)
+    return instance
+
+
+def add_transcript_segment(
+    session: Session,
+    *,
+    session_id: str,
+    speaker_label: Optional[str],
+    text: str,
+    start_ms: Optional[int],
+    end_ms: Optional[int],
+    confidence: Optional[float],
+    is_final: bool = True,
+    metadata: Optional[dict] = None,
+) -> ScribeTranscriptSegment:
+    segment = ScribeTranscriptSegment(
+        session_id=session_id,
+        speaker_label=speaker_label,
+        text=text,
+        start_ms=start_ms,
+        end_ms=end_ms,
+        confidence=confidence,
+        is_final=is_final,
+        metadata=metadata,
+    )
+    session.add(segment)
+    session.flush()
+    session.refresh(segment)
+    return segment
+
+
+def list_transcript_segments(
+    session: Session,
+    session_id: str,
+    *,
+    limit: int = 500,
+) -> Sequence[ScribeTranscriptSegment]:
+    stmt = (
+        select(ScribeTranscriptSegment)
+        .where(
+            ScribeTranscriptSegment.session_id == session_id,
+            ScribeTranscriptSegment.is_deleted.is_(False),
+        )
+        .order_by(ScribeTranscriptSegment.start_ms.asc().nulls_last(), ScribeTranscriptSegment.created_at.asc())
+        .limit(limit)
+    )
+    return session.execute(stmt).scalars().all()
+
+
+def record_scribe_vitals(
+    session: Session,
+    *,
+    session_id: str,
+    recorded_at: datetime,
+    source: str,
+    recorded_by: Optional[str] = None,
+    heart_rate: Optional[int] = None,
+    respiratory_rate: Optional[int] = None,
+    systolic_bp: Optional[int] = None,
+    diastolic_bp: Optional[int] = None,
+    temperature_c: Optional[float] = None,
+    oxygen_saturation: Optional[int] = None,
+    pain_score: Optional[int] = None,
+    metadata: Optional[dict] = None,
+) -> ScribeVitalsEntry:
+    entry = ScribeVitalsEntry(
+        session_id=session_id,
+        recorded_by=recorded_by,
+        recorded_at=recorded_at,
+        source=source,
+        heart_rate=heart_rate,
+        respiratory_rate=respiratory_rate,
+        systolic_bp=systolic_bp,
+        diastolic_bp=diastolic_bp,
+        temperature_c=temperature_c,
+        oxygen_saturation=oxygen_saturation,
+        pain_score=pain_score,
+        metadata=metadata,
+    )
+    session.add(entry)
+    session.flush()
+    session.refresh(entry)
+    return entry
+
+
+def list_scribe_vitals(
+    session: Session,
+    session_id: str,
+    *,
+    limit: int = 200,
+) -> Sequence[ScribeVitalsEntry]:
+    stmt = (
+        select(ScribeVitalsEntry)
+        .where(
+            ScribeVitalsEntry.session_id == session_id,
+            ScribeVitalsEntry.is_deleted.is_(False),
+        )
+        .order_by(ScribeVitalsEntry.recorded_at.asc())
+        .limit(limit)
+    )
+    return session.execute(stmt).scalars().all()
+
+
+def create_soap_note(session: Session, **kwargs) -> SoapNote:
+    return create_instance(session, SoapNote, **kwargs)
+
+
+def update_soap_note(session: Session, instance: SoapNote, **kwargs) -> SoapNote:
+    for key, value in kwargs.items():
+        setattr(instance, key, value)
+    session.add(instance)
+    session.flush()
+    session.refresh(instance)
+    return instance
+
+
+def list_soap_notes_for_session(session: Session, session_id: str) -> Sequence[SoapNote]:
+    stmt = (
+        select(SoapNote)
+        .where(SoapNote.session_id == session_id, SoapNote.is_deleted.is_(False))
+        .order_by(SoapNote.created_at.desc())
+    )
+    return session.execute(stmt).scalars().all()
+
+
+def create_triage_prediction(session: Session, **kwargs) -> TriagePrediction:
+    prediction = TriagePrediction(**kwargs)
+    session.add(prediction)
+    session.flush()
+    session.refresh(prediction)
+    return prediction
+
+
+def list_triage_predictions_for_session(
+    session: Session,
+    session_id: str,
+) -> Sequence[TriagePrediction]:
+    stmt = (
+        select(TriagePrediction)
+        .where(
+            TriagePrediction.session_id == session_id,
+            TriagePrediction.is_deleted.is_(False),
+        )
+        .order_by(TriagePrediction.created_at.desc())
+    )
+    return session.execute(stmt).scalars().all()
+
+
 def create_timeline_event(session: Session, **kwargs) -> TimelineEvent:
     return create_instance(session, TimelineEvent, **kwargs)
 
@@ -258,7 +426,7 @@ def list_timeline_events_for_file(
     stmt = (
         select(TimelineEvent)
         .where(
-            TimelineEvent.source_file_id == file_id,
+            TimelineEvent.source_file_asset_id == file_id,
             TimelineEvent.is_deleted.is_(False),
         )
         .order_by(TimelineEvent.event_date.asc(), TimelineEvent.created_at.asc())

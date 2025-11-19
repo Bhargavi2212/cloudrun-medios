@@ -22,7 +22,7 @@
 
    Quick setup (PowerShell):
    ```powershell
-   $env:GEMINI_API_KEY="AIzaSyD3R7WCLviEOxz8oFkr1uFbZK7Nibe4Xuo"
+   $env:GEMINI_API_KEY="YOUR_GEMINI_API_KEY_HERE"
    ```
 
    See SETUP_ENV.md for detailed instructions.

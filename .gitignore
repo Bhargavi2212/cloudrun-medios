@@ -34,6 +34,20 @@ wheels/
 # Environment variables
 .env
 .env.local
+.env.*
+!.env.example
+*.env
+!*.env.example
+
+# Secrets and credentials
+*.key
+*.pem
+*_key.json
+*secret*
+*password*
+*credential*
+credentials.json
+service-account*.json
 
 # Google Cloud credentials
 gcp-key.json

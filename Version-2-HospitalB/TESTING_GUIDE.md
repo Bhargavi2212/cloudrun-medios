@@ -22,8 +22,8 @@
 
    Quick setup (PowerShell):
    ```powershell
-   $env:DATABASE_URL="postgresql+asyncpg://postgres:Anuradha@localhost:5432/medi_os_v2_b"
-   $env:GEMINI_API_KEY="AIzaSyD3R7WCLviEOxz8oFkr1uFbZK7Nibe4Xuo"
+   $env:DATABASE_URL="postgresql+asyncpg://postgres:YOUR_PASSWORD@localhost:5432/medi_os_v2_b"
+   $env:GEMINI_API_KEY="YOUR_GEMINI_API_KEY_HERE"
    $env:MANAGE_AGENT_STORAGE_ROOT="./storage/hospital_b"
    $env:SUMMARIZER_AGENT_STORAGE_ROOT="./storage/hospital_b"
    ```

@@ -1,0 +1,51 @@
+"""Verify database tables were created successfully."""
+
+import asyncio
+
+import asyncpg
+
+
+async def verify_tables():
+    """Check if file_assets and timeline_events tables exist."""
+    try:
+        conn = await asyncpg.connect(
+            "postgresql://postgres:Anuradha@localhost:5432/medi_os_v2"
+        )
+
+        # Check for file_assets table
+        file_assets = await conn.fetchval(
+            "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'file_assets')"
+        )
+
+        # Check for timeline_events table
+        timeline_events = await conn.fetchval(
+            "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'timeline_events')"
+        )
+
+        print("Database Verification:")
+        print("-" * 60)
+        print(f"file_assets table: {'[OK]' if file_assets else '[FAIL]'}")
+        print(f"timeline_events table: {'[OK]' if timeline_events else '[FAIL]'}")
+
+        if file_assets and timeline_events:
+            # Get column counts
+            file_assets_cols = await conn.fetchval(
+                "SELECT COUNT(*) FROM information_schema.columns WHERE table_name = 'file_assets'"
+            )
+            timeline_cols = await conn.fetchval(
+                "SELECT COUNT(*) FROM information_schema.columns WHERE table_name = 'timeline_events'"
+            )
+            print(f"\nfile_assets columns: {file_assets_cols}")
+            print(f"timeline_events columns: {timeline_cols}")
+            print("\n[OK] All tables created successfully!")
+        else:
+            print("\n[FAIL] Some tables are missing!")
+
+        await conn.close()
+
+    except Exception as e:
+        print(f"[ERROR] Database connection failed: {e}")
+
+
+if __name__ == "__main__":
+    asyncio.run(verify_tables())

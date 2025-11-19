@@ -5,7 +5,7 @@
 - **Assumptions**
   - PostgreSQL is running locally.
   - User: `postgres`
-  - Password: `Anuradha`
+  - Password: `YOUR_DATABASE_PASSWORD` (set as environment variable, never commit to git!)
   - Databases:
     - `medi_os_v2_a` (main app DB)
     - `medi_os_v2_a_test` (test DB)
@@ -14,8 +14,8 @@
 cd "D:\Hackathons\Cloud Run\Version -2"
 
 # 1) Point SQLAlchemy at your local databases
-$env:DATABASE_URL = "postgresql+asyncpg://postgres:Anuradha@localhost:5432/medi_os_v2_a"
-$env:TEST_DATABASE_URL = "postgresql+asyncpg://postgres:Anuradha@localhost:5432/medi_os_v2_a_test"
+$env:DATABASE_URL = "postgresql+asyncpg://postgres:YOUR_PASSWORD@localhost:5432/medi_os_v2_a"
+$env:TEST_DATABASE_URL = "postgresql+asyncpg://postgres:YOUR_PASSWORD@localhost:5432/medi_os_v2_a_test"
 
 # 2) Apply schema migrations
 poetry run alembic -c database/alembic.ini upgrade head

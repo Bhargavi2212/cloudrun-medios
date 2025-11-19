@@ -31,7 +31,10 @@ async def lifespan(app: FastAPI):
 
     # Start initialization tasks in background (don't await them)
     asyncio.create_task(initialize_database_background())
-    asyncio.create_task(initialize_models_background())
+    if settings.models_preload_enabled:
+        asyncio.create_task(initialize_models_background())
+    else:
+        logger.info("Skipping model preload (MODELS_PRELOAD_ENABLED is false)")
 
     yield
     logger.info("Shutting down MediOS AI Scribe")

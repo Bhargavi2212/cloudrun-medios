@@ -19,6 +19,10 @@ import type {
   ConsultationRecord,
   DocumentStatus,
   TimelineSummary,
+  ScribeSession,
+  ScribeSessionDetails,
+  ScribeVital,
+  SoapNote,
 } from '@/types'
 
 const deriveBackendUrlFromHost = () => {
@@ -52,6 +56,16 @@ const apiBaseUrl = normalizedBaseUrl.endsWith('/api/v1')
 
 export const API_BASE_URL = apiBaseUrl
 export const API_ROOT_URL = apiBaseUrl.replace(/\/api\/v1$/, '')
+
+export const buildWebSocketUrl = (path: string): string => {
+  if (typeof window === 'undefined') {
+    return ''
+  }
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  const url = new URL(API_ROOT_URL)
+  url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
+  return `${url.origin}${normalizedPath}`
+}
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -206,6 +220,66 @@ export const manageAPI = {
         payload,
       )
       .then((res) => unwrap(res).record),
+  listPendingDocuments: (options?: { consultationId?: string; patientId?: string }) => {
+    const params: Record<string, unknown> = {}
+    if (options?.consultationId) params.consultation_id = options.consultationId
+    if (options?.patientId) params.patient_id = options.patientId
+    return api
+      .get<StandardResponse<{ records: ConsultationRecord[]; count: number }>>(
+        '/manage/documents/pending-review',
+        { params },
+      )
+      .then(unwrap)
+  },
+  getDocumentExtraction: (fileId: string) =>
+    api
+      .get<StandardResponse<{
+        file_id: string
+        extraction_data: Record<string, unknown>
+        raw_text_preview?: string | null
+        confidence?: number | null
+        processing_metadata?: Record<string, unknown>
+      }>>(`/manage/documents/${fileId}/extraction`)
+      .then(unwrap),
+  confirmDocument: (fileId: string, notes?: string) => {
+    const formData = new FormData()
+    if (notes) formData.append('notes', notes)
+    return api
+      .post<StandardResponse<{ record: ConsultationRecord }>>(
+        `/manage/documents/${fileId}/confirm`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } },
+      )
+      .then((res) => unwrap(res).record)
+  },
+  rejectDocument: (fileId: string, reason?: string) => {
+    const formData = new FormData()
+    if (reason) formData.append('reason', reason)
+    return api
+      .post<StandardResponse<{ record: ConsultationRecord }>>(
+        `/manage/documents/${fileId}/reject`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } },
+      )
+      .then((res) => unwrap(res).record)
+  },
+  uploadConsultationRecordsWithMethod: (
+    consultationId: string,
+    files: File[],
+    options?: { notes?: string; uploadMethod?: 'camera' | 'drag_and_drop' | 'file_picker' | 'scan' | 'manual' },
+  ) => {
+    const formData = new FormData()
+    files.forEach((file) => formData.append('files', file))
+    if (options?.notes) formData.append('notes', options.notes)
+    if (options?.uploadMethod) formData.append('upload_method', options.uploadMethod)
+    return api
+      .post<StandardResponse<{ records: ConsultationRecord[]; processing_results: unknown[] }>>(
+        `/manage/consultations/${consultationId}/records`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } },
+      )
+      .then(unwrap)
+  },
   getTimelineSummary: (
     patientId: string,
     options?: { forceRefresh?: boolean; visitLimit?: number },
@@ -247,6 +321,41 @@ export const queueAPI = {
         },
       )
       .then(unwrap),
+}
+
+export const aiScribeAPI = {
+  createSession: (payload: { consultation_id: string; patient_id: string; language?: string; metadata?: Record<string, unknown> }) =>
+    api.post<StandardResponse<{ session: ScribeSession }>>('/scribe/sessions', payload).then(unwrap),
+  getSession: (sessionId: string) =>
+    api.get<StandardResponse<ScribeSessionDetails>>(`/scribe/sessions/${sessionId}`).then(unwrap),
+  recordVitals: (sessionId: string, payload: Partial<Omit<VitalsSubmission, 'blood_pressure_systolic' | 'blood_pressure_diastolic'>> & {
+    heart_rate?: number
+    respiratory_rate?: number
+    systolic_bp?: number
+    diastolic_bp?: number
+    temperature_c?: number
+    oxygen_saturation?: number
+    pain_score?: number
+    source?: string
+  }) =>
+    api.post<StandardResponse<{ vitals: ScribeVital }>>(`/scribe/sessions/${sessionId}/vitals`, payload).then(unwrap),
+  finalizeSession: (sessionId: string) =>
+    api.post<StandardResponse<Record<string, unknown>>>(`/scribe/sessions/${sessionId}/complete`).then(unwrap),
+  runTriage: (sessionId: string) =>
+    api.post<StandardResponse<Record<string, unknown>>>(`/scribe/sessions/${sessionId}/triage`).then(unwrap),
+  updateNote: (noteId: string, content: SoapNoteContentPayload) =>
+    api.put<StandardResponse<{ note: SoapNote }>>(`/scribe/notes/${noteId}`, content).then(unwrap),
+  downloadPdf: async (sessionId: string): Promise<Blob> => {
+    const response = await api.get(`/scribe/sessions/${sessionId}/export/pdf`, { responseType: 'blob' })
+    return response.data as Blob
+  },
+  exportFhir: (sessionId: string) =>
+    api.get(`/scribe/sessions/${sessionId}/export/fhir`).then((res) => res.data),
+}
+
+type SoapNoteContentPayload = {
+  content?: Record<string, unknown>
+  status?: string
 }
 
 const callMakeAgentEndpoint = async <T>(

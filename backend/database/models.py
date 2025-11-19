@@ -6,7 +6,7 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional, Type
 
-from sqlalchemy import JSON, BigInteger, CheckConstraint, Column, Date, DateTime
+from sqlalchemy import JSON, BigInteger, Boolean, CheckConstraint, Column, Date, DateTime
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy import ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import CITEXT, INET
@@ -113,6 +113,14 @@ class TimelineEventType(str, Enum):
     MEDICATION = "medication"
     VITALS = "vitals"
     NOTE = "note"
+
+
+class ScribeSessionStatus(str, Enum):
+    CREATED = "created"
+    STREAMING = "streaming"
+    SUMMARIZING = "summarizing"
+    COMPLETED = "completed"
+    FAILED = "failed"
 
 
 # ---------- IAM ----------
@@ -390,6 +398,112 @@ class Transcription(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     audio_file: Mapped[AudioFile] = relationship("AudioFile", backref="transcription")
 
 
+class ScribeSession(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
+    __tablename__ = "scribe_sessions"
+
+    consultation_id: Mapped[Optional[str]] = mapped_column(ForeignKey("consultations.id", ondelete="SET NULL"))
+    patient_id: Mapped[Optional[str]] = mapped_column(ForeignKey("patients.id", ondelete="SET NULL"))
+    created_by: Mapped[Optional[str]] = mapped_column(ForeignKey("users.id"))
+    status: Mapped[ScribeSessionStatus] = mapped_column(
+        SAEnum(ScribeSessionStatus, name="scribesessionstatus", values_callable=enum_values),
+        nullable=False,
+        default=ScribeSessionStatus.CREATED,
+    )
+    language: Mapped[Optional[str]] = mapped_column(String(10))
+    active_audio_file_id: Mapped[Optional[str]] = mapped_column(ForeignKey("audio_files.id", ondelete="SET NULL"))
+    started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    ended_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    last_error: Mapped[Optional[str]] = mapped_column(Text())
+    session_metadata: Mapped[Optional[dict]] = mapped_column(JSON)
+    transcript_snapshot: Mapped[Optional[str]] = mapped_column(Text())
+
+    consultation: Mapped[Optional[Consultation]] = relationship("Consultation")
+    patient: Mapped[Optional[Patient]] = relationship("Patient")
+    created_by_user: Mapped[Optional[User]] = relationship("User", foreign_keys=[created_by])
+    active_audio_file: Mapped[Optional[AudioFile]] = relationship("AudioFile", foreign_keys=[active_audio_file_id])
+
+    __table_args__ = (
+        Index("ix_scribe_sessions_consultation", "consultation_id"),
+        Index("ix_scribe_sessions_status", "status"),
+    )
+
+
+class ScribeTranscriptSegment(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
+    __tablename__ = "scribe_transcript_segments"
+
+    session_id: Mapped[str] = mapped_column(ForeignKey("scribe_sessions.id", ondelete="CASCADE"), nullable=False)
+    speaker_label: Mapped[Optional[str]] = mapped_column(String(50))
+    text: Mapped[str] = mapped_column(Text(), nullable=False)
+    start_ms: Mapped[Optional[int]] = mapped_column(Integer)
+    end_ms: Mapped[Optional[int]] = mapped_column(Integer)
+    confidence: Mapped[Optional[float]] = mapped_column(Numeric(4, 3))
+    is_final: Mapped[bool] = mapped_column(default=True, nullable=False)
+    segment_metadata: Mapped[Optional[dict]] = mapped_column(JSON)
+
+    session: Mapped[ScribeSession] = relationship("ScribeSession", backref="segments")
+
+    __table_args__ = (
+        Index("ix_scribe_segments_session_time", "session_id", "start_ms"),
+    )
+
+
+class ScribeVitalsEntry(TimestampMixin, SoftDeleteMixin, Base):
+    __tablename__ = "scribe_vitals"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    session_id: Mapped[str] = mapped_column(ForeignKey("scribe_sessions.id", ondelete="CASCADE"), nullable=False)
+    recorded_by: Mapped[Optional[str]] = mapped_column(ForeignKey("users.id"))
+    recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    source: Mapped[str] = mapped_column(String(20), nullable=False, default="manual")
+    heart_rate: Mapped[Optional[int]] = mapped_column(Integer)
+    respiratory_rate: Mapped[Optional[int]] = mapped_column(Integer)
+    systolic_bp: Mapped[Optional[int]] = mapped_column(Integer)
+    diastolic_bp: Mapped[Optional[int]] = mapped_column(Integer)
+    temperature_c: Mapped[Optional[float]] = mapped_column(Numeric(4, 1))
+    oxygen_saturation: Mapped[Optional[int]] = mapped_column(Integer)
+    pain_score: Mapped[Optional[int]] = mapped_column(Integer)
+    extra: Mapped[Optional[dict]] = mapped_column(JSON)
+
+    session: Mapped[ScribeSession] = relationship("ScribeSession", backref="vitals_entries")
+    recorder: Mapped[Optional[User]] = relationship("User")
+
+    __table_args__ = (
+        CheckConstraint("heart_rate IS NULL OR heart_rate > 0", name="ck_scribe_vitals_heart_rate_positive"),
+        CheckConstraint("respiratory_rate IS NULL OR respiratory_rate > 0", name="ck_scribe_vitals_resp_positive"),
+        CheckConstraint(
+            "oxygen_saturation IS NULL OR (oxygen_saturation >= 0 AND oxygen_saturation <= 100)",
+            name="ck_scribe_vitals_spo2_range",
+        ),
+        Index("ix_scribe_vitals_session_time", "session_id", "recorded_at"),
+    )
+
+
+class SoapNote(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
+    __tablename__ = "soap_notes"
+
+    session_id: Mapped[str] = mapped_column(ForeignKey("scribe_sessions.id", ondelete="CASCADE"), nullable=False)
+    consultation_id: Mapped[Optional[str]] = mapped_column(ForeignKey("consultations.id", ondelete="SET NULL"))
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="draft")
+    model_name: Mapped[Optional[str]] = mapped_column(String(100))
+    specialty: Mapped[Optional[str]] = mapped_column(String(50))
+    version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    content: Mapped[Optional[dict]] = mapped_column(JSON)
+    raw_markdown: Mapped[Optional[str]] = mapped_column(Text())
+    confidence: Mapped[Optional[dict]] = mapped_column(JSON)
+    tokens_prompt: Mapped[Optional[int]] = mapped_column(Integer)
+    tokens_completion: Mapped[Optional[int]] = mapped_column(Integer)
+    latency_ms: Mapped[Optional[int]] = mapped_column(Integer)
+    error_message: Mapped[Optional[str]] = mapped_column(Text())
+
+    session: Mapped[ScribeSession] = relationship("ScribeSession", backref="soap_notes")
+    consultation: Mapped[Optional[Consultation]] = relationship("Consultation")
+
+    __table_args__ = (
+        Index("ix_soap_notes_session", "session_id", "created_at"),
+        Index("ix_soap_notes_consultation", "consultation_id"),
+    )
+
+
 class Note(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     __tablename__ = "notes"
 
@@ -441,17 +555,24 @@ class TriagePrediction(TimestampMixin, SoftDeleteMixin, Base):
     __tablename__ = "triage_predictions"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    session_id: Mapped[Optional[str]] = mapped_column(ForeignKey("scribe_sessions.id", ondelete="SET NULL"))
     consultation_id: Mapped[str] = mapped_column(ForeignKey("consultations.id", ondelete="CASCADE"), nullable=False)
     model_version: Mapped[str] = mapped_column(String(50), nullable=False)
     esi_level: Mapped[int] = mapped_column(Integer, nullable=False)
     probability: Mapped[Optional[float]] = mapped_column(Numeric(4, 3))
+    probabilities: Mapped[Optional[dict]] = mapped_column(JSON)
+    flagged: Mapped[bool] = mapped_column(default=False, nullable=False)
+    latency_ms: Mapped[Optional[int]] = mapped_column(Integer)
+    source: Mapped[Optional[str]] = mapped_column(String(50))
     feature_importances: Mapped[Optional[dict]] = mapped_column(JSON)
     inputs_snapshot: Mapped[Optional[dict]] = mapped_column(JSON)
 
     consultation: Mapped[Consultation] = relationship("Consultation", backref="triage_predictions")
+    session: Mapped[Optional[ScribeSession]] = relationship("ScribeSession", backref="triage_predictions")
 
     __table_args__ = (
         Index("ix_triage_predictions_consultation", "consultation_id"),
+        Index("ix_triage_predictions_session", "session_id"),
         Index("ix_triage_predictions_model", "model_version", "created_at"),
         CheckConstraint("esi_level BETWEEN 1 AND 5", name="ck_triage_predictions_esi_range"),
     )
@@ -468,7 +589,8 @@ class TimelineEvent(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
         ForeignKey("consultations.id", ondelete="SET NULL"),
         nullable=True,
     )
-    source_file_id: Mapped[Optional[str]] = mapped_column(
+    source_type: Mapped[Optional[str]] = mapped_column(String(30))
+    source_file_asset_id: Mapped[Optional[str]] = mapped_column(
         ForeignKey("files.id", ondelete="SET NULL"),
         nullable=True,
     )
@@ -494,6 +616,11 @@ class TimelineEvent(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
         default=TimelineEventStatus.PENDING,
     )
     confidence: Mapped[Optional[float]] = mapped_column(Numeric(4, 3))
+    extraction_confidence: Mapped[Optional[float]] = mapped_column(Numeric(4, 3))
+    extraction_metadata: Mapped[Optional[dict]] = mapped_column(JSON)
+    doctor_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    verified_by: Mapped[Optional[str]] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     notes: Mapped[Optional[str]] = mapped_column(Text())
 
     patient: Mapped[Patient] = relationship("Patient", back_populates="timeline_events")
@@ -504,15 +631,24 @@ class TimelineEvent(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     source_file: Mapped[Optional["FileAsset"]] = relationship(
         "FileAsset",
         back_populates="timeline_events",
+        foreign_keys=[source_file_asset_id],
+    )
+    verified_by_user: Mapped[Optional["User"]] = relationship(
+        "User",
+        foreign_keys=[verified_by],
     )
 
     __table_args__ = (
         Index("ix_timeline_events_patient_date", "patient_id", "event_date"),
         Index("ix_timeline_events_status", "status"),
-        Index("ix_timeline_events_source_file", "source_file_id"),
+        Index("ix_timeline_events_source_file_asset", "source_file_asset_id"),
         CheckConstraint(
             "confidence IS NULL OR (confidence >= 0 AND confidence <= 1)",
             name="ck_timeline_events_confidence_range",
+        ),
+        CheckConstraint(
+            "extraction_confidence IS NULL OR (extraction_confidence >= 0 AND extraction_confidence <= 1)",
+            name="ck_timeline_events_extraction_confidence_range",
         ),
     )
 
@@ -570,6 +706,7 @@ class FileAsset(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     uploaded_by: Mapped[Optional[str]] = mapped_column(ForeignKey("users.id"))
     description: Mapped[Optional[str]] = mapped_column(Text())
     document_type: Mapped[Optional[str]] = mapped_column(String(50))
+    upload_method: Mapped[Optional[str]] = mapped_column(String(20))
     status: Mapped[DocumentProcessingStatus] = mapped_column(
         SAEnum(
             DocumentProcessingStatus,
@@ -580,19 +717,38 @@ class FileAsset(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
         default=DocumentProcessingStatus.UPLOADED,
     )
     confidence: Mapped[Optional[float]] = mapped_column(Numeric(4, 3))
+    raw_text: Mapped[Optional[str]] = mapped_column(Text())
+    extraction_status: Mapped[Optional[str]] = mapped_column(String(30))
+    extraction_confidence: Mapped[Optional[float]] = mapped_column(Numeric(4, 3))
+    confidence_tier: Mapped[Optional[str]] = mapped_column(String(20))
+    review_status: Mapped[Optional[str]] = mapped_column(String(20))
+    needs_manual_review: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    extraction_data: Mapped[Optional[dict]] = mapped_column(JSON)
     processing_metadata: Mapped[Optional[dict]] = mapped_column(JSON)
     processing_notes: Mapped[Optional[str]] = mapped_column(Text())
     processed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     last_error: Mapped[Optional[str]] = mapped_column(Text())
+    nurse_corrections: Mapped[Optional[dict]] = mapped_column(JSON)
+    linked_timeline_event_id: Mapped[Optional[str]] = mapped_column(
+        ForeignKey("timeline_events.id", ondelete="SET NULL")
+    )
 
     timeline_events: Mapped[List["TimelineEvent"]] = relationship(
         "TimelineEvent",
         back_populates="source_file",
+        foreign_keys="TimelineEvent.source_file_asset_id",
+    )
+    linked_timeline_event: Mapped[Optional["TimelineEvent"]] = relationship(
+        "TimelineEvent",
+        foreign_keys=[linked_timeline_event_id],
     )
 
     __table_args__ = (
         Index("ix_files_owner", "owner_type", "owner_id"),
         Index("ix_files_status", "status"),
+        Index("ix_files_extraction_status", "extraction_status"),
+        Index("ix_files_review_status", "review_status"),
+        Index("ix_files_confidence_tier", "confidence_tier"),
     )
 
 
