@@ -1095,7 +1095,8 @@ def detect_data_leakage(
             status = "[OK]" if diff < 0.1 else "[WARN]"
             logger.info(
                 f"  ESI {int(esi)}: {pct:.2f}% "
-                f"(expected: {expected_pct}%, diff: {diff:.2f}%) {status}"
+                f"(expected: {expected_pct}%, diff: {diff:.2f}%) "
+                f"{status}"
             )
 
     # Save report
@@ -1173,7 +1174,7 @@ def test_transformer_loading() -> None:
             continue
 
         try:
-            _transformer = joblib.load(file_path)
+            joblib.load(file_path)
             logger.info(f"  {transformer_file}: [OK] Loaded successfully")
             results.append(f"{transformer_file}: SUCCESS")
         except Exception as e:
@@ -1254,14 +1255,16 @@ def plot_feature_distributions(
 
     plt.tight_layout()
     plt.savefig(
-        DISTRIBUTION_PLOTS_DIR / "continuous_features_distributions.png",
+        DISTRIBUTION_PLOTS_DIR
+        / "continuous_features_distributions.png",
         dpi=300,
         bbox_inches="tight",
     )
     plt.close()
 
     logger.info(
-        f"  [OK] Saved: {DISTRIBUTION_PLOTS_DIR / "continuous_features_distributions.png"}"  # noqa: E501
+        f"  [OK] Saved: "
+        f"{DISTRIBUTION_PLOTS_DIR / 'continuous_features_distributions.png'}"
     )
 
     # Binary features statistics
