@@ -51,6 +51,10 @@ ignore = ["B008"]
 "scripts/**/*.py" = ["N803", "N806"]  # ML naming conventions (X_train, etc.)
 
 [tool.ruff.format]
+# Skip formatting for transcripts.py due to black/ruff format conflict
+exclude = ["services/scribe_agent/handlers/transcripts.py"]
+
+[tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
 line-ending = "lf"
