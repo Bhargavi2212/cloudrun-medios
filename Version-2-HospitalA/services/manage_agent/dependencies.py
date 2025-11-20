@@ -9,6 +9,8 @@ from fastapi import Request
 from services.manage_agent.config import ManageAgentSettings
 from services.manage_agent.core.triage import TriageEngine
 from services.manage_agent.services.check_in_service import CheckInService
+from services.manage_agent.services.federated_sync_service import FederatedSyncService
+from services.manage_agent.services.profile_merge_service import ProfileMergeService
 from shared.config import get_settings as get_shared_settings
 
 
@@ -35,3 +37,23 @@ def get_settings() -> ManageAgentSettings:
     Retrieve the manage-agent settings.
     """
     return get_shared_settings(ManageAgentSettings)
+
+
+def get_federated_sync_service(request: Request) -> FederatedSyncService | None:
+    """
+    Retrieve the federated sync service if configured.
+    """
+
+    return getattr(request.app.state, "federated_sync_service", None)
+
+
+def get_profile_merge_service(request: Request) -> ProfileMergeService:
+    """
+    Create a ProfileMergeService instance for the current request.
+    """
+    from database.session import get_session_factory
+
+    settings = get_settings()
+    session_factory = get_session_factory()
+    session = session_factory()
+    return ProfileMergeService(session=session, hospital_id=settings.dol_hospital_id)
