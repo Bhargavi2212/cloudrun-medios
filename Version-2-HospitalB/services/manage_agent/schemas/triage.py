@@ -4,6 +4,8 @@ Triage classification schemas.
 
 from __future__ import annotations
 
+from uuid import UUID
+
 from pydantic import BaseModel, Field
 
 
@@ -39,15 +41,27 @@ class TriageResponse(BaseModel):
 
 class NurseVitalsRequest(TriageRequest):
     """
-    Request payload for nurse triage with vital signs.
-    Extends TriageRequest for nurse-specific triage.
+    Request payload for nurses recording vitals (extends triage inputs with
+    optional notes).
     """
-    pass
+
+    notes: str | None = Field(
+        None, description="Optional notes or observations from the nurse."
+    )
 
 
-class NurseVitalsResponse(TriageResponse):
+class NurseVitalsResponse(BaseModel):
     """
-    Response payload for nurse triage classification.
-    Extends TriageResponse for nurse-specific triage.
+    Response payload after recording vitals and triage classification.
     """
-    pass
+
+    encounter_id: UUID = Field(..., description="Encounter identifier.")
+    patient_id: UUID = Field(..., description="Patient identifier.")
+    triage_level: int = Field(..., description="Updated acuity level.")
+    model_version: str = Field(
+        ..., description="Model version used for the prediction."
+    )
+    explanation: str = Field(
+        ..., description="Explanation for the computed triage level."
+    )
+    vitals: dict[str, float | int] = Field(..., description="Recorded vital signs.")
