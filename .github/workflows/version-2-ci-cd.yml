@@ -372,11 +372,14 @@ jobs:
             --timeout 300 \
             --max-instances 10 \
             --min-instances 0 \
-            --set-env-vars "HOSPITAL_ID=${{ steps.hospital-id.outputs.id }},DATABASE_URL=${DATABASE_URL},MANAGE_AGENT_CORS_ORIGINS=$CORS_ORIGINS,MANAGE_AGENT_DOL_URL=$DOL_URL" \
-            || echo "Deployment failed"
+            --set-env-vars "HOSPITAL_ID=${{ steps.hospital-id.outputs.id }},DATABASE_URL=${DATABASE_URL},MANAGE_AGENT_CORS_ORIGINS=$CORS_ORIGINS,MANAGE_AGENT_DOL_URL=$DOL_URL"
+          if [ $? -ne 0 ]; then
+            echo "❌ manage-agent deployment FAILED for ${{ steps.hospital-id.outputs.id }}"
+            exit 1
+          fi
           SERVICE_URL=$(gcloud run services describe medi-os-${{ steps.hospital-id.outputs.id }}-manage-agent --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
           echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT
-        continue-on-error: true
+          echo "✅ manage-agent deployed successfully for ${{ steps.hospital-id.outputs.id }}"
 
       - name: Deploy scribe-agent
         id: deploy-scribe
@@ -399,11 +402,14 @@ jobs:
             --timeout 300 \
             --max-instances 10 \
             --min-instances 0 \
-            --set-env-vars "DATABASE_URL=${DATABASE_URL},SCRIBE_AGENT_CORS_ORIGINS=*" \
-            || echo "Deployment failed"
+            --set-env-vars "DATABASE_URL=${DATABASE_URL},SCRIBE_AGENT_CORS_ORIGINS=*"
+          if [ $? -ne 0 ]; then
+            echo "❌ scribe-agent deployment FAILED for ${{ steps.hospital-id.outputs.id }}"
+            exit 1
+          fi
           SERVICE_URL=$(gcloud run services describe medi-os-${{ steps.hospital-id.outputs.id }}-scribe-agent --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
           echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT
-        continue-on-error: true
+          echo "✅ scribe-agent deployed successfully for ${{ steps.hospital-id.outputs.id }}"
 
       - name: Deploy summarizer-agent
         id: deploy-summarizer
@@ -426,11 +432,14 @@ jobs:
             --timeout 300 \
             --max-instances 10 \
             --min-instances 0 \
-            --set-env-vars "DATABASE_URL=${DATABASE_URL},SUMMARIZER_AGENT_CORS_ORIGINS=*,GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" \
-            || echo "Deployment failed"
+            --set-env-vars "DATABASE_URL=${DATABASE_URL},SUMMARIZER_AGENT_CORS_ORIGINS=*,GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}"
+          if [ $? -ne 0 ]; then
+            echo "❌ summarizer-agent deployment FAILED for ${{ steps.hospital-id.outputs.id }}"
+            exit 1
+          fi
           SERVICE_URL=$(gcloud run services describe medi-os-${{ steps.hospital-id.outputs.id }}-summarizer-agent --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
           echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT
-        continue-on-error: true
+          echo "✅ summarizer-agent deployed successfully for ${{ steps.hospital-id.outputs.id }}"
 
       - name: Deploy dol-service
         run: |
@@ -452,9 +461,12 @@ jobs:
             --timeout 300 \
             --max-instances 10 \
             --min-instances 0 \
-            --set-env-vars "DOL_HOSPITAL_ID=${{ steps.hospital-id.outputs.id }},DOL_SHARED_SECRET=super-secret,DATABASE_URL=${DATABASE_URL},DOL_CORS_ORIGINS=*" \
-            || echo "Deployment failed"
-        continue-on-error: true
+            --set-env-vars "DOL_HOSPITAL_ID=${{ steps.hospital-id.outputs.id }},DOL_SHARED_SECRET=super-secret,DATABASE_URL=${DATABASE_URL},DOL_CORS_ORIGINS=*"
+          if [ $? -ne 0 ]; then
+            echo "❌ dol-service deployment FAILED for ${{ steps.hospital-id.outputs.id }}"
+            exit 1
+          fi
+          echo "✅ dol-service deployed successfully for ${{ steps.hospital-id.outputs.id }}"
 
       - name: Deploy federation-aggregator
         run: |
@@ -469,9 +481,12 @@ jobs:
             --timeout 300 \
             --max-instances 5 \
             --min-instances 0 \
-            --set-env-vars "FEDERATION_SHARED_SECRET=super-secret,FEDERATION_CORS_ORIGINS=*" \
-            || echo "Deployment failed"
-        continue-on-error: true
+            --set-env-vars "FEDERATION_SHARED_SECRET=super-secret,FEDERATION_CORS_ORIGINS=*"
+          if [ $? -ne 0 ]; then
+            echo "❌ federation-aggregator deployment FAILED for ${{ steps.hospital-id.outputs.id }}"
+            exit 1
+          fi
+          echo "✅ federation-aggregator deployed successfully for ${{ steps.hospital-id.outputs.id }}"
 
       - name: Get backend service URLs
         id: backend-urls
