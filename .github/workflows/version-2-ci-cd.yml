@@ -247,15 +247,12 @@ jobs:
         if: matrix.service.name == 'manage-agent'
         uses: docker/build-push-action@v5
         with:
-          context: Version-2-${{ matrix.hospital }}/apps/frontend
-          file: Version-2-${{ matrix.hospital }}/apps/frontend/Dockerfile
+          context: frontend
+          file: frontend/Dockerfile
           push: ${{ github.ref == 'refs/heads/main' }}
           build-args: |
-            VITE_MANAGE_API_URL=https://medi-os-${{ steps.hospital-id.outputs.id }}-manage-agent-uizgwl6noq-uc.a.run.app
-            VITE_SCRIBE_API_URL=https://medi-os-${{ steps.hospital-id.outputs.id }}-scribe-agent-uizgwl6noq-uc.a.run.app
-            VITE_SUMMARIZER_API_URL=https://medi-os-${{ steps.hospital-id.outputs.id }}-summarizer-agent-uizgwl6noq-uc.a.run.app
-            VITE_DOL_API_URL=https://medi-os-${{ steps.hospital-id.outputs.id }}-dol-service-uizgwl6noq-uc.a.run.app
-            VITE_FEDERATION_API_URL=https://medi-os-${{ steps.hospital-id.outputs.id }}-federation-aggregator-uizgwl6noq-uc.a.run.app
+            VITE_API_BASE_URL=https://medi-os-${{ steps.hospital-id.outputs.id }}-manage-agent-uizgwl6noq-uc.a.run.app/api/v1
+            VITE_WS_URL=wss://medi-os-${{ steps.hospital-id.outputs.id }}-manage-agent-uizgwl6noq-uc.a.run.app/ws
             VITE_ENVIRONMENT=production
           tags: |
             gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-${{ steps.hospital-id.outputs.id }}-frontend:latest
