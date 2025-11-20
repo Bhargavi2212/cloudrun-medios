@@ -242,9 +242,9 @@ jobs:
           tags: |
             gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-${{ steps.hospital-id.outputs.id }}-${{ matrix.service.name }}:latest
             gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-${{ steps.hospital-id.outputs.id }}-${{ matrix.service.name }}:${{ github.sha }}
-          cache-from: ${{ matrix.service.name != 'manage-agent' && 'type=gha' || '' }}
-          cache-to: ${{ matrix.service.name != 'manage-agent' && 'type=gha,mode=max' || '' }}
-          no-cache: ${{ matrix.service.name == 'manage-agent' }}
+          cache-from: ${{ matrix.service.name != 'manage-agent' && matrix.service.name != 'federation-aggregator' && 'type=gha' || '' }}
+          cache-to: ${{ matrix.service.name != 'manage-agent' && matrix.service.name != 'federation-aggregator' && 'type=gha,mode=max' || '' }}
+          no-cache: ${{ matrix.service.name == 'manage-agent' || matrix.service.name == 'federation-aggregator' }}
 
       # Frontend will be built in deploy job after backends are deployed
 
