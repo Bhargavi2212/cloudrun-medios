@@ -28,7 +28,14 @@ class PatientService:
         Create and persist a patient record.
         """
 
-        patient = await self.repository.create(payload.model_dump(exclude_none=True))
+        from uuid import uuid4
+
+        data = payload.model_dump(exclude_none=True)
+        # Auto-generate MRN if not provided
+        if not data.get("mrn"):
+            data["mrn"] = f"MRN-{uuid4().hex[:8].upper()}"
+
+        patient = await self.repository.create(data)
         await self.session.commit()
         await self.session.refresh(patient)
         return patient

@@ -16,7 +16,7 @@ class PatientBase(BaseModel):
     Common attributes shared across patient operations.
     """
 
-    mrn: str = Field(..., description="Medical record number assigned by the hospital.")
+    mrn: str | None = Field(None, description="Medical record number assigned by the hospital. Auto-generated if not provided.")
     first_name: str = Field(..., description="Patient given name.")
     last_name: str = Field(..., description="Patient family name.")
     dob: date | None = Field(None, description="Date of birth.")
