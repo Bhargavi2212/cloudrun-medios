@@ -13,7 +13,12 @@ RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 COPY shared ./shared
 COPY database ./database
 COPY services/manage_agent ./services/manage_agent
-COPY data ./data
+
+# Create data directory structure for model files
+# Models will use fallback heuristics if files are not present
+RUN mkdir -p ./data/receptionist_models_v3/models \
+    ./data/nurse_models/models \
+    ./data/processed/transformers
 
 # Copy and make entrypoint executable
 COPY services/manage_agent/entrypoint.sh ./entrypoint.sh
