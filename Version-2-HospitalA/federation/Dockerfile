@@ -12,6 +12,10 @@ COPY shared ./shared
 COPY database ./database
 COPY federation ./federation
 
+# Verify database module is present
+RUN python -c "import database; print('✓ Database module found')" || \
+    (echo "ERROR: Database module missing!" && ls -la ./database && exit 1)
+
 # Copy and make entrypoint executable
 COPY federation/entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
