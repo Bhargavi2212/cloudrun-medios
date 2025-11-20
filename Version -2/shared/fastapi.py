@@ -63,7 +63,7 @@ def create_service_app(
     if settings.cors_allow_origins:
         # Check if wildcard is in the list
         allow_all_origins = "*" in settings.cors_allow_origins
-        
+
         # Force CORS headers on ALL responses, including errors
         class ForceCORSMiddleware(BaseHTTPMiddleware):
             """Middleware to force CORS headers on all responses."""
@@ -73,7 +73,7 @@ def create_service_app(
                 should_allow = allow_all_origins or (
                     origin and origin in settings.cors_allow_origins
                 )
-                
+
                 if should_allow:
                     try:
                         response = await call_next(request)
