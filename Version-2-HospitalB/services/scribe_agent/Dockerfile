@@ -14,7 +14,12 @@ COPY shared ./shared
 COPY database ./database
 COPY services/scribe_agent ./services/scribe_agent
 
+# Copy and make entrypoint executable
+COPY services/scribe_agent/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
 EXPOSE 9002
 
-CMD ["sh", "-c", "uvicorn services.scribe_agent.main:app --host 0.0.0.0 --port ${PORT:-9002}"]
+# Cloud Run sets PORT environment variable
+ENTRYPOINT ["./entrypoint.sh"]
 

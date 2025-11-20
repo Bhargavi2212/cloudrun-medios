@@ -14,7 +14,12 @@ COPY shared ./shared
 COPY database ./database
 COPY services/manage_agent ./services/manage_agent
 
+# Copy and make entrypoint executable
+COPY services/manage_agent/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
 EXPOSE 9001
 
-CMD ["sh", "-c", "uvicorn services.manage_agent.main:app --host 0.0.0.0 --port ${PORT:-9001}"]
+# Cloud Run sets PORT environment variable
+ENTRYPOINT ["./entrypoint.sh"]
 

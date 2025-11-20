@@ -14,7 +14,12 @@ COPY shared ./shared
 COPY database ./database
 COPY dol_service ./dol_service
 
+# Copy and make entrypoint executable
+COPY dol_service/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
 EXPOSE 8004
 
-CMD ["sh", "-c", "uvicorn dol_service.main:app --host 0.0.0.0 --port ${PORT:-8004}"]
+# Cloud Run sets PORT environment variable
+ENTRYPOINT ["./entrypoint.sh"]
 

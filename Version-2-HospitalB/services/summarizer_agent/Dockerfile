@@ -14,7 +14,12 @@ COPY shared ./shared
 COPY database ./database
 COPY services/summarizer_agent ./services/summarizer_agent
 
+# Copy and make entrypoint executable
+COPY services/summarizer_agent/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
 EXPOSE 9003
 
-CMD ["sh", "-c", "uvicorn services.summarizer_agent.main:app --host 0.0.0.0 --port ${PORT:-9003}"]
+# Cloud Run sets PORT environment variable
+ENTRYPOINT ["./entrypoint.sh"]
 
