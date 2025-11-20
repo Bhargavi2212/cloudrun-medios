@@ -16,5 +16,5 @@ COPY services/summarizer_agent ./services/summarizer_agent
 
 EXPOSE 8003
 
-CMD ["uvicorn", "services.summarizer_agent.main:app", "--host", "0.0.0.0", "--port", "8003"]
+CMD ["sh", "-c", "uvicorn services.summarizer_agent.main:app --host 0.0.0.0 --port ${PORT:-8003}"]
 

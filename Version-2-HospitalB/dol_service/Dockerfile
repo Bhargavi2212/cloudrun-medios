@@ -16,5 +16,5 @@ COPY dol_service ./dol_service
 
 EXPOSE 8004
 
-CMD ["uvicorn", "dol_service.main:app", "--host", "0.0.0.0", "--port", "8004"]
+CMD ["sh", "-c", "uvicorn dol_service.main:app --host 0.0.0.0 --port ${PORT:-8004}"]
 

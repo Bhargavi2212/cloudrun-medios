@@ -16,5 +16,5 @@ COPY services/manage_agent ./services/manage_agent
 
 EXPOSE 8001
 
-CMD ["uvicorn", "services.manage_agent.main:app", "--host", "0.0.0.0", "--port", "8001"]
+CMD ["sh", "-c", "uvicorn services.manage_agent.main:app --host 0.0.0.0 --port ${PORT:-8001}"]
 

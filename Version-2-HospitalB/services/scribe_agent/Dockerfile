@@ -16,5 +16,5 @@ COPY services/scribe_agent ./services/scribe_agent
 
 EXPOSE 9002
 
-CMD ["uvicorn", "services.scribe_agent.main:app", "--host", "0.0.0.0", "--port", "9002"]
+CMD ["sh", "-c", "uvicorn services.scribe_agent.main:app --host 0.0.0.0 --port ${PORT:-9002}"]
 
