@@ -19,16 +19,16 @@ RUN echo "=== Verifying requirements.txt ===" && \
     grep -q "scikit-learn" requirements.txt || \
     (echo "ERROR: ML dependencies missing from requirements.txt!" && exit 1)
 
-# Install dependencies with verbose output
+# Install dependencies with verbose output and strict verification
 RUN echo "=== Installing dependencies ===" && \
     pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt && \
     echo "=== Verifying installation ===" && \
-    pip list | grep -E "joblib|numpy|pandas|scikit" && \
-    python -c "import joblib; print('✓ joblib:', joblib.__version__)" && \
-    python -c "import numpy; print('✓ numpy:', numpy.__version__)" && \
-    python -c "import pandas; print('✓ pandas:', pandas.__version__)" && \
-    python -c "import sklearn; print('✓ scikit-learn:', sklearn.__version__)" && \
+    pip list | grep -E "joblib|numpy|pandas|scikit" || (echo "ERROR: Dependencies not found in pip list!" && exit 1) && \
+    python -c "import joblib; print('✓ joblib:', joblib.__version__)" || (echo "ERROR: joblib import failed!" && exit 1) && \
+    python -c "import numpy; print('✓ numpy:', numpy.__version__)" || (echo "ERROR: numpy import failed!" && exit 1) && \
+    python -c "import pandas; print('✓ pandas:', pandas.__version__)" || (echo "ERROR: pandas import failed!" && exit 1) && \
+    python -c "import sklearn; print('✓ scikit-learn:', sklearn.__version__)" || (echo "ERROR: sklearn import failed!" && exit 1) && \
     echo "✓ All ML dependencies installed successfully"
 
 COPY shared ./shared
@@ -42,13 +42,21 @@ RUN mkdir -p ./data/receptionist_models_v3/models \
     ./data/nurse_models/models \
     ./data/processed/transformers
 
-# Verify all ML dependencies are installed (force rebuild if missing)
+# Final verification - MUST pass or build fails
 RUN python -c "import joblib, numpy, pandas, sklearn; print('✓ All ML dependencies available')" || \
-    (echo "ERROR: ML dependencies missing!" && pip list | grep -E "joblib|numpy|pandas|scikit" && exit 1)
+    (echo "ERROR: ML dependencies missing in final verification!" && \
+     echo "Checking pip list:" && pip list | grep -E "joblib|numpy|pandas|scikit" || echo "No ML packages found!" && \
+     echo "Python path:" && python -c "import sys; print('\n'.join(sys.path))" && \
+     exit 1)
 
 # Copy and make entrypoint executable
 COPY services/manage_agent/entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
+
+# Final runtime verification - ensure dependencies are accessible at runtime
+RUN echo "=== Runtime Verification ===" && \
+    python -c "import sys; sys.path.insert(0, '/app'); import joblib, numpy, pandas, sklearn; print('✓ Runtime check passed')" || \
+    (echo "ERROR: Runtime verification failed!" && exit 1)
 
 EXPOSE 8001
 
