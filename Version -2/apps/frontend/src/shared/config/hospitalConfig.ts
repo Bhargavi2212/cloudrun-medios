@@ -16,29 +16,44 @@ export interface HospitalConfig {
 }
 
 /**
+ * Get API URLs from environment variables with fallback to localhost for development.
+ */
+const getApiUrl = (envVar: string | undefined, defaultPort: number): string => {
+  if (envVar) {
+    return envVar;
+  }
+  // Fallback to localhost for development
+  if (typeof window !== "undefined" && window.location.hostname === "localhost") {
+    return `http://localhost:${defaultPort}`;
+  }
+  return `http://localhost:${defaultPort}`;
+};
+
+/**
  * Available hospital configurations.
+ * Uses environment variables for production, falls back to localhost for development.
  */
 export const HOSPITALS: Record<string, HospitalConfig> = {
   "hospital-a": {
     id: "hospital-a",
     name: "City Hospital",
     apiUrls: {
-      manage: "http://localhost:8001",
-      scribe: "http://localhost:8002",
-      summarizer: "http://localhost:8003",
-      dol: "http://localhost:8004",
-      federation: "http://localhost:8010",
+      manage: getApiUrl(import.meta.env.VITE_MANAGE_API_URL_HOSPITAL_A, 8001),
+      scribe: getApiUrl(import.meta.env.VITE_SCRIBE_API_URL_HOSPITAL_A, 8002),
+      summarizer: getApiUrl(import.meta.env.VITE_SUMMARIZER_API_URL_HOSPITAL_A, 8003),
+      dol: getApiUrl(import.meta.env.VITE_DOL_API_URL, 8004),
+      federation: getApiUrl(import.meta.env.VITE_FEDERATION_API_URL, 8010),
     },
   },
   "hospital-b": {
     id: "hospital-b",
     name: "County Hospital",
     apiUrls: {
-      manage: "http://localhost:8011",
-      scribe: "http://localhost:8012",
-      summarizer: "http://localhost:8013",
-      dol: "http://localhost:8004", // Shared DOL orchestrator
-      federation: "http://localhost:8010", // Shared federation aggregator
+      manage: getApiUrl(import.meta.env.VITE_MANAGE_API_URL_HOSPITAL_B, 8011),
+      scribe: getApiUrl(import.meta.env.VITE_SCRIBE_API_URL_HOSPITAL_B, 8012),
+      summarizer: getApiUrl(import.meta.env.VITE_SUMMARIZER_API_URL_HOSPITAL_B, 8013),
+      dol: getApiUrl(import.meta.env.VITE_DOL_API_URL, 8004), // Shared DOL orchestrator
+      federation: getApiUrl(import.meta.env.VITE_FEDERATION_API_URL, 8010), // Shared federation aggregator
     },
   },
 };

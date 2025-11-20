@@ -244,19 +244,25 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and push frontend image
-        if: matrix.service.name == 'manage-agent'
+        if: matrix.service.name == 'manage-agent' && matrix.hospital == 'HospitalA'
         uses: docker/build-push-action@v5
         with:
-          context: frontend
-          file: frontend/Dockerfile
+          context: Version -2/apps/frontend
+          file: Version -2/apps/frontend/Dockerfile
           push: ${{ github.ref == 'refs/heads/main' }}
           build-args: |
-            VITE_API_BASE_URL=https://medi-os-${{ steps.hospital-id.outputs.id }}-manage-agent-uizgwl6noq-uc.a.run.app/api/v1
-            VITE_WS_URL=wss://medi-os-${{ steps.hospital-id.outputs.id }}-manage-agent-uizgwl6noq-uc.a.run.app/ws
+            VITE_MANAGE_API_URL_HOSPITAL_A=https://medi-os-hospital-a-manage-agent-uizgwl6noq-uc.a.run.app
+            VITE_SCRIBE_API_URL_HOSPITAL_A=https://medi-os-hospital-a-scribe-agent-uizgwl6noq-uc.a.run.app
+            VITE_SUMMARIZER_API_URL_HOSPITAL_A=https://medi-os-hospital-a-summarizer-agent-uizgwl6noq-uc.a.run.app
+            VITE_MANAGE_API_URL_HOSPITAL_B=https://medi-os-hospital-b-manage-agent-uizgwl6noq-uc.a.run.app
+            VITE_SCRIBE_API_URL_HOSPITAL_B=https://medi-os-hospital-b-scribe-agent-uizgwl6noq-uc.a.run.app
+            VITE_SUMMARIZER_API_URL_HOSPITAL_B=https://medi-os-hospital-b-summarizer-agent-uizgwl6noq-uc.a.run.app
+            VITE_DOL_API_URL=https://medi-os-hospital-a-dol-service-uizgwl6noq-uc.a.run.app
+            VITE_FEDERATION_API_URL=https://medi-os-hospital-a-federation-aggregator-uizgwl6noq-uc.a.run.app
             VITE_ENVIRONMENT=production
           tags: |
-            gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-${{ steps.hospital-id.outputs.id }}-frontend:latest
-            gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-${{ steps.hospital-id.outputs.id }}-frontend:${{ github.sha }}
+            gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-frontend:latest
+            gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-frontend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -386,10 +392,11 @@ jobs:
             || echo "Deployment failed or service doesn't exist"
         continue-on-error: true
 
-      - name: Deploy frontend
+      - name: Deploy frontend (single service for both hospitals)
+        if: matrix.hospital == 'HospitalA'
         run: |
-          gcloud run deploy medi-os-${{ steps.hospital-id.outputs.id }}-frontend \
-            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-${{ steps.hospital-id.outputs.id }}-frontend:${{ github.sha }} \
+          gcloud run deploy medi-os-frontend \
+            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-frontend:${{ github.sha }} \
             --region ${{ steps.region.outputs.region }} \
             --platform managed \
             --allow-unauthenticated \
