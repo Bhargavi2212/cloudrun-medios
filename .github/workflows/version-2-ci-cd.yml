@@ -1,8 +1,6 @@
 name: Version 2 CI/CD Pipeline
 
-# Trigger deployment to replace failed revisions
-# Updated: Security fixes applied, database password rotated, hardcoded values removed
-# Force rebuild: All fixes for manage-agent and federation-aggregator applied
+# Clean, simplified workflow with all fixes
 on:
   push:
     branches: [main, develop]
@@ -174,8 +172,8 @@ jobs:
   build-images:
     name: Build Docker Images
     runs-on: ubuntu-latest
-    # Only wait for test jobs on push, skip them on manual trigger
-    needs: ${{ github.event_name == 'workflow_dispatch' && fromJSON('[]') || fromJSON('["hospital-a-backend", "hospital-b-backend", "frontend"]') }}
+    # Simplified: Always wait for test jobs, but they can fail
+    needs: [hospital-a-backend, hospital-b-backend, frontend]
     # Run on push or manual trigger
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     
@@ -202,7 +200,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to Container Registry
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         uses: docker/login-action@v3
         with:
           registry: gcr.io
@@ -214,10 +212,8 @@ jobs:
         run: |
           if [ "${{ matrix.hospital }}" = "HospitalA" ]; then
             echo "id=hospital-a" >> $GITHUB_OUTPUT
-            echo "port_prefix=8" >> $GITHUB_OUTPUT
           else
             echo "id=hospital-b" >> $GITHUB_OUTPUT
-            echo "port_prefix=9" >> $GITHUB_OUTPUT
           fi
 
       - name: Determine Dockerfile path
@@ -242,26 +238,25 @@ jobs:
         with:
           context: Version-2-${{ matrix.hospital }}
           file: Version-2-${{ matrix.hospital }}/${{ steps.dockerfile-path.outputs.path }}
-          push: ${{ github.ref == 'refs/heads/main' }}
+          push: ${{ github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
           tags: |
             gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-${{ steps.hospital-id.outputs.id }}-${{ matrix.service.name }}:latest
             gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-${{ steps.hospital-id.outputs.id }}-${{ matrix.service.name }}:${{ github.sha }}
           build-args: |
             BUILD_DATE=${{ github.run_number }}
             GIT_SHA=${{ github.sha }}
+          # Force fresh builds for manage-agent and federation-aggregator (no cache)
           cache-from: ${{ matrix.service.name != 'manage-agent' && matrix.service.name != 'federation-aggregator' && 'type=gha' || '' }}
           cache-to: ${{ matrix.service.name != 'manage-agent' && matrix.service.name != 'federation-aggregator' && 'type=gha,mode=max' || '' }}
           no-cache: ${{ matrix.service.name == 'manage-agent' || matrix.service.name == 'federation-aggregator' }}
-
-      # Frontend will be built in deploy job after backends are deployed
 
   # Deploy to Cloud Run (only on main branch)
   deploy:
     name: Deploy to Cloud Run
     runs-on: ubuntu-latest
     needs: [build-images]
-    # Deploy on main branch (push or manual), even if build-images had some failures
-    if: always() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch')
+    # Simplified: Deploy on main branch (push or manual)
+    if: (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     environment:
       name: production
       
@@ -304,7 +299,7 @@ jobs:
             exit 1
           fi
           
-          # Get database host - try Secret Manager first, fallback to GitHub Secrets, then default
+          # Get database host - try Secret Manager first, fallback to GitHub Secrets
           set +e
           DB_HOST_SM=$(gcloud secrets versions access latest --secret=db-host --project=$PROJECT_ID 2>/dev/null)
           SM_HOST_EXIT=$?
@@ -337,18 +332,13 @@ jobs:
       - name: Set deployment region
         id: region
         run: |
-          # Use us-central1 for both hospitals (same region = lower cost, lower latency)
-          # Change to us-east1, europe-west1, asia-east1, etc. if needed
           echo "region=us-central1" >> $GITHUB_OUTPUT
 
       - name: Deploy manage-agent
         id: deploy-manage
         run: |
-          # DOL URL will be empty initially (dol-service deployed later), that's OK
           DOL_URL=$(gcloud run services describe medi-os-${{ steps.hospital-id.outputs.id }}-dol-service --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
-          # Use simple wildcard for CORS - the config parser will handle it
           CORS_ORIGINS="*"
-          # Use credentials from previous step
           DB_PASSWORD="${{ steps.db-credentials.outputs.password }}"
           DB_HOST="${{ steps.db-credentials.outputs.host }}"
           if [ -z "$DB_PASSWORD" ] || [ -z "$DB_HOST" ]; then
@@ -368,7 +358,7 @@ jobs:
             --max-instances 10 \
             --min-instances 0 \
             --set-env-vars "HOSPITAL_ID=${{ steps.hospital-id.outputs.id }},DATABASE_URL=${DATABASE_URL},MANAGE_AGENT_CORS_ORIGINS=$CORS_ORIGINS,MANAGE_AGENT_DOL_URL=$DOL_URL" \
-            || echo "Deployment failed or service doesn't exist"
+            || echo "Deployment failed"
           SERVICE_URL=$(gcloud run services describe medi-os-${{ steps.hospital-id.outputs.id }}-manage-agent --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
           echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT
         continue-on-error: true
@@ -376,7 +366,6 @@ jobs:
       - name: Deploy scribe-agent
         id: deploy-scribe
         run: |
-          # Use credentials from previous step
           DB_PASSWORD="${{ steps.db-credentials.outputs.password }}"
           DB_HOST="${{ steps.db-credentials.outputs.host }}"
           if [ -z "$DB_PASSWORD" ] || [ -z "$DB_HOST" ]; then
@@ -396,7 +385,7 @@ jobs:
             --max-instances 10 \
             --min-instances 0 \
             --set-env-vars "DATABASE_URL=${DATABASE_URL},SCRIBE_AGENT_CORS_ORIGINS=[\"*\"]" \
-            || echo "Deployment failed or service doesn't exist"
+            || echo "Deployment failed"
           SERVICE_URL=$(gcloud run services describe medi-os-${{ steps.hospital-id.outputs.id }}-scribe-agent --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
           echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT
         continue-on-error: true
@@ -404,7 +393,6 @@ jobs:
       - name: Deploy summarizer-agent
         id: deploy-summarizer
         run: |
-          # Use credentials from previous step
           DB_PASSWORD="${{ steps.db-credentials.outputs.password }}"
           DB_HOST="${{ steps.db-credentials.outputs.host }}"
           if [ -z "$DB_PASSWORD" ] || [ -z "$DB_HOST" ]; then
@@ -424,14 +412,13 @@ jobs:
             --max-instances 10 \
             --min-instances 0 \
             --set-env-vars "DATABASE_URL=${DATABASE_URL},SUMMARIZER_AGENT_CORS_ORIGINS=[\"*\"]" \
-            || echo "Deployment failed or service doesn't exist"
+            || echo "Deployment failed"
           SERVICE_URL=$(gcloud run services describe medi-os-${{ steps.hospital-id.outputs.id }}-summarizer-agent --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
           echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT
         continue-on-error: true
 
       - name: Deploy dol-service
         run: |
-          # Use credentials from previous step
           DB_PASSWORD="${{ steps.db-credentials.outputs.password }}"
           DB_HOST="${{ steps.db-credentials.outputs.host }}"
           if [ -z "$DB_PASSWORD" ] || [ -z "$DB_HOST" ]; then
@@ -451,7 +438,7 @@ jobs:
             --max-instances 10 \
             --min-instances 0 \
             --set-env-vars "DOL_HOSPITAL_ID=${{ steps.hospital-id.outputs.id }},DOL_SHARED_SECRET=super-secret,DATABASE_URL=${DATABASE_URL},DOL_CORS_ORIGINS=[\"*\"]" \
-            || echo "Deployment failed or service doesn't exist"
+            || echo "Deployment failed"
         continue-on-error: true
 
       - name: Deploy federation-aggregator
@@ -468,7 +455,7 @@ jobs:
             --max-instances 5 \
             --min-instances 0 \
             --set-env-vars "FEDERATION_SHARED_SECRET=super-secret,FEDERATION_CORS_ORIGINS=[\"*\"]" \
-            || echo "Deployment failed or service doesn't exist"
+            || echo "Deployment failed"
         continue-on-error: true
 
       - name: Get backend service URLs
@@ -537,16 +524,8 @@ jobs:
             --timeout 60 \
             --max-instances 5 \
             --min-instances 0 \
-            || echo "Deployment failed or service doesn't exist"
+            || echo "Deployment failed"
           FRONTEND_URL=$(gcloud run services describe medi-os-frontend --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
           echo "url=$FRONTEND_URL" >> $GITHUB_OUTPUT
           echo "Frontend deployed at: $FRONTEND_URL"
         continue-on-error: true
-
-      - name: Run smoke tests
-        run: |
-          echo "Smoke tests for ${{ matrix.hospital }}"
-          # Add smoke tests here
-          echo "Smoke tests completed"
-        continue-on-error: true
-
