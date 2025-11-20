@@ -243,6 +243,7 @@ jobs:
             gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-${{ steps.hospital-id.outputs.id }}-${{ matrix.service.name }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          no-cache: ${{ matrix.service.name == 'manage-agent' && github.event.head_commit.message == 'Force Docker rebuild to include all new files (orchestrator_client, receptionist_triage)' }}
 
       # Frontend will be built in deploy job after backends are deployed
 
