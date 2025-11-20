@@ -76,4 +76,3 @@ class ManageQueueResponse(BaseModel):
     triage_distribution: dict[int, int] = Field(
         default_factory=dict, description="Count by triage level."
     )
-

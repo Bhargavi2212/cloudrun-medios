@@ -158,4 +158,3 @@ async def get_queue(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve queue: {e!s}",
         ) from e
-
