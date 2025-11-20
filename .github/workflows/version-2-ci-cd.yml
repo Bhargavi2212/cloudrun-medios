@@ -291,6 +291,13 @@ jobs:
         id: deploy-manage
         run: |
           DOL_URL=$(gcloud run services describe medi-os-${{ steps.hospital-id.outputs.id }}-dol-service --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
+          FRONTEND_URL=$(gcloud run services describe medi-os-frontend --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
+          # Build CORS origins list - include frontend URL and allow all origins
+          if [ -n "$FRONTEND_URL" ]; then
+            CORS_ORIGINS="[\"$FRONTEND_URL\",\"*\"]"
+          else
+            CORS_ORIGINS="[\"*\"]"
+          fi
           gcloud run deploy medi-os-${{ steps.hospital-id.outputs.id }}-manage-agent \
             --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-${{ steps.hospital-id.outputs.id }}-manage-agent:${{ github.sha }} \
             --region ${{ steps.region.outputs.region }} \
@@ -302,7 +309,7 @@ jobs:
             --timeout 300 \
             --max-instances 10 \
             --min-instances 0 \
-            --set-env-vars "HOSPITAL_ID=${{ steps.hospital-id.outputs.id }},DATABASE_URL=postgresql+asyncpg://medios_user:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:5432/medios_db,MANAGE_AGENT_CORS_ORIGINS=[\"*\"],MANAGE_AGENT_DOL_URL=$DOL_URL" \
+            --set-env-vars "HOSPITAL_ID=${{ steps.hospital-id.outputs.id }},DATABASE_URL=postgresql+asyncpg://medios_user:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:5432/medios_db,MANAGE_AGENT_CORS_ORIGINS=$CORS_ORIGINS,MANAGE_AGENT_DOL_URL=$DOL_URL" \
             || echo "Deployment failed or service doesn't exist"
           SERVICE_URL=$(gcloud run services describe medi-os-${{ steps.hospital-id.outputs.id }}-manage-agent --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
           echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT

@@ -33,42 +33,59 @@ async def create_patient(
     """
     Create a patient record.
     """
+    import logging
 
-    from datetime import date as date_type
-    from uuid import uuid4
+    logger = logging.getLogger(__name__)
 
-    # Get the raw data and process it (don't exclude None for mrn check)
-    patient_data = payload.model_dump(exclude_none=False)
+    try:
+        from datetime import date as date_type
+        from uuid import uuid4
 
-    # Generate MRN if not provided or empty
-    if not patient_data.get("mrn"):
-        patient_data["mrn"] = f"MRN-{uuid4().hex[:8].upper()}"
+        # Get the raw data and process it (don't exclude None for mrn check)
+        patient_data = payload.model_dump(exclude_none=False)
 
-    # Convert dob string to date if needed
-    if isinstance(patient_data.get("dob"), str):
-        try:
-            patient_data["dob"] = date_type.fromisoformat(patient_data["dob"])
-        except (ValueError, TypeError):
-            patient_data["dob"] = None
+        # Generate MRN if not provided or empty
+        if not patient_data.get("mrn"):
+            patient_data["mrn"] = f"MRN-{uuid4().hex[:8].upper()}"
 
-    # Clean up contact_info - remove undefined/None/empty values
-    if patient_data.get("contact_info"):
-        contact_info = {
-            k: v
-            for k, v in patient_data["contact_info"].items()
-            if v is not None and v != ""
-        }
-        if contact_info:
-            patient_data["contact_info"] = contact_info
-        else:
-            patient_data["contact_info"] = None
+        # Convert dob string to date if needed
+        if isinstance(patient_data.get("dob"), str):
+            try:
+                patient_data["dob"] = date_type.fromisoformat(patient_data["dob"])
+            except (ValueError, TypeError) as e:
+                logger.warning("Invalid date format for dob: %s", e)
+                patient_data["dob"] = None
 
-    # Create a new PatientCreate with processed data
-    processed_payload = PatientCreate(**patient_data)
+        # Clean up contact_info - remove undefined/None/empty values
+        if patient_data.get("contact_info"):
+            contact_info = {
+                k: v
+                for k, v in patient_data["contact_info"].items()
+                if v is not None and v != ""
+            }
+            if contact_info:
+                patient_data["contact_info"] = contact_info
+            else:
+                patient_data["contact_info"] = None
 
-    service = PatientService(session)
-    patient = await service.create_patient(processed_payload)
-    return PatientRead.model_validate(patient, from_attributes=True)
+        # Create a new PatientCreate with processed data
+        processed_payload = PatientCreate(**patient_data)
+
+        service = PatientService(session)
+        patient = await service.create_patient(processed_payload)
+        return PatientRead.model_validate(patient, from_attributes=True)
+    except ValueError as e:
+        logger.error("Validation error creating patient: %s", e, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid patient data: {e!s}",
+        ) from e
+    except Exception as e:
+        logger.error("Error creating patient: %s", e, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create patient: {e!s}",
+        ) from e
 
 
 @router.get(

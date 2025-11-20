@@ -31,10 +31,38 @@ async def create_patient(
     """
     Create a patient record.
     """
+    import logging
 
-    service = PatientService(session)
-    patient = await service.create_patient(payload)
-    return PatientRead.model_validate(patient, from_attributes=True)
+    logger = logging.getLogger(__name__)
+
+    try:
+        from uuid import uuid4
+
+        # Get the raw data and process it
+        patient_data = payload.model_dump(exclude_none=False)
+
+        # Generate MRN if not provided or empty
+        if not patient_data.get("mrn"):
+            patient_data["mrn"] = f"MRN-{uuid4().hex[:8].upper()}"
+
+        # Create a new PatientCreate with processed data
+        processed_payload = PatientCreate(**patient_data)
+
+        service = PatientService(session)
+        patient = await service.create_patient(processed_payload)
+        return PatientRead.model_validate(patient, from_attributes=True)
+    except ValueError as e:
+        logger.error("Validation error creating patient: %s", e, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid patient data: {e!s}",
+        ) from e
+    except Exception as e:
+        logger.error("Error creating patient: %s", e, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create patient: {e!s}",
+        ) from e
 
 
 @router.get(

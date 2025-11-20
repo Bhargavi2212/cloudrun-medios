@@ -61,17 +61,25 @@ def create_service_app(
     cors_logger.info(f"Setting up CORS with origins: {settings.cors_allow_origins}")
 
     if settings.cors_allow_origins:
+        # Check if wildcard is in the list
+        allow_all_origins = "*" in settings.cors_allow_origins
+        
         # Force CORS headers on ALL responses, including errors
         class ForceCORSMiddleware(BaseHTTPMiddleware):
             """Middleware to force CORS headers on all responses."""
 
             async def dispatch(self, request: Request, call_next):
                 origin = request.headers.get("origin")
-                if origin and origin in settings.cors_allow_origins:
+                should_allow = allow_all_origins or (origin and origin in settings.cors_allow_origins)
+                
+                if should_allow:
                     try:
                         response = await call_next(request)
                         # Force CORS headers on response
-                        response.headers["Access-Control-Allow-Origin"] = origin
+                        if allow_all_origins:
+                            response.headers["Access-Control-Allow-Origin"] = "*"
+                        elif origin:
+                            response.headers["Access-Control-Allow-Origin"] = origin
                         response.headers["Access-Control-Allow-Credentials"] = "true"
                         response.headers[
                             "Access-Control-Allow-Methods"
@@ -90,7 +98,10 @@ def create_service_app(
                             status_code=500,
                             content={"detail": "Internal server error"},
                         )
-                        response.headers["Access-Control-Allow-Origin"] = origin
+                        if allow_all_origins:
+                            response.headers["Access-Control-Allow-Origin"] = "*"
+                        elif origin:
+                            response.headers["Access-Control-Allow-Origin"] = origin
                         response.headers["Access-Control-Allow-Credentials"] = "true"
                         response.headers[
                             "Access-Control-Allow-Methods"
@@ -104,16 +115,18 @@ def create_service_app(
         app.add_middleware(ForceCORSMiddleware)
 
         # Add standard CORS middleware for preflight requests
+        # If wildcard is present, use it; otherwise use the list
+        cors_origins = ["*"] if allow_all_origins else settings.cors_allow_origins
         app.add_middleware(
             CORSMiddleware,
-            allow_origins=settings.cors_allow_origins,
+            allow_origins=cors_origins,
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],
             expose_headers=["*"],
         )
         cors_logger.info(
-            f"CORS middleware added with origins: {settings.cors_allow_origins}"
+            f"CORS middleware added with origins: {settings.cors_allow_origins} (allow_all={allow_all_origins})"
         )
     else:
         cors_logger.warning("CORS middleware NOT added - no origins configured")
@@ -135,7 +148,11 @@ def create_service_app(
             )
             # Add CORS headers manually
             origin = request.headers.get("origin")
-            if origin and origin in settings.cors_allow_origins:
+            allow_all = "*" in settings.cors_allow_origins
+            if allow_all:
+                response.headers["Access-Control-Allow-Origin"] = "*"
+                response.headers["Access-Control-Allow-Credentials"] = "true"
+            elif origin and origin in settings.cors_allow_origins:
                 response.headers["Access-Control-Allow-Origin"] = origin
                 response.headers["Access-Control-Allow-Credentials"] = "true"
             return response
@@ -153,7 +170,11 @@ def create_service_app(
             )
             # Add CORS headers manually
             origin = request.headers.get("origin")
-            if origin and origin in settings.cors_allow_origins:
+            allow_all = "*" in settings.cors_allow_origins
+            if allow_all:
+                response.headers["Access-Control-Allow-Origin"] = "*"
+                response.headers["Access-Control-Allow-Credentials"] = "true"
+            elif origin and origin in settings.cors_allow_origins:
                 response.headers["Access-Control-Allow-Origin"] = origin
                 response.headers["Access-Control-Allow-Credentials"] = "true"
             return response
