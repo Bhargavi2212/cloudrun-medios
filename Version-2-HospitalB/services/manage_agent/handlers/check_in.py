@@ -76,12 +76,16 @@ async def check_in_patient_with_complaint(
     await session.flush()
 
     # Create triage observation with chief complaint
+    notes = (
+        f"Injury: {payload.injury}, Ambulance: {payload.ambulance_arrival}, "
+        f"Seen 72h: {payload.seen_72h}"
+    )
     triage_obs = TriageObservation(
         id=uuid4(),
         encounter_id=encounter.id,
         chief_complaint=payload.chief_complaint,
         vitals={},
-        notes=f"Injury: {payload.injury}, Ambulance: {payload.ambulance_arrival}, Seen 72h: {payload.seen_72h}",
+        notes=notes,
     )
     session.add(triage_obs)
     await session.flush()
@@ -91,7 +95,11 @@ async def check_in_patient_with_complaint(
     dol_profile_found = None
     try:
         profile_response = await check_in_service.fetch_profile(payload.patient_id)
-        profile_data = profile_response.model_dump() if hasattr(profile_response, "model_dump") else None
+        profile_data = (
+            profile_response.model_dump()
+            if hasattr(profile_response, "model_dump")
+            else None
+        )
         dol_profile_found = True
     except Exception:
         # DOL service unavailable or patient not found in network
