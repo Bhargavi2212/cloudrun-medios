@@ -272,40 +272,52 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Verify Secret Manager access
+      - name: Get database password
+        id: db-password
         run: |
-          echo "Verifying Secret Manager access..."
+          echo "Attempting to retrieve database password..."
           PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
           SECRET_NAME="db-password-free"
+          SERVICE_ACCOUNT=$(gcloud config get-value account 2>/dev/null || echo "unknown")
           
-          # Check if secret exists
-          if ! gcloud secrets describe $SECRET_NAME --project=$PROJECT_ID &>/dev/null; then
-            echo "ERROR: Secret '$SECRET_NAME' does not exist in project '$PROJECT_ID'"
-            echo "Available secrets:"
-            gcloud secrets list --project=$PROJECT_ID 2>&1 || echo "Cannot list secrets - permission issue"
-            exit 1
-          fi
-          
-          # Check if we can access the secret
+          # Try to get password from Secret Manager first
           set +e
-          TEST_ACCESS=$(gcloud secrets versions access latest --secret=$SECRET_NAME --project=$PROJECT_ID 2>&1)
-          ACCESS_EXIT=$?
+          DB_PASSWORD_SM=$(gcloud secrets versions access latest --secret=$SECRET_NAME --project=$PROJECT_ID 2>&1)
+          SM_EXIT=$?
           set -e
           
-          if [ $ACCESS_EXIT -ne 0 ]; then
-            echo "ERROR: Cannot access secret '$SECRET_NAME'"
-            echo "Error: $TEST_ACCESS"
+          if [ $SM_EXIT -eq 0 ] && [ -n "$DB_PASSWORD_SM" ]; then
+            echo "✓ Retrieved password from Secret Manager"
+            echo "password=$DB_PASSWORD_SM" >> $GITHUB_OUTPUT
+            echo "source=secret-manager" >> $GITHUB_OUTPUT
+          else
+            echo "⚠ Secret Manager access failed (exit code: $SM_EXIT)"
+            echo "Error: $DB_PASSWORD_SM"
             echo ""
-            echo "The service account needs the 'Secret Manager Secret Accessor' role."
-            echo "Grant it with:"
-            echo "  gcloud secrets add-iam-policy-binding $SECRET_NAME \\"
-            echo "    --member='serviceAccount:SERVICE_ACCOUNT_EMAIL' \\"
-            echo "    --role='roles/secretmanager.secretAccessor' \\"
-            echo "    --project=$PROJECT_ID"
-            exit 1
+            echo "Trying GitHub Secrets as fallback..."
+            
+            # Fallback to GitHub Secret
+            if [ -n "${{ secrets.DB_PASSWORD }}" ]; then
+              echo "✓ Using password from GitHub Secrets"
+              echo "password=${{ secrets.DB_PASSWORD }}" >> $GITHUB_OUTPUT
+              echo "source=github-secrets" >> $GITHUB_OUTPUT
+            else
+              echo "ERROR: Cannot retrieve database password from either source"
+              echo ""
+              echo "Service Account: $SERVICE_ACCOUNT"
+              echo "Project ID: $PROJECT_ID"
+              echo "Secret Name: $SECRET_NAME"
+              echo ""
+              echo "To fix Secret Manager access, grant permissions:"
+              echo "  gcloud secrets add-iam-policy-binding $SECRET_NAME \\"
+              echo "    --member='serviceAccount:$SERVICE_ACCOUNT' \\"
+              echo "    --role='roles/secretmanager.secretAccessor' \\"
+              echo "    --project=$PROJECT_ID"
+              echo ""
+              echo "OR add the password to GitHub Secrets as 'DB_PASSWORD'"
+              exit 1
+            fi
           fi
-          
-          echo "✓ Secret Manager access verified"
 
       - name: Extract hospital identifier
         id: hospital-id
@@ -330,28 +342,13 @@ jobs:
           DOL_URL=$(gcloud run services describe medi-os-${{ steps.hospital-id.outputs.id }}-dol-service --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
           # Use simple wildcard for CORS - the config parser will handle it
           CORS_ORIGINS="*"
-          # Get database password from Secret Manager
-          echo "Attempting to retrieve database password from Secret Manager..."
-          set +e
-          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>&1)
-          SECRET_EXIT_CODE=$?
-          set -e
-          if [ $SECRET_EXIT_CODE -ne 0 ]; then
-            echo "ERROR: Failed to retrieve database password from Secret Manager"
-            echo "Exit code: $SECRET_EXIT_CODE"
-            echo "Error output: $DB_PASSWORD"
-            echo "Secret name: db-password-free"
-            echo "Project ID: ${{ secrets.GCP_PROJECT_ID }}"
-            # Try to list secrets to verify access
-            echo "Listing available secrets:"
-            gcloud secrets list --project=${{ secrets.GCP_PROJECT_ID }} 2>&1 || true
-            exit 1
-          fi
+          # Use password from previous step
+          DB_PASSWORD="${{ steps.db-password.outputs.password }}"
           if [ -z "$DB_PASSWORD" ]; then
-            echo "ERROR: Database password is empty after retrieval"
+            echo "ERROR: Database password is not available"
             exit 1
           fi
-          echo "Database password retrieved successfully (length: ${#DB_PASSWORD} characters)"
+          echo "Using database password from: ${{ steps.db-password.outputs.source }}"
           DB_HOST="104.198.58.247"
           DATABASE_URL="postgresql+asyncpg://medios_user:${DB_PASSWORD}@${DB_HOST}:5432/medios_db"
           gcloud run deploy medi-os-${{ steps.hospital-id.outputs.id }}-manage-agent \
@@ -374,20 +371,10 @@ jobs:
       - name: Deploy scribe-agent
         id: deploy-scribe
         run: |
-          # Get database password from Secret Manager
-          echo "Attempting to retrieve database password from Secret Manager..."
-          set +e
-          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>&1)
-          SECRET_EXIT_CODE=$?
-          set -e
-          if [ $SECRET_EXIT_CODE -ne 0 ]; then
-            echo "ERROR: Failed to retrieve database password from Secret Manager"
-            echo "Exit code: $SECRET_EXIT_CODE"
-            echo "Error output: $DB_PASSWORD"
-            exit 1
-          fi
+          # Use password from previous step
+          DB_PASSWORD="${{ steps.db-password.outputs.password }}"
           if [ -z "$DB_PASSWORD" ]; then
-            echo "ERROR: Database password is empty after retrieval"
+            echo "ERROR: Database password is not available"
             exit 1
           fi
           DB_HOST="104.198.58.247"
@@ -412,20 +399,10 @@ jobs:
       - name: Deploy summarizer-agent
         id: deploy-summarizer
         run: |
-          # Get database password from Secret Manager
-          echo "Attempting to retrieve database password from Secret Manager..."
-          set +e
-          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>&1)
-          SECRET_EXIT_CODE=$?
-          set -e
-          if [ $SECRET_EXIT_CODE -ne 0 ]; then
-            echo "ERROR: Failed to retrieve database password from Secret Manager"
-            echo "Exit code: $SECRET_EXIT_CODE"
-            echo "Error output: $DB_PASSWORD"
-            exit 1
-          fi
+          # Use password from previous step
+          DB_PASSWORD="${{ steps.db-password.outputs.password }}"
           if [ -z "$DB_PASSWORD" ]; then
-            echo "ERROR: Database password is empty after retrieval"
+            echo "ERROR: Database password is not available"
             exit 1
           fi
           DB_HOST="104.198.58.247"
@@ -449,20 +426,10 @@ jobs:
 
       - name: Deploy dol-service
         run: |
-          # Get database password from Secret Manager
-          echo "Attempting to retrieve database password from Secret Manager..."
-          set +e
-          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>&1)
-          SECRET_EXIT_CODE=$?
-          set -e
-          if [ $SECRET_EXIT_CODE -ne 0 ]; then
-            echo "ERROR: Failed to retrieve database password from Secret Manager"
-            echo "Exit code: $SECRET_EXIT_CODE"
-            echo "Error output: $DB_PASSWORD"
-            exit 1
-          fi
+          # Use password from previous step
+          DB_PASSWORD="${{ steps.db-password.outputs.password }}"
           if [ -z "$DB_PASSWORD" ]; then
-            echo "ERROR: Database password is empty after retrieval"
+            echo "ERROR: Database password is not available"
             exit 1
           fi
           DB_HOST="104.198.58.247"
