@@ -22,7 +22,9 @@ RUN mkdir -p ./data/receptionist_models_v3/models \
     ./data/processed/transformers
 
 # Ensure all Python files are included (force rebuild)
-RUN find ./services/manage_agent -name "*.py" | head -5
+# Force fresh build to include all dependencies and files
+RUN find ./services/manage_agent -name "*.py" | head -5 && \
+    python -c "import joblib, numpy, pandas, sklearn; print('All ML dependencies available')"
 
 # Copy and make entrypoint executable
 COPY services/manage_agent/entrypoint.sh ./entrypoint.sh

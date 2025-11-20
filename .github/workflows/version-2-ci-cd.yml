@@ -295,7 +295,11 @@ jobs:
           # Use simple wildcard for CORS - the config parser will handle it
           CORS_ORIGINS="*"
           # Get database password from Secret Manager
-          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>/dev/null || echo "")
+          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>&1)
+          if [ -z "$DB_PASSWORD" ]; then
+            echo "ERROR: Failed to retrieve database password from Secret Manager"
+            exit 1
+          fi
           DB_HOST="104.198.58.247"
           DATABASE_URL="postgresql+asyncpg://medios_user:${DB_PASSWORD}@${DB_HOST}:5432/medios_db"
           gcloud run deploy medi-os-${{ steps.hospital-id.outputs.id }}-manage-agent \
@@ -319,7 +323,11 @@ jobs:
         id: deploy-scribe
         run: |
           # Get database password from Secret Manager
-          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>/dev/null || echo "")
+          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>&1)
+          if [ -z "$DB_PASSWORD" ]; then
+            echo "ERROR: Failed to retrieve database password from Secret Manager"
+            exit 1
+          fi
           DB_HOST="104.198.58.247"
           DATABASE_URL="postgresql+asyncpg://medios_user:${DB_PASSWORD}@${DB_HOST}:5432/medios_db"
           gcloud run deploy medi-os-${{ steps.hospital-id.outputs.id }}-scribe-agent \
@@ -343,7 +351,11 @@ jobs:
         id: deploy-summarizer
         run: |
           # Get database password from Secret Manager
-          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>/dev/null || echo "")
+          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>&1)
+          if [ -z "$DB_PASSWORD" ]; then
+            echo "ERROR: Failed to retrieve database password from Secret Manager"
+            exit 1
+          fi
           DB_HOST="104.198.58.247"
           DATABASE_URL="postgresql+asyncpg://medios_user:${DB_PASSWORD}@${DB_HOST}:5432/medios_db"
           gcloud run deploy medi-os-${{ steps.hospital-id.outputs.id }}-summarizer-agent \
@@ -366,7 +378,11 @@ jobs:
       - name: Deploy dol-service
         run: |
           # Get database password from Secret Manager
-          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>/dev/null || echo "")
+          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>&1)
+          if [ -z "$DB_PASSWORD" ]; then
+            echo "ERROR: Failed to retrieve database password from Secret Manager"
+            exit 1
+          fi
           DB_HOST="104.198.58.247"
           DATABASE_URL="postgresql+asyncpg://medios_user:${DB_PASSWORD}@${DB_HOST}:5432/medios_db"
           gcloud run deploy medi-os-${{ steps.hospital-id.outputs.id }}-dol-service \
