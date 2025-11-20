@@ -35,7 +35,9 @@ def create_app(settings: ScribeAgentSettings | None = None) -> FastAPI:
         )
         app.state.settings = loaded_settings
         logger.info("Initializing ScribeEngine...")
-        app.state.scribe_engine = ScribeEngine(model_version=loaded_settings.model_version)
+        app.state.scribe_engine = ScribeEngine(
+            model_version=loaded_settings.model_version
+        )
         logger.info("✅ Scribe-agent app created successfully")
         return app
     except Exception as e:
