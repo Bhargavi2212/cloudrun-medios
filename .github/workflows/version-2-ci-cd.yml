@@ -321,7 +321,7 @@ jobs:
             --timeout 300 \
             --max-instances 10 \
             --min-instances 0 \
-            --set-env-vars "HOSPITAL_ID=${{ steps.hospital-id.outputs.id }},DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/medi_os_v2,MANAGE_AGENT_CORS_ORIGINS=[\"https://medi-os-frontend-uizgwl6noq-uc.a.run.app\",\"http://localhost:5173\",\"http://localhost:3000\"]" \
+            --set-env-vars "HOSPITAL_ID=${{ steps.hospital-id.outputs.id }},DATABASE_URL=postgresql+asyncpg://medios_user:m4zrH73diqa1yW2EFNkvshZxU@104.198.58.247:5432/medios_db,MANAGE_AGENT_CORS_ORIGINS=[\"https://medi-os-frontend-uizgwl6noq-uc.a.run.app\",\"http://localhost:5173\",\"http://localhost:3000\"]" \
             || echo "Deployment failed or service doesn't exist"
         continue-on-error: true
 
@@ -338,7 +338,7 @@ jobs:
             --timeout 300 \
             --max-instances 10 \
             --min-instances 0 \
-            --set-env-vars "DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/medi_os_v2,SCRIBE_AGENT_CORS_ORIGINS=[\"https://medi-os-frontend-uizgwl6noq-uc.a.run.app\",\"http://localhost:5173\",\"http://localhost:3000\"]" \
+            --set-env-vars "DATABASE_URL=postgresql+asyncpg://medios_user:m4zrH73diqa1yW2EFNkvshZxU@104.198.58.247:5432/medios_db,SCRIBE_AGENT_CORS_ORIGINS=[\"https://medi-os-frontend-uizgwl6noq-uc.a.run.app\",\"http://localhost:5173\",\"http://localhost:3000\"]" \
             || echo "Deployment failed or service doesn't exist"
         continue-on-error: true
 
@@ -355,7 +355,7 @@ jobs:
             --timeout 300 \
             --max-instances 10 \
             --min-instances 0 \
-            --set-env-vars "DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/medi_os_v2,SUMMARIZER_AGENT_CORS_ORIGINS=[\"https://medi-os-frontend-uizgwl6noq-uc.a.run.app\",\"http://localhost:5173\",\"http://localhost:3000\"]" \
+            --set-env-vars "DATABASE_URL=postgresql+asyncpg://medios_user:m4zrH73diqa1yW2EFNkvshZxU@104.198.58.247:5432/medios_db,SUMMARIZER_AGENT_CORS_ORIGINS=[\"https://medi-os-frontend-uizgwl6noq-uc.a.run.app\",\"http://localhost:5173\",\"http://localhost:3000\"]" \
             || echo "Deployment failed or service doesn't exist"
         continue-on-error: true
 
@@ -372,7 +372,7 @@ jobs:
             --timeout 300 \
             --max-instances 10 \
             --min-instances 0 \
-            --set-env-vars "DOL_HOSPITAL_ID=${{ steps.hospital-id.outputs.id }},DOL_SHARED_SECRET=super-secret,DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/medi_os_v2,DOL_CORS_ORIGINS=[\"*\"]" \
+            --set-env-vars "DOL_HOSPITAL_ID=${{ steps.hospital-id.outputs.id }},DOL_SHARED_SECRET=super-secret,DATABASE_URL=postgresql+asyncpg://medios_user:m4zrH73diqa1yW2EFNkvshZxU@104.198.58.247:5432/medios_db,DOL_CORS_ORIGINS=[\"*\"]" \
             || echo "Deployment failed or service doesn't exist"
         continue-on-error: true
 
