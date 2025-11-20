@@ -361,7 +361,7 @@ jobs:
             --timeout 300 \
             --max-instances 10 \
             --min-instances 0 \
-            --set-env-vars "DOL_HOSPITAL_ID=${{ steps.hospital-id.outputs.id }},DOL_SHARED_SECRET=super-secret,DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/medi_os_v2,DOL_CORS_ORIGINS=*" \
+            --set-env-vars "DOL_HOSPITAL_ID=${{ steps.hospital-id.outputs.id }},DOL_SHARED_SECRET=super-secret,DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/medi_os_v2,DOL_CORS_ORIGINS=[\"*\"]" \
             || echo "Deployment failed or service doesn't exist"
         continue-on-error: true
 
@@ -378,7 +378,7 @@ jobs:
             --timeout 300 \
             --max-instances 5 \
             --min-instances 0 \
-            --set-env-vars "FEDERATION_SHARED_SECRET=super-secret,FEDERATION_CORS_ORIGINS=*" \
+            --set-env-vars "FEDERATION_SHARED_SECRET=super-secret,FEDERATION_CORS_ORIGINS=[\"*\"]" \
             || echo "Deployment failed or service doesn't exist"
         continue-on-error: true
 
