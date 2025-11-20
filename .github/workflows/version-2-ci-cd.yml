@@ -296,14 +296,27 @@ jobs:
           # Use simple wildcard for CORS - the config parser will handle it
           CORS_ORIGINS="*"
           # Get database password from Secret Manager
+          echo "Attempting to retrieve database password from Secret Manager..."
           set +e
-          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>/dev/null)
+          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>&1)
           SECRET_EXIT_CODE=$?
           set -e
-          if [ $SECRET_EXIT_CODE -ne 0 ] || [ -z "$DB_PASSWORD" ]; then
-            echo "ERROR: Failed to retrieve database password from Secret Manager (exit code: $SECRET_EXIT_CODE)"
+          if [ $SECRET_EXIT_CODE -ne 0 ]; then
+            echo "ERROR: Failed to retrieve database password from Secret Manager"
+            echo "Exit code: $SECRET_EXIT_CODE"
+            echo "Error output: $DB_PASSWORD"
+            echo "Secret name: db-password-free"
+            echo "Project ID: ${{ secrets.GCP_PROJECT_ID }}"
+            # Try to list secrets to verify access
+            echo "Listing available secrets:"
+            gcloud secrets list --project=${{ secrets.GCP_PROJECT_ID }} 2>&1 || true
             exit 1
           fi
+          if [ -z "$DB_PASSWORD" ]; then
+            echo "ERROR: Database password is empty after retrieval"
+            exit 1
+          fi
+          echo "Database password retrieved successfully (length: ${#DB_PASSWORD} characters)"
           DB_HOST="104.198.58.247"
           DATABASE_URL="postgresql+asyncpg://medios_user:${DB_PASSWORD}@${DB_HOST}:5432/medios_db"
           gcloud run deploy medi-os-${{ steps.hospital-id.outputs.id }}-manage-agent \
