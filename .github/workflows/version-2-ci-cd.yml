@@ -247,8 +247,8 @@ jobs:
         if: matrix.service.name == 'manage-agent' && matrix.hospital == 'HospitalA'
         uses: docker/build-push-action@v5
         with:
-          context: Version-2/apps/frontend
-          file: Version-2/apps/frontend/Dockerfile
+          context: 'Version -2/apps/frontend'
+          file: 'Version -2/apps/frontend/Dockerfile'
           push: ${{ github.ref == 'refs/heads/main' }}
           build-args: |
             VITE_MANAGE_API_URL_HOSPITAL_A=https://medi-os-hospital-a-manage-agent-uizgwl6noq-uc.a.run.app
