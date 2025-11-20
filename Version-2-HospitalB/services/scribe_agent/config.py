@@ -23,14 +23,14 @@ class ScribeAgentSettings(DatabaseSettings):
         description="Comma-separated list of allowed origins for CORS.",
         exclude=True,
     )
-    
+
     cors_allow_origins: list[str] = Field(
         default_factory=list,
         description="Parsed list of allowed CORS origins.",
     )
 
     @model_validator(mode="after")
-    def _parse_cors_origins(self) -> "ScribeAgentSettings":
+    def _parse_cors_origins(self) -> ScribeAgentSettings:
         """Parse CORS origins string into list after model initialization."""
         if self._cors_origins_str:
             self.cors_allow_origins = [
