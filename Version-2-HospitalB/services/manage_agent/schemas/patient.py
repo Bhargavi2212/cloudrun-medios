@@ -18,7 +18,10 @@ class PatientBase(BaseModel):
 
     mrn: str | None = Field(
         None,
-        description="Medical record number assigned by the hospital. Auto-generated if not provided.",
+        description=(
+            "Medical record number assigned by the hospital. "
+            "Auto-generated if not provided."
+        ),
     )
     first_name: str = Field(..., description="Patient given name.")
     last_name: str = Field(..., description="Patient family name.")
