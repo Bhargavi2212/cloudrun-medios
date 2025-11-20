@@ -272,6 +272,41 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Verify Secret Manager access
+        run: |
+          echo "Verifying Secret Manager access..."
+          PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
+          SECRET_NAME="db-password-free"
+          
+          # Check if secret exists
+          if ! gcloud secrets describe $SECRET_NAME --project=$PROJECT_ID &>/dev/null; then
+            echo "ERROR: Secret '$SECRET_NAME' does not exist in project '$PROJECT_ID'"
+            echo "Available secrets:"
+            gcloud secrets list --project=$PROJECT_ID 2>&1 || echo "Cannot list secrets - permission issue"
+            exit 1
+          fi
+          
+          # Check if we can access the secret
+          set +e
+          TEST_ACCESS=$(gcloud secrets versions access latest --secret=$SECRET_NAME --project=$PROJECT_ID 2>&1)
+          ACCESS_EXIT=$?
+          set -e
+          
+          if [ $ACCESS_EXIT -ne 0 ]; then
+            echo "ERROR: Cannot access secret '$SECRET_NAME'"
+            echo "Error: $TEST_ACCESS"
+            echo ""
+            echo "The service account needs the 'Secret Manager Secret Accessor' role."
+            echo "Grant it with:"
+            echo "  gcloud secrets add-iam-policy-binding $SECRET_NAME \\"
+            echo "    --member='serviceAccount:SERVICE_ACCOUNT_EMAIL' \\"
+            echo "    --role='roles/secretmanager.secretAccessor' \\"
+            echo "    --project=$PROJECT_ID"
+            exit 1
+          fi
+          
+          echo "✓ Secret Manager access verified"
+
       - name: Extract hospital identifier
         id: hospital-id
         run: |
