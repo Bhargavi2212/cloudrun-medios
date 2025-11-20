@@ -7,6 +7,7 @@ from __future__ import annotations
 from fastapi import Request
 
 from services.manage_agent.config import ManageAgentSettings
+from services.manage_agent.core.nurse_triage import NurseTriageEngine
 from services.manage_agent.core.triage import TriageEngine
 from services.manage_agent.services.check_in_service import CheckInService
 from services.manage_agent.services.federated_sync_service import FederatedSyncService
@@ -20,6 +21,15 @@ def get_triage_engine(request: Request) -> TriageEngine:
     """
 
     engine: TriageEngine = request.app.state.triage_engine
+    return engine
+
+
+def get_nurse_triage_engine(request: Request) -> NurseTriageEngine:
+    """
+    Retrieve the nurse triage engine instance from application state.
+    """
+
+    engine: NurseTriageEngine = request.app.state.nurse_triage_engine
     return engine
 
 

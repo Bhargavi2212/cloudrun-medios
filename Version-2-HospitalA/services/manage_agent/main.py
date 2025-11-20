@@ -7,6 +7,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 
 from services.manage_agent.config import ManageAgentSettings
+from services.manage_agent.core.nurse_triage import NurseTriageEngine
 from services.manage_agent.core.triage import TriageEngine
 from services.manage_agent.handlers import api_router
 from services.manage_agent.services.check_in_service import CheckInService
@@ -29,6 +30,7 @@ def create_app(settings: ManageAgentSettings | None = None) -> FastAPI:
     )
     app.state.settings = loaded_settings
     app.state.triage_engine = TriageEngine(model_version=loaded_settings.model_version)
+    app.state.nurse_triage_engine = NurseTriageEngine()
     app.state.check_in_service = CheckInService(
         base_url=loaded_settings.dol_base_url,
         shared_secret=loaded_settings.dol_shared_secret,
