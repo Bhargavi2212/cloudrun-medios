@@ -36,11 +36,14 @@ COPY database ./database
 COPY dol_service ./dol_service
 COPY services/manage_agent ./services/manage_agent
 
-# Copy model files (nurse triage models and transformers)
-# Create directories first, then copy if they exist
+# Create data directory structure for model files
+# Models will use fallback heuristics if files are not present
 RUN mkdir -p ./data/receptionist_models_v3/models \
     ./data/nurse_models/models \
     ./data/processed/transformers
+# Copy model files if they exist (optional - models will use fallback if missing)
+# Note: Model files are too large for git, so they may not be in build context
+# They can be copied from Version -2/data during CI/CD build if needed
 COPY data/nurse_models ./data/nurse_models
 COPY data/processed/transformers ./data/processed/transformers
 

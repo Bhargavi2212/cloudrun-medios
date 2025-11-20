@@ -233,6 +233,21 @@ jobs:
             echo "path=services/${{ matrix.service.name }}/Dockerfile" >> $GITHUB_OUTPUT
           fi
 
+      - name: Copy model files for manage-agent
+        if: matrix.service.name == 'manage-agent'
+        run: |
+          echo "Copying model files from Version -2/data to Version-2-${{ matrix.hospital }}/data..."
+          mkdir -p "Version-2-${{ matrix.hospital }}/data/nurse_models/models"
+          mkdir -p "Version-2-${{ matrix.hospital }}/data/processed/transformers"
+          # Copy model files if they exist (they're too large for git)
+          if [ -d "Version -2/data/nurse_models/models" ]; then
+            cp -r "Version -2/data/nurse_models/models"/* "Version-2-${{ matrix.hospital }}/data/nurse_models/models/" 2>/dev/null || true
+          fi
+          if [ -d "Version -2/data/processed/transformers" ]; then
+            cp -r "Version -2/data/processed/transformers"/* "Version-2-${{ matrix.hospital }}/data/processed/transformers/" 2>/dev/null || true
+          fi
+          echo "Model files copied (if available)"
+
       - name: Build and push service image
         uses: docker/build-push-action@v5
         with:
