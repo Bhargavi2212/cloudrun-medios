@@ -70,7 +70,9 @@ def create_service_app(
 
             async def dispatch(self, request: Request, call_next):
                 origin = request.headers.get("origin")
-                should_allow = allow_all_origins or (origin and origin in settings.cors_allow_origins)
+                should_allow = allow_all_origins or (
+                    origin and origin in settings.cors_allow_origins
+                )
                 
                 if should_allow:
                     try:
@@ -126,7 +128,8 @@ def create_service_app(
             expose_headers=["*"],
         )
         cors_logger.info(
-            f"CORS middleware added with origins: {settings.cors_allow_origins} (allow_all={allow_all_origins})"
+            f"CORS middleware added with origins: {settings.cors_allow_origins} "
+            f"(allow_all={allow_all_origins})"
         )
     else:
         cors_logger.warning("CORS middleware NOT added - no origins configured")
