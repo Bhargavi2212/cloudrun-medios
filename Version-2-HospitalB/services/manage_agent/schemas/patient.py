@@ -23,7 +23,9 @@ class PatientBase(BaseModel):
     first_name: str = Field(..., description="Patient given name.")
     last_name: str = Field(..., description="Patient family name.")
     dob: date | None = Field(None, description="Date of birth.")
-    sex: str | None = Field(None, description="Administrative sex or gender.")
+    sex: str | None = Field(
+        None, description="Administrative sex or gender."
+    )
     contact_info: dict[str, Any] | None = Field(
         None,
         description="Contact details for the patient (phone, email, address).",
