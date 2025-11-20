@@ -13,7 +13,12 @@ from services.manage_agent.schemas.portable_profile import (
     PortableSummary,
     PortableTimelineEvent,
 )
-from services.manage_agent.schemas.triage import TriageRequest, TriageResponse
+from services.manage_agent.schemas.triage import (
+    NurseVitalsRequest,
+    NurseVitalsResponse,
+    TriageRequest,
+    TriageResponse,
+)
 
 __all__ = [
     "PatientCreate",
@@ -25,4 +30,6 @@ __all__ = [
     "PortableTimelineEvent",
     "TriageRequest",
     "TriageResponse",
+    "NurseVitalsRequest",
+    "NurseVitalsResponse",
 ]

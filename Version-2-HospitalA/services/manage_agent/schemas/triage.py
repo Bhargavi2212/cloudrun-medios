@@ -35,3 +35,19 @@ class TriageResponse(BaseModel):
     explanation: str = Field(
         ..., description="Human-readable explanation of classification."
     )
+
+
+class NurseVitalsRequest(TriageRequest):
+    """
+    Request payload for nurse triage with vital signs.
+    Extends TriageRequest for nurse-specific triage.
+    """
+    pass
+
+
+class NurseVitalsResponse(TriageResponse):
+    """
+    Response payload for nurse triage classification.
+    Extends TriageResponse for nurse-specific triage.
+    """
+    pass
