@@ -64,9 +64,9 @@ const ScribeLivePage = () => {
             <Button onClick={handleFinalize} disabled={isFinalizing}>
               {isFinalizing ? 'Generating…' : 'Finalize Session'}
             </Button>
-            <Button variant="secondary" asChild>
-              <Link to={`/scribe/review/${session.id}`}>Open Review</Link>
-            </Button>
+            <Link to={`/scribe/review/${session.id}`}>
+              <Button variant="secondary">Open Review</Button>
+            </Link>
           </div>
         )}
       </div>

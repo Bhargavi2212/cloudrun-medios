@@ -45,7 +45,7 @@ const ScribeReviewPage = () => {
     if (!selectedNote || !noteContent) return
     setIsSaving(true)
     try {
-      const response = await aiScribeAPI.updateNote(selectedNote.id, { content: noteContent })
+      const response = await aiScribeAPI.updateNote(selectedNote.id, { content: noteContent as Record<string, unknown> })
       setSelectedNote(response.note)
       toast({ title: 'Note updated', description: 'Edits saved successfully.' })
     } catch (error) {

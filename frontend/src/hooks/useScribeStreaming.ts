@@ -94,10 +94,14 @@ export const useScribeStreaming = ({ sessionId }: UseScribeStreamingOptions) => 
       const input = event.inputBuffer.getChannelData(0)
       const pcmBuffer = convertFloat32ToInt16(input)
       if (audioSocket.readyState === WebSocket.OPEN) {
+        // Convert ArrayBufferLike to ArrayBuffer
+        const arrayBuffer = pcmBuffer.buffer instanceof ArrayBuffer 
+          ? pcmBuffer.buffer 
+          : new Uint8Array(pcmBuffer).buffer
         audioSocket.send(
           JSON.stringify({
             type: 'chunk',
-            chunk: bufferToBase64(pcmBuffer.buffer),
+            chunk: bufferToBase64(arrayBuffer),
             sampleRate: audioContext.sampleRate,
             speaker: speakerRef.current,
             timestampMs: Date.now(),

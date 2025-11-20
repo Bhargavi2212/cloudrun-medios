@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/components/ui/use-toast'
 import {
   CheckCircle2,
   XCircle,
@@ -378,7 +378,7 @@ export function DocumentReviewDashboard() {
                   <div>
                     <h4 className="font-medium mb-2">Raw Text Preview</h4>
                     <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-md text-sm max-h-64 overflow-y-auto">
-                      {extractionData.raw_text_preview}
+                      {String(extractionData.raw_text_preview || '')}
                     </div>
                   </div>
                 )}
