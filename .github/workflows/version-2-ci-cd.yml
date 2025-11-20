@@ -1,5 +1,6 @@
 name: Version 2 CI/CD Pipeline
 
+# Trigger deployment to replace failed revisions
 on:
   push:
     branches: [main, develop]
