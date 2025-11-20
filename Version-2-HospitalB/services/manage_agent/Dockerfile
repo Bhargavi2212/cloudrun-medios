@@ -18,7 +18,7 @@ COPY services/manage_agent ./services/manage_agent
 COPY services/manage_agent/entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
-EXPOSE 9001
+EXPOSE 8001
 
 # Cloud Run sets PORT environment variable
 ENTRYPOINT ["./entrypoint.sh"]
