@@ -8,7 +8,11 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
 
 COPY services/manage_agent/requirements.txt ./requirements.txt
+# Verify requirements.txt includes ML dependencies before installing
+RUN grep -q "joblib" requirements.txt && grep -q "numpy" requirements.txt && grep -q "pandas" requirements.txt && grep -q "scikit-learn" requirements.txt || (echo "ERROR: ML dependencies missing from requirements.txt!" && cat requirements.txt && exit 1)
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+# Verify installation succeeded
+RUN python -c "import joblib, numpy, pandas, sklearn; print('✓ All ML dependencies installed successfully')" || (echo "ERROR: ML dependencies not installed!" && pip list | grep -E "joblib|numpy|pandas|scikit" && exit 1)
 
 COPY shared ./shared
 COPY database ./database
