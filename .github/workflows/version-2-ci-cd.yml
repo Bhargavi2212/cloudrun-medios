@@ -411,7 +411,7 @@ jobs:
             --timeout 300 \
             --max-instances 10 \
             --min-instances 0 \
-            --set-env-vars "DATABASE_URL=${DATABASE_URL},SUMMARIZER_AGENT_CORS_ORIGINS=[\"*\"]" \
+            --set-env-vars "DATABASE_URL=${DATABASE_URL},SUMMARIZER_AGENT_CORS_ORIGINS=[\"*\"],GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" \
             || echo "Deployment failed"
           SERVICE_URL=$(gcloud run services describe medi-os-${{ steps.hospital-id.outputs.id }}-summarizer-agent --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
           echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT

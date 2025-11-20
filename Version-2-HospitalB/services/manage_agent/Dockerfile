@@ -36,11 +36,13 @@ COPY database ./database
 COPY dol_service ./dol_service
 COPY services/manage_agent ./services/manage_agent
 
-# Create data directory structure for model files
-# Models will use fallback heuristics if files are not present
+# Copy model files (nurse triage models and transformers)
+# Create directories first, then copy if they exist
 RUN mkdir -p ./data/receptionist_models_v3/models \
     ./data/nurse_models/models \
     ./data/processed/transformers
+COPY data/nurse_models ./data/nurse_models
+COPY data/processed/transformers ./data/processed/transformers
 
 # Final verification - MUST pass or build fails
 RUN python -c "import joblib, numpy, pandas, sklearn; print('✓ All ML dependencies available')" || \
