@@ -4,13 +4,35 @@ Triage classification endpoints.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import asdict
+from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
+from database.models import Encounter, TriageObservation
+from database.session import get_session
+from services.manage_agent.core.nurse_triage import (
+    NurseTriageEngine,
+    NurseTriagePayload,
+)
 from services.manage_agent.core.triage import TriageEngine
-from services.manage_agent.dependencies import get_triage_engine
-from services.manage_agent.schemas import TriageRequest, TriageResponse
+from services.manage_agent.dependencies import (
+    get_nurse_triage_engine,
+    get_triage_engine,
+)
+from services.manage_agent.schemas import (
+    NurseVitalsRequest,
+    NurseVitalsResponse,
+    TriageRequest,
+    TriageResponse,
+)
+from shared.schemas import StandardResponse
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/manage", tags=["triage"])
 
@@ -31,3 +53,235 @@ async def classify_patient(
 
     result = await engine.classify(payload)
     return TriageResponse.model_validate(asdict(result))
+
+
+@router.post(
+    "/encounters/{encounter_id}/vitals",
+    response_model=StandardResponse,
+    summary="Record vitals and update triage",
+    description="Capture vitals for an encounter and run the nurse triage model with vitals.",  # noqa: E501
+)
+async def record_vitals(
+    encounter_id: UUID,
+    payload: NurseVitalsRequest,
+    session: AsyncSession = Depends(get_session),
+    engine: NurseTriageEngine = Depends(get_nurse_triage_engine),
+) -> StandardResponse:
+    """
+    Nurse workflow: store vitals and classify acuity for an encounter.
+    """
+    import sys
+
+    print(
+        f"[VITALS] Recording vitals for encounter: {encounter_id}",
+        file=sys.stderr,
+        flush=True,
+    )
+    print(
+        f"[VITALS] Vitals: HR={payload.hr}, RR={payload.rr}, BP={payload.sbp}/{payload.dbp}, Temp={payload.temp_c}C, SpO2={payload.spo2}, Pain={payload.pain}",  # noqa: E501
+        file=sys.stderr,
+        flush=True,
+    )
+    logger.info("[VITALS] Recording vitals for encounter: %s", encounter_id)
+    logger.info(
+        "[VITALS] Vitals: HR=%d, RR=%d, BP=%d/%d, Temp=%.1fC, SpO2=%d, Pain=%d",
+        payload.hr,
+        payload.rr,
+        payload.sbp,
+        payload.dbp,
+        payload.temp_c,
+        payload.spo2,
+        payload.pain,
+    )
+
+    stmt = (
+        select(Encounter)
+        .where(Encounter.id == encounter_id)
+        .options(
+            selectinload(Encounter.triage_observations),
+            selectinload(Encounter.patient),
+        )
+    )
+    result = await session.execute(stmt)
+    encounter = result.scalar_one_or_none()
+    if encounter is None:
+        print(
+            f"[VITALS] ERROR: Encounter not found: {encounter_id}",
+            file=sys.stderr,
+            flush=True,
+        )
+        logger.error("[VITALS] ERROR: Encounter not found: %s", encounter_id)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Encounter not found.",
+        )
+
+    print(
+        f"[VITALS] Encounter found for patient: {encounter.patient_id if encounter.patient else 'unknown'}",  # noqa: E501
+        file=sys.stderr,
+        flush=True,
+    )
+    logger.info(
+        "[VITALS] Encounter found for patient: %s",
+        encounter.patient_id if encounter.patient else "unknown",
+    )
+
+    triage_obs = (
+        encounter.triage_observations[0] if encounter.triage_observations else None
+    )
+    if triage_obs is None:
+        triage_obs = TriageObservation(
+            id=uuid4(),
+            encounter_id=encounter.id,
+            vitals={},
+            chief_complaint=None,
+        )
+        session.add(triage_obs)
+
+    existing_vitals = triage_obs.vitals or {}
+    vitals_dict = {**existing_vitals, **payload.model_dump(exclude={"notes"})}
+    triage_obs.vitals = vitals_dict
+    if payload.notes:
+        triage_obs.notes = payload.notes
+
+    patient = encounter.patient
+    if patient is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Encounter has no associated patient record.",
+        )
+
+    # Calculate age in years
+    age_years: float | None = None
+    if patient.dob is not None:
+        from datetime import date
+
+        dob = patient.dob
+        if hasattr(dob, "date"):
+            dob = dob.date()
+        today = date.today()
+        age_years = float(
+            today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+        )
+
+    nurse_payload = NurseTriagePayload(
+        hr=payload.hr,
+        rr=payload.rr,
+        sbp=payload.sbp,
+        dbp=payload.dbp,
+        temp_c=payload.temp_c,
+        pain=payload.pain,
+        age=age_years,
+        chief_complaint=triage_obs.chief_complaint,
+        ambulance_arrival=bool(existing_vitals.get("ambulance_arrival")),
+        seen_72h=bool(existing_vitals.get("seen_72h")),
+        injury=bool(existing_vitals.get("injury")),
+    )
+
+    # Initialize with default values (will be overwritten if triage succeeds)
+    default_triage_level = 4
+    triage_obs.triage_score = default_triage_level
+    encounter.acuity_level = default_triage_level
+
+    try:
+        import sys
+
+        print(
+            "[VITALS] Running nurse triage classification...",
+            file=sys.stderr,
+            flush=True,
+        )
+        logger.info("[VITALS] Running nurse triage classification...")
+        triage_result = engine.classify(nurse_payload)
+        if triage_result and triage_result.acuity_level:
+            triage_obs.triage_score = triage_result.acuity_level
+            triage_obs.triage_model_version = triage_result.model_version
+            encounter.acuity_level = triage_result.acuity_level
+            print(
+                f"[VITALS] Triage result: Level {triage_result.acuity_level} (model: {triage_result.model_version})",  # noqa: E501
+                file=sys.stderr,
+                flush=True,
+            )
+            print(
+                f"[VITALS] Explanation: {triage_result.explanation}",
+                file=sys.stderr,
+                flush=True,
+            )
+            logger.info(
+                "[VITALS] Triage result: Level %d (model: %s)",
+                triage_result.acuity_level,
+                triage_result.model_version,
+            )
+            logger.info("[VITALS] Explanation: %s", triage_result.explanation)
+        else:
+            print(
+                "[VITALS] WARNING: Triage returned None or invalid result, using default level 4",  # noqa: E501
+                file=sys.stderr,
+                flush=True,
+            )
+            logger.warning(
+                "[VITALS] WARNING: Triage returned None or invalid result, "
+                "using default level 4"
+            )
+            triage_result = type(
+                "TriageResult",
+                (),
+                {
+                    "acuity_level": default_triage_level,
+                    "model_version": f"{engine.model_version}-fallback",
+                    "explanation": "Fallback triage level due to invalid model result",
+                },
+            )()
+    except Exception as exc:  # pragma: no cover - runtime safety
+        import sys
+
+        print(
+            f"[VITALS] WARNING: Nurse triage classification failed, using default level 4: {exc}",  # noqa: E501
+            file=sys.stderr,
+            flush=True,
+        )
+        logger.warning(
+            "[VITALS] WARNING: Nurse triage classification failed, "
+            "using default level 4: %s",
+            exc,
+            exc_info=True,
+        )
+        # Values already set to default above, but ensure they're set
+        triage_obs.triage_score = default_triage_level
+        encounter.acuity_level = default_triage_level
+        # Create a fallback result object
+        triage_result = type(
+            "TriageResult",
+            (),
+            {
+                "acuity_level": default_triage_level,
+                "model_version": f"{engine.model_version}-fallback",
+                "explanation": f"Fallback triage level due to error: {exc}",
+            },
+        )()
+
+    await session.commit()
+    await session.refresh(encounter)
+    import sys
+
+    print(
+        f"[VITALS] Vitals recorded and triage updated successfully. Encounter: {encounter.id}, Triage Level: {encounter.acuity_level}",  # noqa: E501
+        file=sys.stderr,
+        flush=True,
+    )
+    logger.info(
+        "[VITALS] Vitals recorded and triage updated successfully. Encounter: %s, Triage Level: %s",  # noqa: E501
+        encounter.id,
+        encounter.acuity_level,
+    )
+
+    response = NurseVitalsResponse(
+        encounter_id=encounter.id,
+        patient_id=encounter.patient_id,
+        triage_level=triage_result.acuity_level,
+        model_version=triage_result.model_version,
+        explanation=triage_result.explanation,
+        vitals=vitals_dict,
+    )
+
+    return StandardResponse(success=True, data=response)

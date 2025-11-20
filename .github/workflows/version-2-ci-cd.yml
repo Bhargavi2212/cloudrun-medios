@@ -293,6 +293,10 @@ jobs:
           DOL_URL=$(gcloud run services describe medi-os-${{ steps.hospital-id.outputs.id }}-dol-service --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
           # Use simple wildcard for CORS - the config parser will handle it
           CORS_ORIGINS="*"
+          # Get database password from Secret Manager
+          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>/dev/null || echo "")
+          DB_HOST="104.198.58.247"
+          DATABASE_URL="postgresql+asyncpg://medios_user:${DB_PASSWORD}@${DB_HOST}:5432/medios_db"
           gcloud run deploy medi-os-${{ steps.hospital-id.outputs.id }}-manage-agent \
             --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-${{ steps.hospital-id.outputs.id }}-manage-agent:${{ github.sha }} \
             --region ${{ steps.region.outputs.region }} \
@@ -304,7 +308,7 @@ jobs:
             --timeout 300 \
             --max-instances 10 \
             --min-instances 0 \
-            --set-env-vars "HOSPITAL_ID=${{ steps.hospital-id.outputs.id }},DATABASE_URL=postgresql+asyncpg://medios_user:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:5432/medios_db,MANAGE_AGENT_CORS_ORIGINS=$CORS_ORIGINS,MANAGE_AGENT_DOL_URL=$DOL_URL" \
+            --set-env-vars "HOSPITAL_ID=${{ steps.hospital-id.outputs.id }},DATABASE_URL=${DATABASE_URL},MANAGE_AGENT_CORS_ORIGINS=$CORS_ORIGINS,MANAGE_AGENT_DOL_URL=$DOL_URL" \
             || echo "Deployment failed or service doesn't exist"
           SERVICE_URL=$(gcloud run services describe medi-os-${{ steps.hospital-id.outputs.id }}-manage-agent --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
           echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT
@@ -313,6 +317,10 @@ jobs:
       - name: Deploy scribe-agent
         id: deploy-scribe
         run: |
+          # Get database password from Secret Manager
+          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>/dev/null || echo "")
+          DB_HOST="104.198.58.247"
+          DATABASE_URL="postgresql+asyncpg://medios_user:${DB_PASSWORD}@${DB_HOST}:5432/medios_db"
           gcloud run deploy medi-os-${{ steps.hospital-id.outputs.id }}-scribe-agent \
             --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-${{ steps.hospital-id.outputs.id }}-scribe-agent:${{ github.sha }} \
             --region ${{ steps.region.outputs.region }} \
@@ -324,7 +332,7 @@ jobs:
             --timeout 300 \
             --max-instances 10 \
             --min-instances 0 \
-            --set-env-vars "DATABASE_URL=postgresql+asyncpg://medios_user:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:5432/medios_db,SCRIBE_AGENT_CORS_ORIGINS=[\"*\"]" \
+            --set-env-vars "DATABASE_URL=${DATABASE_URL},SCRIBE_AGENT_CORS_ORIGINS=[\"*\"]" \
             || echo "Deployment failed or service doesn't exist"
           SERVICE_URL=$(gcloud run services describe medi-os-${{ steps.hospital-id.outputs.id }}-scribe-agent --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
           echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT
@@ -333,6 +341,10 @@ jobs:
       - name: Deploy summarizer-agent
         id: deploy-summarizer
         run: |
+          # Get database password from Secret Manager
+          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>/dev/null || echo "")
+          DB_HOST="104.198.58.247"
+          DATABASE_URL="postgresql+asyncpg://medios_user:${DB_PASSWORD}@${DB_HOST}:5432/medios_db"
           gcloud run deploy medi-os-${{ steps.hospital-id.outputs.id }}-summarizer-agent \
             --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-${{ steps.hospital-id.outputs.id }}-summarizer-agent:${{ github.sha }} \
             --region ${{ steps.region.outputs.region }} \
@@ -344,7 +356,7 @@ jobs:
             --timeout 300 \
             --max-instances 10 \
             --min-instances 0 \
-            --set-env-vars "DATABASE_URL=postgresql+asyncpg://medios_user:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:5432/medios_db,SUMMARIZER_AGENT_CORS_ORIGINS=[\"*\"]" \
+            --set-env-vars "DATABASE_URL=${DATABASE_URL},SUMMARIZER_AGENT_CORS_ORIGINS=[\"*\"]" \
             || echo "Deployment failed or service doesn't exist"
           SERVICE_URL=$(gcloud run services describe medi-os-${{ steps.hospital-id.outputs.id }}-summarizer-agent --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
           echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT
@@ -352,6 +364,10 @@ jobs:
 
       - name: Deploy dol-service
         run: |
+          # Get database password from Secret Manager
+          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>/dev/null || echo "")
+          DB_HOST="104.198.58.247"
+          DATABASE_URL="postgresql+asyncpg://medios_user:${DB_PASSWORD}@${DB_HOST}:5432/medios_db"
           gcloud run deploy medi-os-${{ steps.hospital-id.outputs.id }}-dol-service \
             --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-${{ steps.hospital-id.outputs.id }}-dol-service:${{ github.sha }} \
             --region ${{ steps.region.outputs.region }} \
@@ -363,7 +379,7 @@ jobs:
             --timeout 300 \
             --max-instances 10 \
             --min-instances 0 \
-            --set-env-vars "DOL_HOSPITAL_ID=${{ steps.hospital-id.outputs.id }},DOL_SHARED_SECRET=super-secret,DATABASE_URL=postgresql+asyncpg://medios_user:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:5432/medios_db,DOL_CORS_ORIGINS=[\"*\"]" \
+            --set-env-vars "DOL_HOSPITAL_ID=${{ steps.hospital-id.outputs.id }},DOL_SHARED_SECRET=super-secret,DATABASE_URL=${DATABASE_URL},DOL_CORS_ORIGINS=[\"*\"]" \
             || echo "Deployment failed or service doesn't exist"
         continue-on-error: true
 

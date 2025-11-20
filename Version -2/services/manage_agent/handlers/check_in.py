@@ -163,6 +163,11 @@ async def check_in_patient(
     )
     session.add(triage_obs)
 
+    # Initialize with default values (will be overwritten if triage succeeds)
+    default_triage_level = 4
+    triage_obs.triage_score = default_triage_level
+    encounter.acuity_level = default_triage_level
+
     # Run receptionist triage classification (age + complaint only)
     try:
         print(
@@ -176,19 +181,30 @@ async def check_in_patient(
             payload.chief_complaint,
         )
         triage_result = await receptionist_triage.classify(receptionist_payload)
-        triage_obs.triage_score = triage_result.acuity_level
-        triage_obs.triage_model_version = triage_result.model_version
-        encounter.acuity_level = triage_result.acuity_level
-        print(
-            f"[CHECK-IN] Triage result: Level {triage_result.acuity_level} (model: {triage_result.model_version})",  # noqa: E501
-            file=sys.stderr,
-            flush=True,
-        )
-        logger.info(
-            "[CHECK-IN] Triage result: Level %d (model: %s)",
-            triage_result.acuity_level,
-            triage_result.model_version,
-        )
+        if triage_result and triage_result.acuity_level:
+            triage_obs.triage_score = triage_result.acuity_level
+            triage_obs.triage_model_version = triage_result.model_version
+            encounter.acuity_level = triage_result.acuity_level
+            print(
+                f"[CHECK-IN] Triage result: Level {triage_result.acuity_level} (model: {triage_result.model_version})",  # noqa: E501
+                file=sys.stderr,
+                flush=True,
+            )
+            logger.info(
+                "[CHECK-IN] Triage result: Level %d (model: %s)",
+                triage_result.acuity_level,
+                triage_result.model_version,
+            )
+        else:
+            print(
+                "[CHECK-IN] WARNING: Triage returned None or invalid result, using default level 4",  # noqa: E501
+                file=sys.stderr,
+                flush=True,
+            )
+            logger.warning(
+                "[CHECK-IN] WARNING: Triage returned None or invalid result, "
+                "using default level 4"
+            )
     except Exception as e:
         # If triage fails, default to level 4 (routine)
         print(
@@ -199,9 +215,11 @@ async def check_in_patient(
         logger.warning(
             "[CHECK-IN] WARNING: Triage classification failed, defaulting to level 4: %s",  # noqa: E501
             e,
+            exc_info=True,
         )
-        triage_obs.triage_score = 4
-        encounter.acuity_level = 4
+        # Values already set to default above, but ensure they're set
+        triage_obs.triage_score = default_triage_level
+        encounter.acuity_level = default_triage_level
 
     await session.commit()
     await session.refresh(encounter)

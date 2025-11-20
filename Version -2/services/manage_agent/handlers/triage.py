@@ -178,6 +178,11 @@ async def record_vitals(
         injury=bool(existing_vitals.get("injury")),
     )
 
+    # Initialize with default values (will be overwritten if triage succeeds)
+    default_triage_level = 4
+    triage_obs.triage_score = default_triage_level
+    encounter.acuity_level = default_triage_level
+
     try:
         import sys
 
@@ -188,39 +193,72 @@ async def record_vitals(
         )
         logger.info("[VITALS] Running nurse triage classification...")
         triage_result = engine.classify(nurse_payload)
-        print(
-            f"[VITALS] Triage result: Level {triage_result.acuity_level} (model: {triage_result.model_version})",  # noqa: E501
-            file=sys.stderr,
-            flush=True,
-        )
-        print(
-            f"[VITALS] Explanation: {triage_result.explanation}",
-            file=sys.stderr,
-            flush=True,
-        )
-        logger.info(
-            "[VITALS] Triage result: Level %d (model: %s)",
-            triage_result.acuity_level,
-            triage_result.model_version,
-        )
-        logger.info("[VITALS] Explanation: %s", triage_result.explanation)
+        if triage_result and triage_result.acuity_level:
+            triage_obs.triage_score = triage_result.acuity_level
+            triage_obs.triage_model_version = triage_result.model_version
+            encounter.acuity_level = triage_result.acuity_level
+            print(
+                f"[VITALS] Triage result: Level {triage_result.acuity_level} (model: {triage_result.model_version})",  # noqa: E501
+                file=sys.stderr,
+                flush=True,
+            )
+            print(
+                f"[VITALS] Explanation: {triage_result.explanation}",
+                file=sys.stderr,
+                flush=True,
+            )
+            logger.info(
+                "[VITALS] Triage result: Level %d (model: %s)",
+                triage_result.acuity_level,
+                triage_result.model_version,
+            )
+            logger.info("[VITALS] Explanation: %s", triage_result.explanation)
+        else:
+            print(
+                "[VITALS] WARNING: Triage returned None or invalid result, using default level 4",  # noqa: E501
+                file=sys.stderr,
+                flush=True,
+            )
+            logger.warning(
+                "[VITALS] WARNING: Triage returned None or invalid result, "
+                "using default level 4"
+            )
+            triage_result = type(
+                "TriageResult",
+                (),
+                {
+                    "acuity_level": default_triage_level,
+                    "model_version": f"{engine.model_version}-fallback",
+                    "explanation": "Fallback triage level due to invalid model result",
+                },
+            )()
     except Exception as exc:  # pragma: no cover - runtime safety
         import sys
 
         print(
-            f"[VITALS] ERROR: Nurse triage classification failed: {exc}",
+            f"[VITALS] WARNING: Nurse triage classification failed, using default level 4: {exc}",  # noqa: E501
             file=sys.stderr,
             flush=True,
         )
-        logging.getLogger(__name__).error("Nurse triage classification failed: %s", exc)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to classify vitals with nurse triage model.",
-        ) from exc
-
-    triage_obs.triage_score = triage_result.acuity_level
-    triage_obs.triage_model_version = triage_result.model_version
-    encounter.acuity_level = triage_result.acuity_level
+        logger.warning(
+            "[VITALS] WARNING: Nurse triage classification failed, "
+            "using default level 4: %s",
+            exc,
+            exc_info=True,
+        )
+        # Values already set to default above, but ensure they're set
+        triage_obs.triage_score = default_triage_level
+        encounter.acuity_level = default_triage_level
+        # Create a fallback result object
+        triage_result = type(
+            "TriageResult",
+            (),
+            {
+                "acuity_level": default_triage_level,
+                "model_version": f"{engine.model_version}-fallback",
+                "explanation": f"Fallback triage level due to error: {exc}",
+            },
+        )()
 
     await session.commit()
     await session.refresh(encounter)

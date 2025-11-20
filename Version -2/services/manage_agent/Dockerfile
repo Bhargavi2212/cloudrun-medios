@@ -13,6 +13,7 @@ RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 COPY shared ./shared
 COPY database ./database
 COPY services/manage_agent ./services/manage_agent
+COPY data ./data
 
 EXPOSE 8001
 
