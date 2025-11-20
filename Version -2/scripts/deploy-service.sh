@@ -112,13 +112,63 @@ EOF
 
 cd - > /dev/null
 
-# Get Cloud SQL connection name (if exists)
-CLOUD_SQL_INSTANCE=$(gcloud sql instances list --filter="name:medios-db-${ENVIRONMENT}" --format="value(connectionName)" --limit=1 2>/dev/null || echo "")
+# Get DATABASE_URL from Secret Manager or use default VM connection
+# For VM-based database, use standard PostgreSQL connection string
+DATABASE_URL=$(gcloud secrets versions access latest --secret=database-url-${ENVIRONMENT} 2>/dev/null || echo "")
+if [ -z "$DATABASE_URL" ]; then
+    # Try to get database connection details from secrets (with environment suffix)
+    DB_HOST=$(gcloud secrets versions access latest --secret=db-host-${ENVIRONMENT} 2>/dev/null || echo "")
+    DB_USER=$(gcloud secrets versions access latest --secret=db-user-${ENVIRONMENT} 2>/dev/null || echo "")
+    DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-${ENVIRONMENT} 2>/dev/null || echo "")
+    DB_NAME=$(gcloud secrets versions access latest --secret=db-name-${ENVIRONMENT} 2>/dev/null || echo "")
+    DB_PORT=$(gcloud secrets versions access latest --secret=db-port-${ENVIRONMENT} 2>/dev/null || echo "")
+    
+    # Fallback to secrets without environment suffix (for shared secrets like db-password-free)
+    if [ -z "$DB_PASSWORD" ]; then
+        DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free 2>/dev/null || echo "")
+    fi
+    if [ -z "$DB_HOST" ]; then
+        DB_HOST=$(gcloud secrets versions access latest --secret=db-host 2>/dev/null || echo "")
+    fi
+    if [ -z "$DB_USER" ]; then
+        DB_USER=$(gcloud secrets versions access latest --secret=db-user 2>/dev/null || echo "medios_user")
+    fi
+    if [ -z "$DB_NAME" ]; then
+        DB_NAME=$(gcloud secrets versions access latest --secret=db-name 2>/dev/null || echo "medios_db")
+    fi
+    if [ -z "$DB_PORT" ]; then
+        DB_PORT=$(gcloud secrets versions access latest --secret=db-port 2>/dev/null || echo "5432")
+    fi
+    
+    # Use known VM database connection if password is available
+    # Default values based on current deployment: host=104.198.58.247, user=medios_user, name=medios_db, port=5432
+    if [ -z "$DB_HOST" ]; then
+        DB_HOST="104.198.58.247"
+    fi
+    if [ -z "$DB_USER" ]; then
+        DB_USER="medios_user"
+    fi
+    if [ -z "$DB_NAME" ]; then
+        DB_NAME="medios_db"
+    fi
+    if [ -z "$DB_PORT" ]; then
+        DB_PORT="5432"
+    fi
+    
+    if [ -n "$DB_PASSWORD" ]; then
+        DATABASE_URL="postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+        echo -e "${GREEN}Constructed DATABASE_URL from secrets${NC}"
+    else
+        echo -e "${RED}Error: Database password not found in secrets.${NC}"
+        echo -e "${YELLOW}Please set db-password-${ENVIRONMENT} or db-password-free secret.${NC}"
+        exit 1
+    fi
+fi
 
 # Prepare environment variables
 ENV_VARS=(
     "APP_ENV=${ENVIRONMENT}"
-    "DATABASE_URL=postgresql+asyncpg://postgres:password@/medios_db?host=/cloudsql/${CLOUD_SQL_INSTANCE}"
+    "DATABASE_URL=${DATABASE_URL}"
 )
 
 # Add service-specific environment variables
@@ -172,10 +222,11 @@ DEPLOY_CMD="gcloud run deploy ${CLOUD_RUN_SERVICE} \
     --concurrency 80 \
     --port ${SERVICE_PORT}"
 
-# Add Cloud SQL connection if available
-if [ -n "$CLOUD_SQL_INSTANCE" ]; then
-    DEPLOY_CMD="${DEPLOY_CMD} --add-cloudsql-instances ${CLOUD_SQL_INSTANCE}"
-fi
+# Note: Cloud SQL connection not needed for VM-based database
+# If using Cloud SQL, uncomment the following:
+# if [ -n "$CLOUD_SQL_INSTANCE" ]; then
+#     DEPLOY_CMD="${DEPLOY_CMD} --add-cloudsql-instances ${CLOUD_SQL_INSTANCE}"
+# fi
 
 eval $DEPLOY_CMD
 
