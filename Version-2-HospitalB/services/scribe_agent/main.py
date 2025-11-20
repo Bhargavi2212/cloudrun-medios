@@ -50,5 +50,6 @@ try:
 except Exception as e:
     print(f"FATAL: Failed to create application: {e}", file=sys.stderr)
     import traceback
+
     traceback.print_exc()
     raise
