@@ -291,14 +291,8 @@ jobs:
         id: deploy-manage
         run: |
           DOL_URL=$(gcloud run services describe medi-os-${{ steps.hospital-id.outputs.id }}-dol-service --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
-          FRONTEND_URL=$(gcloud run services describe medi-os-frontend --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
-          # Build CORS origins list - include frontend URL and allow all origins
-          # Escape JSON properly for environment variable
-          if [ -n "$FRONTEND_URL" ]; then
-            CORS_ORIGINS='["'"$FRONTEND_URL"'","*"]'
-          else
-            CORS_ORIGINS='["*"]'
-          fi
+          # Use simple wildcard for CORS - the config parser will handle it
+          CORS_ORIGINS="*"
           gcloud run deploy medi-os-${{ steps.hospital-id.outputs.id }}-manage-agent \
             --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-${{ steps.hospital-id.outputs.id }}-manage-agent:${{ github.sha }} \
             --region ${{ steps.region.outputs.region }} \
