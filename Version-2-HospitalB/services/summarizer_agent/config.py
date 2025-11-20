@@ -4,7 +4,7 @@ Configuration for the summarizer-agent service.
 
 from __future__ import annotations
 
-from pydantic import Field, field_validator
+from pydantic import Field, model_validator
 
 from database.session import DatabaseSettings
 
@@ -18,11 +18,21 @@ class SummarizerAgentSettings(DatabaseSettings):
     model_version: str = Field(
         default="summary_v0", alias="SUMMARIZER_AGENT_MODEL_VERSION"
     )
+
+    # Store as string to avoid JSON parsing, then convert to list
+    # Using a non-private field name to avoid Pydantic validation issues
+    cors_origins_str: str | None = Field(
+        default=None,
+        alias="SUMMARIZER_AGENT_CORS_ORIGINS",
+        description="Comma-separated list of allowed origins for CORS.",
+        exclude=True,
+    )
+
     cors_allow_origins: list[str] = Field(
         default_factory=list,
-        alias="SUMMARIZER_AGENT_CORS_ORIGINS",
-        description="Trusted origins for CORS.",
+        description="Parsed list of allowed CORS origins.",
     )
+
     gemini_api_key: str | None = Field(
         default=None,
         alias="GEMINI_API_KEY",
@@ -41,9 +51,13 @@ class SummarizerAgentSettings(DatabaseSettings):
         ),
     )
 
-    @field_validator("cors_allow_origins", mode="before")
-    @classmethod
-    def _split_origins(cls, value: str | list[str]) -> list[str]:
-        if isinstance(value, str):
-            return [origin.strip() for origin in value.split(",") if origin.strip()]
-        return value
+    @model_validator(mode="after")
+    def _parse_cors_origins(self) -> SummarizerAgentSettings:
+        """Parse CORS origins string into list after model initialization."""
+        if self.cors_origins_str:
+            self.cors_allow_origins = [
+                origin.strip()
+                for origin in self.cors_origins_str.split(",")
+                if origin.strip()
+            ]
+        return self

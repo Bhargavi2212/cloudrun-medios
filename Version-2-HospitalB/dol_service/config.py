@@ -4,7 +4,7 @@ Configuration for the Data Orchestration Layer (DOL) service.
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from database.session import DatabaseSettings
 
@@ -36,23 +36,36 @@ class DOLSettings(DatabaseSettings):
         alias="DOL_SHARED_SECRET",
         description="Shared secret for peer authentication.",
     )
-    cors_allow_origins: list[str] = Field(
-        default_factory=list,
+
+    # Store as string to avoid JSON parsing, then convert to list
+    cors_origins_str: str | None = Field(
+        default=None,
         alias="DOL_CORS_ORIGINS",
         description="Comma-separated list of allowed origins.",
+        exclude=True,
     )
+
+    cors_allow_origins: list[str] = Field(
+        default_factory=list,
+        description="Parsed list of allowed CORS origins.",
+    )
+
     peers: list[PeerConfig] = Field(
         default_factory=list,
         alias="DOL_PEERS",
         description="JSON array describing peer endpoints.",
     )
 
-    @field_validator("cors_allow_origins", mode="before")
-    @classmethod
-    def _split_origins(cls, value: str | list[str]) -> list[str]:
-        if isinstance(value, str):
-            return [origin.strip() for origin in value.split(",") if origin.strip()]
-        return value
+    @model_validator(mode="after")
+    def _parse_cors_origins(self) -> DOLSettings:
+        """Parse CORS origins string into list after model initialization."""
+        if self.cors_origins_str:
+            self.cors_allow_origins = [
+                origin.strip()
+                for origin in self.cors_origins_str.split(",")
+                if origin.strip()
+            ]
+        return self
 
     @field_validator("peers", mode="before")
     @classmethod
