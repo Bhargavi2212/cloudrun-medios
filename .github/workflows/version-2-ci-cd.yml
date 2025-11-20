@@ -2,6 +2,7 @@ name: Version 2 CI/CD Pipeline
 
 # Trigger deployment to replace failed revisions
 # Updated: Security fixes applied, database password rotated, hardcoded values removed
+# Force rebuild: All fixes for manage-agent and federation-aggregator applied
 on:
   push:
     branches: [main, develop]
