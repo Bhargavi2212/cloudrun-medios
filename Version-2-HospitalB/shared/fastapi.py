@@ -10,7 +10,6 @@ from typing import Protocol
 from fastapi import APIRouter, FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from database.session import dispose_engine, init_engine
 from shared.logging import configure_logging
 
 
@@ -66,6 +65,7 @@ def create_service_app(
         app.include_router(router)
 
     if enable_database:
+        from database.session import dispose_engine, init_engine
 
         @app.on_event("startup")
         async def _startup() -> None:
