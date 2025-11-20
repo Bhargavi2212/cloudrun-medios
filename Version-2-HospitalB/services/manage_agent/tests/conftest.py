@@ -56,7 +56,7 @@ async def app(prepared_database: None):
     init_engine(database_url=TEST_DATABASE_URL)
     settings = ManageAgentSettings(
         database_url=TEST_DATABASE_URL,  # type: ignore[arg-type]
-        cors_allow_origins=[],
+        cors_allow_origins=["*"],  # Allow all origins in tests
         debug=True,
         dol_base_url="http://dol-service",
         dol_shared_secret="test-secret",
