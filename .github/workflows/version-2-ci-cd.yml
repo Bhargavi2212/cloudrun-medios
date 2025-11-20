@@ -402,7 +402,7 @@ jobs:
             --timeout 300 \
             --max-instances 10 \
             --min-instances 0 \
-            --set-env-vars "DATABASE_URL=${DATABASE_URL},SCRIBE_AGENT_CORS_ORIGINS=*"
+            --set-env-vars "PORT=8002,DATABASE_URL=${DATABASE_URL},SCRIBE_AGENT_CORS_ORIGINS=*"
           if [ $? -ne 0 ]; then
             echo "❌ scribe-agent deployment FAILED for ${{ steps.hospital-id.outputs.id }}"
             exit 1
