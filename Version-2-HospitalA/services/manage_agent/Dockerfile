@@ -7,12 +7,29 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
 
+# Copy requirements first for better layer caching
 COPY services/manage_agent/requirements.txt ./requirements.txt
+
 # Verify requirements.txt includes ML dependencies before installing
-RUN grep -q "joblib" requirements.txt && grep -q "numpy" requirements.txt && grep -q "pandas" requirements.txt && grep -q "scikit-learn" requirements.txt || (echo "ERROR: ML dependencies missing from requirements.txt!" && cat requirements.txt && exit 1)
-RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
-# Verify installation succeeded
-RUN python -c "import joblib, numpy, pandas, sklearn; print('✓ All ML dependencies installed successfully')" || (echo "ERROR: ML dependencies not installed!" && pip list | grep -E "joblib|numpy|pandas|scikit" && exit 1)
+RUN echo "=== Verifying requirements.txt ===" && \
+    cat requirements.txt && \
+    grep -q "joblib" requirements.txt && \
+    grep -q "numpy" requirements.txt && \
+    grep -q "pandas" requirements.txt && \
+    grep -q "scikit-learn" requirements.txt || \
+    (echo "ERROR: ML dependencies missing from requirements.txt!" && exit 1)
+
+# Install dependencies with verbose output
+RUN echo "=== Installing dependencies ===" && \
+    pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    echo "=== Verifying installation ===" && \
+    pip list | grep -E "joblib|numpy|pandas|scikit" && \
+    python -c "import joblib; print('✓ joblib:', joblib.__version__)" && \
+    python -c "import numpy; print('✓ numpy:', numpy.__version__)" && \
+    python -c "import pandas; print('✓ pandas:', pandas.__version__)" && \
+    python -c "import sklearn; print('✓ scikit-learn:', sklearn.__version__)" && \
+    echo "✓ All ML dependencies installed successfully"
 
 COPY shared ./shared
 COPY database ./database
