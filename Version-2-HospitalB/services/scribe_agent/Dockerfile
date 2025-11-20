@@ -18,7 +18,7 @@ COPY services/scribe_agent ./services/scribe_agent
 COPY services/scribe_agent/entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
-EXPOSE 9002
+EXPOSE 8002
 
 # Cloud Run sets PORT environment variable
 ENTRYPOINT ["./entrypoint.sh"]
