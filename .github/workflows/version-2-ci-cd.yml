@@ -291,12 +291,13 @@ jobs:
       - name: Deploy manage-agent
         id: deploy-manage
         run: |
+          # DOL URL will be empty initially (dol-service deployed later), that's OK
           DOL_URL=$(gcloud run services describe medi-os-${{ steps.hospital-id.outputs.id }}-dol-service --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
           # Use simple wildcard for CORS - the config parser will handle it
           CORS_ORIGINS="*"
           # Get database password from Secret Manager
-          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>&1)
-          if [ -z "$DB_PASSWORD" ]; then
+          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>/dev/null)
+          if [ $? -ne 0 ] || [ -z "$DB_PASSWORD" ]; then
             echo "ERROR: Failed to retrieve database password from Secret Manager"
             exit 1
           fi
@@ -323,8 +324,8 @@ jobs:
         id: deploy-scribe
         run: |
           # Get database password from Secret Manager
-          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>&1)
-          if [ -z "$DB_PASSWORD" ]; then
+          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>/dev/null)
+          if [ $? -ne 0 ] || [ -z "$DB_PASSWORD" ]; then
             echo "ERROR: Failed to retrieve database password from Secret Manager"
             exit 1
           fi
@@ -351,8 +352,8 @@ jobs:
         id: deploy-summarizer
         run: |
           # Get database password from Secret Manager
-          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>&1)
-          if [ -z "$DB_PASSWORD" ]; then
+          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>/dev/null)
+          if [ $? -ne 0 ] || [ -z "$DB_PASSWORD" ]; then
             echo "ERROR: Failed to retrieve database password from Secret Manager"
             exit 1
           fi
@@ -378,8 +379,8 @@ jobs:
       - name: Deploy dol-service
         run: |
           # Get database password from Secret Manager
-          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>&1)
-          if [ -z "$DB_PASSWORD" ]; then
+          DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password-free --project=${{ secrets.GCP_PROJECT_ID }} 2>/dev/null)
+          if [ $? -ne 0 ] || [ -z "$DB_PASSWORD" ]; then
             echo "ERROR: Failed to retrieve database password from Secret Manager"
             exit 1
           fi
