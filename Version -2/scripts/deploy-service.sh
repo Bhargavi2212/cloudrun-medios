@@ -140,10 +140,12 @@ if [ -z "$DATABASE_URL" ]; then
         DB_PORT=$(gcloud secrets versions access latest --secret=db-port 2>/dev/null || echo "5432")
     fi
     
-    # Use known VM database connection if password is available
-    # Default values based on current deployment: host=104.198.58.247, user=medios_user, name=medios_db, port=5432
+    # Use VM database connection - host must be provided via secrets
+    # Do not hardcode database host for security
     if [ -z "$DB_HOST" ]; then
-        DB_HOST="104.198.58.247"
+        echo -e "${RED}Error: Database host (DB_HOST) not found in secrets.${NC}"
+        echo -e "${YELLOW}Please set db-host secret or DB_HOST environment variable.${NC}"
+        exit 1
     fi
     if [ -z "$DB_USER" ]; then
         DB_USER="medios_user"

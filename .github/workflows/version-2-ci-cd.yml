@@ -272,52 +272,49 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Get database password
-        id: db-password
+      - name: Get database credentials
+        id: db-credentials
         run: |
-          echo "Attempting to retrieve database password..."
+          echo "Retrieving database credentials..."
           PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
-          SECRET_NAME="db-password-free"
-          SERVICE_ACCOUNT=$(gcloud config get-value account 2>/dev/null || echo "unknown")
           
-          # Try to get password from Secret Manager first
+          # Get database password - try Secret Manager first, fallback to GitHub Secrets
           set +e
-          DB_PASSWORD_SM=$(gcloud secrets versions access latest --secret=$SECRET_NAME --project=$PROJECT_ID 2>&1)
+          DB_PASSWORD_SM=$(gcloud secrets versions access latest --secret=db-password-free --project=$PROJECT_ID 2>/dev/null)
           SM_EXIT=$?
           set -e
           
           if [ $SM_EXIT -eq 0 ] && [ -n "$DB_PASSWORD_SM" ]; then
             echo "✓ Retrieved password from Secret Manager"
-            echo "password=$DB_PASSWORD_SM" >> $GITHUB_OUTPUT
-            echo "source=secret-manager" >> $GITHUB_OUTPUT
+            DB_PASSWORD="$DB_PASSWORD_SM"
+          elif [ -n "${{ secrets.DB_PASSWORD }}" ]; then
+            echo "✓ Using password from GitHub Secrets"
+            DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
           else
-            echo "⚠ Secret Manager access failed (exit code: $SM_EXIT)"
-            echo "Error: $DB_PASSWORD_SM"
-            echo ""
-            echo "Trying GitHub Secrets as fallback..."
-            
-            # Fallback to GitHub Secret
-            if [ -n "${{ secrets.DB_PASSWORD }}" ]; then
-              echo "✓ Using password from GitHub Secrets"
-              echo "password=${{ secrets.DB_PASSWORD }}" >> $GITHUB_OUTPUT
-              echo "source=github-secrets" >> $GITHUB_OUTPUT
-            else
-              echo "ERROR: Cannot retrieve database password from either source"
-              echo ""
-              echo "Service Account: $SERVICE_ACCOUNT"
-              echo "Project ID: $PROJECT_ID"
-              echo "Secret Name: $SECRET_NAME"
-              echo ""
-              echo "To fix Secret Manager access, grant permissions:"
-              echo "  gcloud secrets add-iam-policy-binding $SECRET_NAME \\"
-              echo "    --member='serviceAccount:$SERVICE_ACCOUNT' \\"
-              echo "    --role='roles/secretmanager.secretAccessor' \\"
-              echo "    --project=$PROJECT_ID"
-              echo ""
-              echo "OR add the password to GitHub Secrets as 'DB_PASSWORD'"
-              exit 1
-            fi
+            echo "ERROR: Cannot retrieve database password"
+            exit 1
           fi
+          
+          # Get database host - try Secret Manager first, fallback to GitHub Secrets, then default
+          set +e
+          DB_HOST_SM=$(gcloud secrets versions access latest --secret=db-host --project=$PROJECT_ID 2>/dev/null)
+          SM_HOST_EXIT=$?
+          set -e
+          
+          if [ $SM_HOST_EXIT -eq 0 ] && [ -n "$DB_HOST_SM" ]; then
+            echo "✓ Retrieved host from Secret Manager"
+            DB_HOST="$DB_HOST_SM"
+          elif [ -n "${{ secrets.DB_HOST }}" ]; then
+            echo "✓ Using host from GitHub Secrets"
+            DB_HOST="${{ secrets.DB_HOST }}"
+          else
+            echo "ERROR: Database host not configured. Add DB_HOST to GitHub Secrets or Secret Manager"
+            exit 1
+          fi
+          
+          # Output credentials
+          echo "password=$DB_PASSWORD" >> $GITHUB_OUTPUT
+          echo "host=$DB_HOST" >> $GITHUB_OUTPUT
 
       - name: Extract hospital identifier
         id: hospital-id
@@ -342,14 +339,13 @@ jobs:
           DOL_URL=$(gcloud run services describe medi-os-${{ steps.hospital-id.outputs.id }}-dol-service --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
           # Use simple wildcard for CORS - the config parser will handle it
           CORS_ORIGINS="*"
-          # Use password from previous step
-          DB_PASSWORD="${{ steps.db-password.outputs.password }}"
-          if [ -z "$DB_PASSWORD" ]; then
-            echo "ERROR: Database password is not available"
+          # Use credentials from previous step
+          DB_PASSWORD="${{ steps.db-credentials.outputs.password }}"
+          DB_HOST="${{ steps.db-credentials.outputs.host }}"
+          if [ -z "$DB_PASSWORD" ] || [ -z "$DB_HOST" ]; then
+            echo "ERROR: Database credentials are not available"
             exit 1
           fi
-          echo "Using database password from: ${{ steps.db-password.outputs.source }}"
-          DB_HOST="104.198.58.247"
           DATABASE_URL="postgresql+asyncpg://medios_user:${DB_PASSWORD}@${DB_HOST}:5432/medios_db"
           gcloud run deploy medi-os-${{ steps.hospital-id.outputs.id }}-manage-agent \
             --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-${{ steps.hospital-id.outputs.id }}-manage-agent:${{ github.sha }} \
@@ -371,13 +367,13 @@ jobs:
       - name: Deploy scribe-agent
         id: deploy-scribe
         run: |
-          # Use password from previous step
-          DB_PASSWORD="${{ steps.db-password.outputs.password }}"
-          if [ -z "$DB_PASSWORD" ]; then
-            echo "ERROR: Database password is not available"
+          # Use credentials from previous step
+          DB_PASSWORD="${{ steps.db-credentials.outputs.password }}"
+          DB_HOST="${{ steps.db-credentials.outputs.host }}"
+          if [ -z "$DB_PASSWORD" ] || [ -z "$DB_HOST" ]; then
+            echo "ERROR: Database credentials are not available"
             exit 1
           fi
-          DB_HOST="104.198.58.247"
           DATABASE_URL="postgresql+asyncpg://medios_user:${DB_PASSWORD}@${DB_HOST}:5432/medios_db"
           gcloud run deploy medi-os-${{ steps.hospital-id.outputs.id }}-scribe-agent \
             --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-${{ steps.hospital-id.outputs.id }}-scribe-agent:${{ github.sha }} \
@@ -399,13 +395,13 @@ jobs:
       - name: Deploy summarizer-agent
         id: deploy-summarizer
         run: |
-          # Use password from previous step
-          DB_PASSWORD="${{ steps.db-password.outputs.password }}"
-          if [ -z "$DB_PASSWORD" ]; then
-            echo "ERROR: Database password is not available"
+          # Use credentials from previous step
+          DB_PASSWORD="${{ steps.db-credentials.outputs.password }}"
+          DB_HOST="${{ steps.db-credentials.outputs.host }}"
+          if [ -z "$DB_PASSWORD" ] || [ -z "$DB_HOST" ]; then
+            echo "ERROR: Database credentials are not available"
             exit 1
           fi
-          DB_HOST="104.198.58.247"
           DATABASE_URL="postgresql+asyncpg://medios_user:${DB_PASSWORD}@${DB_HOST}:5432/medios_db"
           gcloud run deploy medi-os-${{ steps.hospital-id.outputs.id }}-summarizer-agent \
             --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-${{ steps.hospital-id.outputs.id }}-summarizer-agent:${{ github.sha }} \
@@ -426,13 +422,13 @@ jobs:
 
       - name: Deploy dol-service
         run: |
-          # Use password from previous step
-          DB_PASSWORD="${{ steps.db-password.outputs.password }}"
-          if [ -z "$DB_PASSWORD" ]; then
-            echo "ERROR: Database password is not available"
+          # Use credentials from previous step
+          DB_PASSWORD="${{ steps.db-credentials.outputs.password }}"
+          DB_HOST="${{ steps.db-credentials.outputs.host }}"
+          if [ -z "$DB_PASSWORD" ] || [ -z "$DB_HOST" ]; then
+            echo "ERROR: Database credentials are not available"
             exit 1
           fi
-          DB_HOST="104.198.58.247"
           DATABASE_URL="postgresql+asyncpg://medios_user:${DB_PASSWORD}@${DB_HOST}:5432/medios_db"
           gcloud run deploy medi-os-${{ steps.hospital-id.outputs.id }}-dol-service \
             --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-${{ steps.hospital-id.outputs.id }}-dol-service:${{ github.sha }} \
