@@ -231,7 +231,7 @@ def clean_and_transform(df: pd.DataFrame) -> pd.DataFrame:
         # Replace negative values and invalid codes with NaN
         df["esi_level"] = df["esi_level"].replace([-9, -8, 0, 7, 9, 99, 999], None)
         # Convert to int if possible (1.0 -> 1), but keep as float for comparison
-    #  Actually, pandas handles float(1.0) == int(1) in isin(), so we can keep as float
+  #  Actually, pandas handles float(1.0) == int(1) in isin(), so we can keep as float
 
     # Handle missing values for other numeric vars (temp_c already handled above)
     numeric_vars = [
