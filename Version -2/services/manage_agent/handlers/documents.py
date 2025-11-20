@@ -285,7 +285,7 @@ async def upload_document(
                     )
                     await asyncio.sleep(2)
 
-                    #  Verify the file asset was updated with extraction_data (with retries)
+                    # Verify the file asset was updated with extraction_data (with retries)
                     max_retries = 5
                     has_extraction_data = False
                     for attempt in range(max_retries):
