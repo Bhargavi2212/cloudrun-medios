@@ -20,7 +20,10 @@ RUN mkdir -p ./data/receptionist_models_v3/models \
     ./data/nurse_models/models \
     ./data/processed/transformers
 
-EXPOSE 8001
+# Cloud Run sets the PORT environment variable dynamically
+ENV PORT=8001
+EXPOSE $PORT
 
-CMD ["uvicorn", "services.manage_agent.main:app", "--host", "0.0.0.0", "--port", "8001"]
+# Use shell form to allow environment variable substitution
+CMD uvicorn services.manage_agent.main:app --host 0.0.0.0 --port ${PORT:-8001}
 
