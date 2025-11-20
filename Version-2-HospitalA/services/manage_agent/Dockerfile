@@ -21,6 +21,9 @@ RUN mkdir -p ./data/receptionist_models_v3/models \
     ./data/nurse_models/models \
     ./data/processed/transformers
 
+# Ensure all Python files are included (force rebuild)
+RUN find ./services/manage_agent -name "*.py" | head -5
+
 # Copy and make entrypoint executable
 COPY services/manage_agent/entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
