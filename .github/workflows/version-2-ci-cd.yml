@@ -316,11 +316,11 @@ jobs:
             --allow-unauthenticated \
             --port 8001 \
             --memory 2Gi \
-            --cpu 2 \
+            --cpu 1 \
             --timeout 300 \
             --max-instances 10 \
             --min-instances 0 \
-            --set-env-vars "HOSPITAL_ID=${{ steps.hospital-id.outputs.id }},DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/medi_os_v2" \
+            --set-env-vars "HOSPITAL_ID=${{ steps.hospital-id.outputs.id }},DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/medi_os_v2,MANAGE_AGENT_CORS_ORIGINS=https://medi-os-frontend-uizgwl6noq-uc.a.run.app,http://localhost:5173,http://localhost:3000" \
             || echo "Deployment failed or service doesn't exist"
         continue-on-error: true
 
@@ -333,11 +333,11 @@ jobs:
             --allow-unauthenticated \
             --port 8002 \
             --memory 2Gi \
-            --cpu 2 \
+            --cpu 1 \
             --timeout 300 \
             --max-instances 10 \
             --min-instances 0 \
-            --set-env-vars "DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/medi_os_v2" \
+            --set-env-vars "DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/medi_os_v2,SCRIBE_AGENT_CORS_ORIGINS=https://medi-os-frontend-uizgwl6noq-uc.a.run.app,http://localhost:5173,http://localhost:3000" \
             || echo "Deployment failed or service doesn't exist"
         continue-on-error: true
 
@@ -350,11 +350,11 @@ jobs:
             --allow-unauthenticated \
             --port 8003 \
             --memory 2Gi \
-            --cpu 2 \
+            --cpu 1 \
             --timeout 300 \
             --max-instances 10 \
             --min-instances 0 \
-            --set-env-vars "DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/medi_os_v2" \
+            --set-env-vars "DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/medi_os_v2,SUMMARIZER_AGENT_CORS_ORIGINS=https://medi-os-frontend-uizgwl6noq-uc.a.run.app,http://localhost:5173,http://localhost:3000" \
             || echo "Deployment failed or service doesn't exist"
         continue-on-error: true
 
