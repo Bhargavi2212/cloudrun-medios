@@ -244,26 +244,25 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and push frontend image
+      - name: Build and push frontend image (placeholder - will rebuild in deploy)
         if: matrix.service.name == 'manage-agent' && matrix.hospital == 'HospitalA'
         uses: docker/build-push-action@v5
         with:
           context: 'Version -2/apps/frontend'
           file: 'Version -2/apps/frontend/Dockerfile'
-          push: ${{ github.ref == 'refs/heads/main' }}
+          push: false
           build-args: |
-            VITE_MANAGE_API_URL_HOSPITAL_A=https://medi-os-hospital-a-manage-agent-uizgwl6noq-uc.a.run.app
-            VITE_SCRIBE_API_URL_HOSPITAL_A=https://medi-os-hospital-a-scribe-agent-uizgwl6noq-uc.a.run.app
-            VITE_SUMMARIZER_API_URL_HOSPITAL_A=https://medi-os-hospital-a-summarizer-agent-uizgwl6noq-uc.a.run.app
-            VITE_MANAGE_API_URL_HOSPITAL_B=https://medi-os-hospital-b-manage-agent-uizgwl6noq-uc.a.run.app
-            VITE_SCRIBE_API_URL_HOSPITAL_B=https://medi-os-hospital-b-scribe-agent-uizgwl6noq-uc.a.run.app
-            VITE_SUMMARIZER_API_URL_HOSPITAL_B=https://medi-os-hospital-b-summarizer-agent-uizgwl6noq-uc.a.run.app
-            VITE_DOL_API_URL=https://medi-os-hospital-a-dol-service-uizgwl6noq-uc.a.run.app
-            VITE_FEDERATION_API_URL=https://medi-os-hospital-a-federation-aggregator-uizgwl6noq-uc.a.run.app
+            VITE_MANAGE_API_URL_HOSPITAL_A=https://placeholder-a-manage.run.app
+            VITE_SCRIBE_API_URL_HOSPITAL_A=https://placeholder-a-scribe.run.app
+            VITE_SUMMARIZER_API_URL_HOSPITAL_A=https://placeholder-a-summarizer.run.app
+            VITE_MANAGE_API_URL_HOSPITAL_B=https://placeholder-b-manage.run.app
+            VITE_SCRIBE_API_URL_HOSPITAL_B=https://placeholder-b-scribe.run.app
+            VITE_SUMMARIZER_API_URL_HOSPITAL_B=https://placeholder-b-summarizer.run.app
+            VITE_DOL_API_URL=https://placeholder-dol.run.app
+            VITE_FEDERATION_API_URL=https://placeholder-federation.run.app
             VITE_ENVIRONMENT=production
           tags: |
-            gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-frontend:latest
-            gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-frontend:${{ github.sha }}
+            gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-frontend:placeholder
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -309,6 +308,7 @@ jobs:
           echo "region=us-central1" >> $GITHUB_OUTPUT
 
       - name: Deploy manage-agent
+        id: deploy-manage
         run: |
           gcloud run deploy medi-os-${{ steps.hospital-id.outputs.id }}-manage-agent \
             --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-${{ steps.hospital-id.outputs.id }}-manage-agent:${{ github.sha }} \
@@ -321,11 +321,14 @@ jobs:
             --timeout 300 \
             --max-instances 10 \
             --min-instances 0 \
-            --set-env-vars "HOSPITAL_ID=${{ steps.hospital-id.outputs.id }},DATABASE_URL=postgresql+asyncpg://medios_user:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:5432/medios_db,MANAGE_AGENT_CORS_ORIGINS=[\"https://medi-os-frontend-uizgwl6noq-uc.a.run.app\",\"http://localhost:5173\",\"http://localhost:3000\"]" \
+            --set-env-vars "HOSPITAL_ID=${{ steps.hospital-id.outputs.id }},DATABASE_URL=postgresql+asyncpg://medios_user:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:5432/medios_db,MANAGE_AGENT_CORS_ORIGINS=[\"*\"]" \
             || echo "Deployment failed or service doesn't exist"
+          SERVICE_URL=$(gcloud run services describe medi-os-${{ steps.hospital-id.outputs.id }}-manage-agent --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
+          echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT
         continue-on-error: true
 
       - name: Deploy scribe-agent
+        id: deploy-scribe
         run: |
           gcloud run deploy medi-os-${{ steps.hospital-id.outputs.id }}-scribe-agent \
             --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-${{ steps.hospital-id.outputs.id }}-scribe-agent:${{ github.sha }} \
@@ -338,11 +341,14 @@ jobs:
             --timeout 300 \
             --max-instances 10 \
             --min-instances 0 \
-            --set-env-vars "DATABASE_URL=postgresql+asyncpg://medios_user:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:5432/medios_db,SCRIBE_AGENT_CORS_ORIGINS=[\"https://medi-os-frontend-uizgwl6noq-uc.a.run.app\",\"http://localhost:5173\",\"http://localhost:3000\"]" \
+            --set-env-vars "DATABASE_URL=postgresql+asyncpg://medios_user:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:5432/medios_db,SCRIBE_AGENT_CORS_ORIGINS=[\"*\"]" \
             || echo "Deployment failed or service doesn't exist"
+          SERVICE_URL=$(gcloud run services describe medi-os-${{ steps.hospital-id.outputs.id }}-scribe-agent --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
+          echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT
         continue-on-error: true
 
       - name: Deploy summarizer-agent
+        id: deploy-summarizer
         run: |
           gcloud run deploy medi-os-${{ steps.hospital-id.outputs.id }}-summarizer-agent \
             --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-${{ steps.hospital-id.outputs.id }}-summarizer-agent:${{ github.sha }} \
@@ -355,8 +361,10 @@ jobs:
             --timeout 300 \
             --max-instances 10 \
             --min-instances 0 \
-            --set-env-vars "DATABASE_URL=postgresql+asyncpg://medios_user:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:5432/medios_db,SUMMARIZER_AGENT_CORS_ORIGINS=[\"https://medi-os-frontend-uizgwl6noq-uc.a.run.app\",\"http://localhost:5173\",\"http://localhost:3000\"]" \
+            --set-env-vars "DATABASE_URL=postgresql+asyncpg://medios_user:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:5432/medios_db,SUMMARIZER_AGENT_CORS_ORIGINS=[\"*\"]" \
             || echo "Deployment failed or service doesn't exist"
+          SERVICE_URL=$(gcloud run services describe medi-os-${{ steps.hospital-id.outputs.id }}-summarizer-agent --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
+          echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT
         continue-on-error: true
 
       - name: Deploy dol-service
@@ -393,7 +401,53 @@ jobs:
             || echo "Deployment failed or service doesn't exist"
         continue-on-error: true
 
+      - name: Get backend service URLs
+        id: backend-urls
+        if: matrix.hospital == 'HospitalA'
+        run: |
+          MANAGE_A_URL=$(gcloud run services describe medi-os-hospital-a-manage-agent --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
+          SCRIBE_A_URL=$(gcloud run services describe medi-os-hospital-a-scribe-agent --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
+          SUMMARIZER_A_URL=$(gcloud run services describe medi-os-hospital-a-summarizer-agent --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
+          MANAGE_B_URL=$(gcloud run services describe medi-os-hospital-b-manage-agent --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
+          SCRIBE_B_URL=$(gcloud run services describe medi-os-hospital-b-scribe-agent --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
+          SUMMARIZER_B_URL=$(gcloud run services describe medi-os-hospital-b-summarizer-agent --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
+          DOL_A_URL=$(gcloud run services describe medi-os-hospital-a-dol-service --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
+          FEDERATION_A_URL=$(gcloud run services describe medi-os-hospital-a-federation-aggregator --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
+          echo "manage_a=$MANAGE_A_URL" >> $GITHUB_OUTPUT
+          echo "scribe_a=$SCRIBE_A_URL" >> $GITHUB_OUTPUT
+          echo "summarizer_a=$SUMMARIZER_A_URL" >> $GITHUB_OUTPUT
+          echo "manage_b=$MANAGE_B_URL" >> $GITHUB_OUTPUT
+          echo "scribe_b=$SCRIBE_B_URL" >> $GITHUB_OUTPUT
+          echo "summarizer_b=$SUMMARIZER_B_URL" >> $GITHUB_OUTPUT
+          echo "dol_a=$DOL_A_URL" >> $GITHUB_OUTPUT
+          echo "federation_a=$FEDERATION_A_URL" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Build and push frontend with actual URLs
+        if: matrix.hospital == 'HospitalA'
+        uses: docker/build-push-action@v5
+        with:
+          context: 'Version -2/apps/frontend'
+          file: 'Version -2/apps/frontend/Dockerfile'
+          push: true
+          build-args: |
+            VITE_MANAGE_API_URL_HOSPITAL_A=${{ steps.backend-urls.outputs.manage_a }}
+            VITE_SCRIBE_API_URL_HOSPITAL_A=${{ steps.backend-urls.outputs.scribe_a }}
+            VITE_SUMMARIZER_API_URL_HOSPITAL_A=${{ steps.backend-urls.outputs.summarizer_a }}
+            VITE_MANAGE_API_URL_HOSPITAL_B=${{ steps.backend-urls.outputs.manage_b }}
+            VITE_SCRIBE_API_URL_HOSPITAL_B=${{ steps.backend-urls.outputs.scribe_b }}
+            VITE_SUMMARIZER_API_URL_HOSPITAL_B=${{ steps.backend-urls.outputs.summarizer_b }}
+            VITE_DOL_API_URL=${{ steps.backend-urls.outputs.dol_a }}
+            VITE_FEDERATION_API_URL=${{ steps.backend-urls.outputs.federation_a }}
+            VITE_ENVIRONMENT=production
+          tags: |
+            gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-frontend:latest
+            gcr.io/${{ secrets.GCP_PROJECT_ID }}/medi-os-frontend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - name: Deploy frontend (single service for both hospitals)
+        id: deploy-frontend
         if: matrix.hospital == 'HospitalA'
         run: |
           gcloud run deploy medi-os-frontend \
@@ -407,6 +461,9 @@ jobs:
             --max-instances 5 \
             --min-instances 0 \
             || echo "Deployment failed or service doesn't exist"
+          FRONTEND_URL=$(gcloud run services describe medi-os-frontend --region=${{ steps.region.outputs.region }} --format="value(status.url)" 2>/dev/null || echo "")
+          echo "url=$FRONTEND_URL" >> $GITHUB_OUTPUT
+          echo "Frontend deployed at: $FRONTEND_URL"
         continue-on-error: true
 
       - name: Run smoke tests
