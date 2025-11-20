@@ -12,6 +12,7 @@ RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
 COPY shared ./shared
 COPY database ./database
+COPY dol_service ./dol_service
 COPY services/manage_agent ./services/manage_agent
 
 # Create data directory structure for model files
